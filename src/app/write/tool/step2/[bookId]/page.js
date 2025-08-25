@@ -3,7 +3,8 @@ import AuthorSidebar from '@/app/components/dashbaord/AuthorSidebar'
 import AuthorTopbar from '@/app/components/dashbaord/Topbar'
 import React, { useState } from 'react'
 
-export default function WriteToolDesign() {
+export default function WriteToolDesign({ params }) {
+  alert(params.bookId);
   const [bookSize, setBookSize] = useState("");
   const [bindingType, setBindingType] = useState("");
   const [bookInterior, setBookInterior] = useState("");

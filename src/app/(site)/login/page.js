@@ -1,12 +1,48 @@
-import React from "react";
+"use client";
+
+import React, { useState } from "react";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 export default function Login() {
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPass, setShowPass] = useState(false);
+  const [remember, setRemember] = useState(false); // optional, see note below
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    // NOTE: NextAuth will call your Express /auth/login via the Credentials `authorize` you configured.
+    const res = await signIn("credentials", {
+      email,
+      password,
+      redirect: false, // handle redirect manually so we can show errors here
+      // You can pass anything else you want to read in callbacks via `req.body`, but not needed here.
+    });
+
+    setLoading(false);
+
+    if (res?.ok) {
+      // (optional) persist "remember me" client hint
+      if (remember) localStorage.setItem("rememberMe", "1");
+      else localStorage.removeItem("rememberMe");
+      router.push("/author-dashboard");
+    } else {
+      setError(res?.error || "Invalid email or password.");
+    }
+  }
+
   return (
     <div className="min-h-90 flex items-center justify-center py-4 bg-gray-50">
       <div className="flex bg-white shadow-lg rounded-lg overflow-hidden max-w-4xl w-full">
-        
         {/* Left Image / Text Section */}
-        <div className="w-1/2 bg-blue-400 flex flex-col justify-center items-center text-white p-8">
+        <div className="hidden md:flex w-1/2 bg-blue-400 flex-col justify-center items-center text-white p-8">
           <h2 className="text-2xl font-bold mb-4 text-center">
             Join the fastest growing publishing platform in the world
           </h2>
@@ -17,19 +53,25 @@ export default function Login() {
         </div>
 
         {/* Right Form Section */}
-        <div className="w-1/2 p-8">
+        <div className="w-full md:w-1/2 p-8">
           <h2 className="text-2xl font-bold text-blue-700 mb-6">Login</h2>
-          <form className="space-y-5">
+
+          {error && (
+            <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label
-                htmlFor="email"
-                className="block mb-2 text-sm font-medium text-gray-900"
-              >
+              <label htmlFor="email" className="block mb-2 text-sm font-medium text-gray-900">
                 Your email
               </label>
               <input
                 type="email"
                 id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                 placeholder="name@example.com"
                 required
@@ -37,39 +79,48 @@ export default function Login() {
             </div>
 
             <div>
-              <label
-                htmlFor="password"
-                className="block mb-2 text-sm font-medium text-gray-900"
-              >
+              <label htmlFor="password" className="block mb-2 text-sm font-medium text-gray-900">
                 Your password
               </label>
-              <input
-                type="password"
-                id="password"
-                className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                required
-              />
+              <div className="relative">
+                <input
+                  type={showPass ? "text" : "password"}
+                  id="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full p-2.5 pr-12 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPass((s) => !s)}
+                  className="absolute inset-y-0 right-2 my-1 px-2 text-sm text-gray-600 hover:text-gray-900"
+                  aria-label={showPass ? "Hide password" : "Show password"}
+                >
+                  {showPass ? "Hide" : "Show"}
+                </button>
+              </div>
             </div>
 
             <div className="flex items-center">
               <input
                 id="remember"
                 type="checkbox"
+                checked={remember}
+                onChange={(e) => setRemember(e.target.checked)}
                 className="w-4 h-4 border border-gray-300 rounded"
               />
-              <label
-                htmlFor="remember"
-                className="ml-2 text-sm font-medium text-gray-900"
-              >
+              <label htmlFor="remember" className="ml-2 text-sm font-medium text-gray-900">
                 Remember me
               </label>
             </div>
 
             <button
               type="submit"
-              className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg text-sm px-5 py-2.5"
+              disabled={loading}
+              className="w-full bg-blue-500 hover:bg-blue-600 disabled:opacity-70 disabled:cursor-not-allowed text-white font-medium rounded-lg text-sm px-5 py-2.5"
             >
-              Login
+              {loading ? "Logging in..." : "Login"}
             </button>
 
             <p className="text-sm text-gray-600 mt-4">
