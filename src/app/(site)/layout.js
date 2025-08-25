@@ -6,13 +6,13 @@ import Topbar from "../components/frontend/Topbar";
 
 export default function HomeLayout({ children }) {
   return (
-   <>
-        <Topbar/>
-        <Navbar/>
-        {children}
-        <Footer/>
-   </>
-       
-     
+    <>
+      <Topbar />
+      <Navbar />
+      {children}
+      <Footer />
+    </>
+
+
   );
 }
