@@ -30,7 +30,7 @@ const handler = NextAuth({
             id: data.user.id,
             name: data.user.name,
             email: data.user.email,
-            // token: data.accessToken, // from Express backend
+            token: data.token, // from Express backend
             // refreshToken: data.refreshToken
           };
         } catch (err) {
