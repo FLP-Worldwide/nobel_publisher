@@ -12,6 +12,7 @@ export default function WriteToolDesign({ params }) {
 
   const bookId = params.bookId; // dynamic id from URL
 
+  // alert(params.bookId);
   const [bookSize, setBookSize] = useState("");
   const [bindingType, setBindingType] = useState("");
   const [bookInterior, setBookInterior] = useState("");
@@ -48,10 +49,52 @@ export default function WriteToolDesign({ params }) {
     { name: "Gloss Finish", value: "GLOSS", detail: "Recommended for darker colored covers and designs with spatial detailing" },
     { name: "Matte Finish", value: "MATTE", detail: "Recommended for lighter colored covers, especially with graphic designs" },
   ];
-
   const cardClass = (selected) =>
-    `flex-1 min-w-[200px] max-w-[250px] border rounded-lg p-4 text-center cursor-pointer transition 
-     ${selected ? "border-blue-500 bg-blue-50" : "border-gray-300 bg-white hover:border-blue-600"}`;
+    `flex-1 min-w-[250px] max-w-[300px] border rounded-lg p-4 text-center cursor-pointer transition dark:bg-gray-800  
+     ${selected ? "border-blue-500 bg-blue-50 dark:bg-gray-700 dark:text-white" : "border-gray-300 bg-white hover:border-blue-600 "}`;
+
+  // 🔑 Save handler
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setMsg("");
+    if (!accessToken) {
+      return setMsg("You must be logged in as an author.");
+    }
+    if (!bookSize || !bindingType || !bookInterior || !paperType || !coverLamination) {
+      return setMsg("Please select all required options.");
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/books/${bookId}/design`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({
+            size: bookSize,
+            bindingType,
+            interior: bookInterior,
+            paperType,
+            coverLamination,
+          }),
+        }
+      );
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to save design");
+      setMsg("✅ Design saved successfully.");
+      // redirect to next step (example: upload cover images)
+      // router.push(`/author-dashboard/books/${bookId}/upload-cover`);
+    } catch (err) {
+      setMsg(`❌ ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   // 🔑 Save handler
   async function handleSubmit(e) {
@@ -98,11 +141,13 @@ export default function WriteToolDesign({ params }) {
 
   return (
     <>
+
+      <section className="lg:ml-64">
       <AuthorTopbar />
-      <AuthorSidebar />
+      <AuthorSidebar currentStep="content" />
 
       <section className="bg-white dark:bg-gray-900">
-        <div className="py-8 px-4 mx-auto max-w-5xl lg:py-16">
+        <div className="py-8 px-4 mx-auto max-w-full lg:py-16">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
             Book Content Design
           </h1>
@@ -135,8 +180,8 @@ export default function WriteToolDesign({ params }) {
                         onChange={() => setBookSize(item.value)}
                         className="hidden"
                       />
-                      <span className="block font-bold text-lg">{item.name}</span>
-                      <span className="block text-sm text-gray-600">{item.detail}</span>
+                      <span className="block font-bold text-lg  ">{item.name}</span>
+                      <span className="block text-sm ">{item.detail}</span>
                     </label>
                   ))}
                 </div>
@@ -181,7 +226,7 @@ export default function WriteToolDesign({ params }) {
                         className="hidden"
                       />
                       <span className="block font-bold text-lg">{item.name}</span>
-                      <span className="block text-sm text-gray-600">{item.detail}</span>
+                      <span className="block text-sm ">{item.detail}</span>
                     </label>
                   ))}
                 </div>
@@ -204,7 +249,7 @@ export default function WriteToolDesign({ params }) {
                         className="hidden"
                       />
                       <span className="block font-bold text-lg">{item.name}</span>
-                      <span className="block text-sm text-gray-600">{item.detail}</span>
+                      <span className="block text-sm ">{item.detail}</span>
                     </label>
                   ))}
                 </div>
@@ -227,13 +272,140 @@ export default function WriteToolDesign({ params }) {
                         className="hidden"
                       />
                       <span className="block font-bold text-lg">{item.name}</span>
-                      <span className="block text-sm text-gray-600">{item.detail}</span>
+                      <span className="block text-sm ">{item.detail}</span>
                     </label>
                   ))}
                 </div>
               </div>
             </div>
 
+
+            {/* Interior Design */}
+                <div className='mt-5'>
+                    <label className="block text-lg font-bold text-gray-900 dark:text-white mb-2">
+                        Interior Design <span className="text-red-500">*</span>
+                    </label>
+                
+                    <div className="space-y-6">
+                        {/* Option 1 - Use Interior Formatting Tool */}
+                        <label
+                        className={`block border rounded-lg p-6 cursor-pointer transition ${
+                            bookInterior === "FormattingTool"
+                            ? "border-blue-500 bg-blue-50"
+                            : "border-gray-300 bg-white hover:border-blue-600"
+                        }`}
+                        >
+                        <input
+                            type="radio"
+                            name="interiorDesign"
+                            value="FormattingTool"
+                            checked={bookInterior === "FormattingTool"}
+                            onChange={() => setBookInterior("FormattingTool")}
+                            className="hidden"
+                        />
+                        <div>
+                            <span className="block font-bold text-lg text-blue-900">
+                            Use our Interior Formatting Tool
+                            </span>
+                            <p className="text-sm text-gray-600 mt-1">
+                            Works best for books with text and limited images.
+                            </p>
+
+                            <ul className="mt-3 space-y-1 text-sm text-blue-900">
+                            <li className="flex items-center gap-2">
+                                ✅ Get Published in 2 days
+                            </li>
+                            <li className="flex items-center gap-2">
+                                ✅ Publish Print & eBook
+                            </li>
+                            <li className="flex items-center gap-2">
+                                ✅ Publish in India & sell in 150+ countries
+                            </li>
+                            </ul>
+
+                            <a href={`/write/tool/step2/${bookId}/canva`}>
+                            <button
+                            type="button"
+                            className="mt-4 px-4 py-2 text-white bg-blue-900 rounded-lg hover:bg-blue-800"
+                            >
+                            Launch Interior Formatting Tool
+                            </button>
+                            </a>
+                        </div>
+                        </label>
+
+                        {/* Option 2 - Upload Print Ready PDF */}
+                        {/* <label
+                        className={`block border rounded-lg p-6 cursor-pointer transition ${
+                            bookInterior === "UploadPDF"
+                            ? "border-blue-500 bg-blue-50"
+                            : "border-gray-300 bg-white hover:border-blue-600"
+                        }`}
+                        >
+                        <input
+                            type="radio"
+                            name="interiorDesign"
+                            value="UploadPDF"
+                            checked={bookInterior === "UploadPDF"}
+                            onChange={() => setBookInterior("UploadPDF")}
+                            className="hidden"
+                        />
+                        <div>
+                            <span className="block font-bold text-lg text-blue-900">
+                            Upload Print Ready file in PDF format
+                            </span>
+                            <p className="text-sm text-gray-600 mt-1">
+                            Best if you already have your manuscript formatted.
+                            </p>
+                        </div>
+                        </label> */}
+                    </div>
+                </div>
+                <div className='mt-5'>
+                    <label className="block text-lg font-bold text-gray-900 dark:text-white mb-2">
+                        Interior Design <span className="text-red-500">*</span>
+                    </label>
+                
+                    <div className="space-y-6">
+                        {/* Option 1 - Use Interior Formatting Tool */}
+                        <label
+                        className={`block border rounded-lg p-6 cursor-pointer transition ${
+                            bookInterior === "FormattingTool"
+                            ? "border-blue-500 bg-blue-50"
+                            : "border-gray-300 bg-white hover:border-blue-600"
+                        }`}
+                        >
+                        <input
+                            type="radio"
+                            name="interiorDesign"
+                            value="FormattingTool"
+                            checked={bookInterior === "FormattingTool"}
+                            onChange={() => setBookInterior("FormattingTool")}
+                            className="hidden"
+                        />
+                        <div>
+                            <span className="block font-bold text-lg text-blue-900">
+                            Use our Cover Creator
+                            </span>
+                            <p className="text-sm text-gray-600 mt-1">
+                            Start with pre-existing templates, add images and text to create a professional-looking cover for your book without design knowledge.
+                            </p>
+
+                          
+
+                            <button
+                            type="button"
+                            className="mt-4 px-4 py-2 text-white bg-blue-900 rounded-lg hover:bg-blue-800"
+                            >
+                            Launch Cover Creator Tool
+                            </button>
+                        </div>
+                        </label>
+                    </div>
+                </div>
+
+
+            {/* Submit */}
             <button
               type="submit"
               disabled={loading}
@@ -243,6 +415,8 @@ export default function WriteToolDesign({ params }) {
             </button>
           </form>
         </div>
+      </section>
+
       </section>
     </>
   );
