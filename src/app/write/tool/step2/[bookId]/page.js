@@ -4,7 +4,7 @@ import AuthorTopbar from '@/app/components/dashbaord/Topbar'
 import React, { useState } from 'react'
 
 export default function WriteToolDesign({ params }) {
-  alert(params.bookId);
+  // alert(params.bookId);
   const [bookSize, setBookSize] = useState("");
   const [bindingType, setBindingType] = useState("");
   const [bookInterior, setBookInterior] = useState("");
@@ -41,19 +41,20 @@ export default function WriteToolDesign({ params }) {
     { name: "Matte Finish", detail: "Recommended for lighter colored covers, especially with graphic designs" },
   ];
 
-
   // 🔑 reusable card style
   const cardClass = (selected) =>
-    `flex-1 min-w-[200px] max-w-[250px] border rounded-lg p-4 text-center cursor-pointer transition 
-     ${selected ? "border-blue-500 bg-blue-50" : "border-gray-300 bg-white hover:border-blue-600"}`;
+    `flex-1 min-w-[250px] max-w-[300px] border rounded-lg p-4 text-center cursor-pointer transition dark:bg-gray-800  
+     ${selected ? "border-blue-500 bg-blue-50 dark:bg-gray-700 dark:text-white" : "border-gray-300 bg-white hover:border-blue-600 "}`;
 
   return (
     <>
+
+      <section className="lg:ml-64">
       <AuthorTopbar />
-      <AuthorSidebar />
+      <AuthorSidebar currentStep="content" />
 
       <section className="bg-white dark:bg-gray-900">
-        <div className="py-8 px-4 mx-auto max-w-5xl lg:py-16">
+        <div className="py-8 px-4 mx-auto max-w-full lg:py-16">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Book Content Design</h1>
           <h2 className="mb-6 text-lg text-gray-600 dark:text-gray-300">
             Select your book's specifications, add content and design your cover and interior.
@@ -78,8 +79,8 @@ export default function WriteToolDesign({ params }) {
                         onChange={() => setBookSize(item.name)}
                         className="hidden"
                       />
-                      <span className="block font-bold text-lg">{item.name}</span>
-                      <span className="block text-sm text-gray-600">{item.detail}</span>
+                      <span className="block font-bold text-lg  ">{item.name}</span>
+                      <span className="block text-sm ">{item.detail}</span>
                     </label>
                   ))}
                 </div>
@@ -124,7 +125,7 @@ export default function WriteToolDesign({ params }) {
                         className="hidden"
                       />
                       <span className="block font-bold text-lg">{item.name}</span>
-                      <span className="block text-sm text-gray-600">{item.detail}</span>
+                      <span className="block text-sm ">{item.detail}</span>
                     </label>
                   ))}
                 </div>
@@ -147,7 +148,7 @@ export default function WriteToolDesign({ params }) {
                         className="hidden"
                       />
                       <span className="block font-bold text-lg">{item.name}</span>
-                      <span className="block text-sm text-gray-600">{item.detail}</span>
+                      <span className="block text-sm ">{item.detail}</span>
                     </label>
                   ))}
                 </div>
@@ -170,7 +171,7 @@ export default function WriteToolDesign({ params }) {
                         className="hidden"
                       />
                       <span className="block font-bold text-lg">{item.name}</span>
-                      <span className="block text-sm text-gray-600">{item.detail}</span>
+                      <span className="block text-sm ">{item.detail}</span>
                     </label>
                   ))}
                 </div>
@@ -180,7 +181,7 @@ export default function WriteToolDesign({ params }) {
 
 
             {/* Interior Design */}
-                <div>
+                <div className='mt-5'>
                     <label className="block text-lg font-bold text-gray-900 dark:text-white mb-2">
                         Interior Design <span className="text-red-500">*</span>
                     </label>
@@ -258,7 +259,7 @@ export default function WriteToolDesign({ params }) {
                         </label> */}
                     </div>
                 </div>
-                <div>
+                <div className='mt-5'>
                     <label className="block text-lg font-bold text-gray-900 dark:text-white mb-2">
                         Interior Design <span className="text-red-500">*</span>
                     </label>
@@ -311,6 +312,8 @@ export default function WriteToolDesign({ params }) {
             </button>
           </form>
         </div>
+      </section>
+
       </section>
     </>
   )

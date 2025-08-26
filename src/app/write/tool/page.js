@@ -94,11 +94,13 @@ export default function WriteTool() {
 
   return (
     <>
+
+      <section className="lg:ml-64">
       <AuthorTopbar />
-      <AuthorSidebar />
+      <AuthorSidebar currentStep="information" />
 
       <section className="bg-white dark:bg-gray-900">
-        <div className="py-8 px-4 mx-auto max-w-5xl lg:py-16">
+        <div className="py-8 px-4 mx-auto max-w-full lg:py-16">
           <h1 className="text-2xl font-bold mb-2">Book Informations</h1>
           <h2 className="mb-4 text-xl font-bold text-gray-900 dark:text-white">
             Enter all the information about your book - Its language, title and author(s)
@@ -252,6 +254,7 @@ export default function WriteTool() {
             </button>
           </form>
         </div>
+      </section>
       </section>
     </>
   );
