@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@headlessui/react": "^2.2.7",
     "flowbite": "^3.1.2",
     "flowbite-react": "^0.12.7",
     "html2pdf.js": "^0.11.2",

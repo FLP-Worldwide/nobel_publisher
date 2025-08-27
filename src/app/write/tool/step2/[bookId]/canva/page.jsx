@@ -1,14 +1,16 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, use } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Toolbar from "@/app/components/editor/Toolbar";
 import EditorArea from "@/app/components/editor/EditorArea";
 import PreviewModal from "@/app/components/editor/PreviewModal";
+import { Disclosure } from "@headlessui/react";
+import { ArrowBigLeft, ArrowLeft, ChevronDown, Eye, PlusCircle, Trash } from "lucide-react";
 
 export default function EditorPage({ params }) {
-  const { bookId } = params; // dynamic id from URL
+  const { bookId } = use(params); // dynamic id from URL
   const { data: session } = useSession();
   const router = useRouter();
   const accessToken = session?.user?.accessToken;
@@ -27,7 +29,7 @@ export default function EditorPage({ params }) {
   const [loadingList, setLoadingList] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
-
+  const [isTwoColumn, setIsTwoColumn] = useState(false);
   const API = process.env.NEXT_PUBLIC_API_URL;
 
   /* ---------------------------
@@ -167,93 +169,166 @@ export default function EditorPage({ params }) {
     return <div className="p-6">Loading chapters…</div>;
   }
 
-  return (
-    <div className="flex min-h-screen bg-gray-100 p-6 gap-6">
-      {/* Editor Section */}
-      <div className="w-full lg:w-3/4 bg-white shadow-lg rounded-lg p-4">
-        <h1 className="text-2xl font-bold mb-4 text-center">📝 Chapter Editor</h1>
+  const frontMatter = [
+    "Dedication",
+    "Foreword",
 
-        {msg && (
-          <div
-            className={`mb-3 rounded border px-3 py-2 text-sm ${
-              msg.startsWith("✅")
-                ? "border-green-300 bg-green-50 text-green-700"
-                : "border-yellow-300 bg-yellow-50 text-yellow-700"
+  ];
+
+
+  const toggleColumns = () => {
+    setIsTwoColumn((prev) => !prev);
+  };
+
+
+  return (
+    <div className="flex min-h-screen bg-gray-700">
+
+
+      {/* Sidebar */}
+      <div className="hidden lg:block w-1/6 bg-gray-800 text-white p-4 sticky top-0 h-screen overflow-y-auto">
+        <div className="flex flex-1 gap-2 mb-2"><ArrowLeft className="text-xs" />
+          <p className="text-sm mb-2"> Back to dashboard</p>
+        </div>
+        <h2 className="text-md font-bold mb-4">And She Left...</h2>
+
+        {/* Front Matter */}
+        <Disclosure defaultOpen>
+          {({ open }) => (
+            <div className="mb-4">
+              <Disclosure.Button className="flex w-full justify-between items-center px-2 py-2 text-left font-semibold bg-gray-900 rounded">
+                <span className="text-md">Front Matter</span>
+                <ChevronDown
+                  className={`h-4 w-4 transition-transform ${
+                    open ? "rotate-180" : ""
+                  }`}
+                />
+              </Disclosure.Button>
+              <Disclosure.Panel>
+                <ul className="mt-2 space-y-2">
+                  {frontMatter.map((item, idx) => (
+                    <li
+                      key={idx}
+                      className="text-sm flex justify-between items-center px-2 py-1 hover:bg-gray-700 rounded cursor-pointer"
+                    >
+                      <span>{item}</span>
+                      <Eye className="h-4 w-4 text-gray-300" />
+                    </li>
+                  ))}
+                </ul>
+              </Disclosure.Panel>
+            </div>
+          )}
+        </Disclosure>
+
+        {/* Chapters */}
+        <div>
+      {/* Header */}
+      <div className="flex justify-between items-center px-2 py-2 font-semibold bg-gray-900 rounded">
+        <span>Chapters</span>
+        <PlusCircle 
+        onClick={() => handleCreateChapter(true)}
+        disabled={saving}
+        className="h-5 w-5 text-gray-300 cursor-pointer hover:text-white" />
+      </div>
+
+      {/* Chapter List */}
+      <ul className="mt-2 space-y-2">
+
+      <li className='flex justify-between items-center px-2 py-1 rounded cursor-pointer' > <span className="truncate w-4/5"> Chapter - 1 </span> <div className="flex gap-2"> <Trash className="h-4 w-4 text-gray-300 cursor-pointer hover:text-red-400" /> <Eye className="h-4 w-4 text-gray-300 cursor-pointer hover:text-white" /> </div> </li>
+
+
+        {chapters.map((ch, idx) => (
+          <li
+            key={ch.id}
+            onClick={() => loadChapter(ch.id)}
+            className={`flex justify-between items-center px-2 py-1 rounded cursor-pointer ${
+              ch.id === currentId
+                ? "bg-green-500 text-white"
+                : "hover:bg-gray-700"
             }`}
           >
-            {msg}
-          </div>
-        )}
+            <span className="truncate w-4/5">
+              {idx + 1}. {ch.title}
+            </span>
+            <div className="flex gap-2">
+              <Trash className="h-4 w-4 text-gray-300 cursor-pointer hover:text-red-400" />
+              <Eye className="h-4 w-4 text-gray-300 cursor-pointer hover:text-white" />
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+      </div>
 
-        {/* Chapter Title */}
-        <input
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Chapter Title"
-          className="w-full border p-2 rounded mb-3 text-lg font-semibold"
-        />
+      {/* Editor Section */}
 
-        {/* Toolbar */}
-        <Toolbar onFormat={formatText} onReset={resetEditor} />
-
-        {/* Editor */}
-        <EditorArea editorRef={editorRef} content={content} setContent={setContent} />
+      <div className="flex-1 flex flex-col items-center">
 
         {/* Actions */}
-        <div className="flex flex-wrap gap-3 justify-between mt-4">
+        <div className="w-full items-center bg-gray-800 text-white px-6 py-3 flex flex-wrap gap-3 justify-end shadow-md sticky top-0 z-10">
+        
+          <div>
+              {msg && (
+                <div
+                  className={`px-3 w-2xl text-sm  py-1 rounded ${
+                    msg.startsWith("✅")
+                      ? "border-green-300 bg-green-50 text-green-700"
+                      : "border-yellow-200 bg-yellow-50 text-yellow-700"
+                  }`}
+                >
+                  {msg}
+                </div>
+              )}
+          </div>
+
           <button
             onClick={handleSave}
             disabled={saving}
-            className="px-4 py-2 bg-green-600 text-white rounded shadow hover:bg-green-700 disabled:opacity-70"
+            className="px-2 font-bold  text-sm text-white rounded shadow hover:underline disabled:opacity-70"
           >
-            💾 {saving ? "Saving…" : "Save"}
+             {saving ? "Saving…" : "Save"}
           </button>
 
           <button
             onClick={() => setShowModal(true)}
-            className="px-4 py-2 bg-purple-600 text-white rounded shadow hover:bg-purple-700"
+            className="px-4 py-2 bg-blue-200 text-sm text-black font-bold rounded shadow hover:bg-blue-300"
           >
-            👀 Preview PDF
+            Preview and Finish
           </button>
 
-          <button
-            onClick={() => handleCreateChapter(true)}
-            disabled={saving}
-            className="px-4 py-2 bg-blue-600 text-white rounded shadow hover:bg-blue-700 disabled:opacity-70"
-          >
-            ➕ New Chapter
-          </button>
         </div>
 
-        {/* Modal */}
-        {showModal && (
-          <PreviewModal
-            content={content}
-            pdfUrl={pdfUrl}
-            setPdfUrl={setPdfUrl}
-            onClose={() => setShowModal(false)}
-          />
-        )}
+        <div className="w-full max-w-4xl bg-white shadow-lg rounded-lg py-4 px-4 my-6">
+           {/* Toolbar */}
+           
+           <Toolbar onFormat={formatText} onReset={resetEditor} onToggleColumns={toggleColumns} />
+
+            {/* Chapter Title */}
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Chapter Title"
+              className="w-full text-center text-4xl font-serif p-2 mb-3 
+                        focus:outline-none focus:ring-0 border-none bg-transparent"
+            />
+
+            {/* Editor */}
+            <EditorArea editorRef={editorRef} content={content} setContent={setContent} isTwoColumn={isTwoColumn} />
+
+            {/* Modal */}
+            {showModal && (
+              <PreviewModal
+                content={content}
+                pdfUrl={pdfUrl}
+                setPdfUrl={setPdfUrl}
+                onClose={() => setShowModal(false)}
+              />
+            )}
+          </div>
       </div>
 
-      {/* Sidebar */}
-      <div className="hidden lg:block w-1/4 bg-white shadow-lg rounded-lg p-4">
-        <h2 className="text-lg font-bold mb-2">📚 Chapters</h2>
-        <ul className="space-y-2 text-gray-700">
-          {chapters.map((ch) => (
-            <li
-              key={ch.id}
-              onClick={() => loadChapter(ch.id)}
-              className={`cursor-pointer p-2 rounded ${
-                ch.id === currentId ? "bg-blue-100 text-blue-700 font-semibold" : "hover:bg-gray-100"
-              }`}
-            >
-              {ch.title}
-            </li>
-          ))}
-        </ul>
-      </div>
     </div>
   );
 }

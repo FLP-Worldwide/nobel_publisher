@@ -12,11 +12,13 @@ import {
     AlignJustify,
     Undo,
     Redo,
+    Columns,
+    Eraser,
 } from "lucide-react";
 
-export default function Toolbar({ onFormat, onReset }) {
+export default function Toolbar({ onFormat, onReset, onToggleColumns }) {
     return (
-        <div className="flex flex-wrap gap-2 mb-4 border-b pb-3 bg-gray-50 p-2 rounded-md shadow-sm">
+        <div className="flex flex-wrap justify-between gap-4 mb-4  border-b border-gray-200 ">
             {/* Bold / Italic / Underline / Strike */}
             <button onClick={() => onFormat("bold")} className="toolbar-btn" title="Bold">
                 <Bold className="w-4 h-4" />
@@ -31,17 +33,6 @@ export default function Toolbar({ onFormat, onReset }) {
                 <Strikethrough className="w-4 h-4" />
             </button>
 
-            {/* Headings */}
-            <select
-                onChange={(e) => onFormat("formatBlock", e.target.value === "p" ? "P" : e.target.value)}
-                className="px-2 py-1 border rounded bg-white"
-            >
-                <option value="p">Normal</option>
-                <option value="h1">H1</option>
-                <option value="h2">H2</option>
-                <option value="h3">H3</option>
-            </select>
-
             {/* Alignment */}
             <button onClick={() => onFormat("justifyLeft")} className="toolbar-btn" title="Align Left">
                 <AlignLeft className="w-4 h-4" />
@@ -55,6 +46,9 @@ export default function Toolbar({ onFormat, onReset }) {
             <button onClick={() => onFormat("justifyFull")} className="toolbar-btn" title="Justify">
                 <AlignJustify className="w-4 h-4" />
             </button>
+            <button onClick={() => onFormat("removeFormat")} className="toolbar-btn" title="removeFormat">
+                <Eraser className="w-4 h-4" />
+            </button>
 
             {/* Lists */}
             <button onClick={() => onFormat("insertUnorderedList")} className="toolbar-btn" title="Bullet List">
@@ -64,6 +58,10 @@ export default function Toolbar({ onFormat, onReset }) {
                 <ListOrdered className="w-4 h-4" />
             </button>
 
+            <button onClick={onToggleColumns} className="toolbar-btn" title="Toggle 2 Columns">
+                <Columns className="w-4 h-4" />
+            </button>
+
             {/* Undo / Redo */}
             <button onClick={() => onFormat("undo")} className="toolbar-btn" title="Undo">
                 <Undo className="w-4 h-4" />
@@ -71,30 +69,13 @@ export default function Toolbar({ onFormat, onReset }) {
             <button onClick={() => onFormat("redo")} className="toolbar-btn" title="Redo">
                 <Redo className="w-4 h-4" />
             </button>
-
-            {/* Text color */}
-            <input
-                type="color"
-                onChange={(e) => onFormat("foreColor", e.target.value)}
-                className="w-10 h-8 cursor-pointer border rounded"
-                title="Text Color"
-            />
-
-            {/* Highlight color */}
-            <input
-                type="color"
-                onChange={(e) => onFormat("hiliteColor", e.target.value)}
-                className="w-10 h-8 cursor-pointer border rounded"
-                title="Highlight Color"
-            />
-
             {/* Reset Button */}
             <button
                 onClick={onReset}
-                className="ml-auto px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                className="ml-auto px-3 py-1"
                 title="Reset Editor"
             >
-                Reset
+                Clear All
             </button>
         </div>
     );
