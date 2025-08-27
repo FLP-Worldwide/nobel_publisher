@@ -101,10 +101,12 @@ export default function AuthorDashboard() {
             <h2 className="text-gray-900 dark:text-white text-2xl md:text-3xl font-extrabold">
               Books
             </h2>
+
             <button
               onClick={() => router.push("write/tool")}
               className="bg-blue-500 text-white px-8 py-3 font-semibold rounded-lg text-lg flex items-center gap-2 shadow-[8px_8px_0px_black] hover:bg-blue-600 transition"
             >
+
               Start a New Book →
             </button>
           </div>
