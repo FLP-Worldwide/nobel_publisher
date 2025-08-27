@@ -1,6 +1,9 @@
+import { useSession } from 'next-auth/react';
 import React from 'react'
 
 export default function UserHeroSection() {
+
+  const { data: session, status } = useSession();
   return (
     <section className="bg-white dark:bg-gray-900">
     <div className="py-2 px-8 mx-auto lg:py-2">
@@ -11,7 +14,7 @@ export default function UserHeroSection() {
           <div>
 
             <h1 className="text-gray-900 dark:text-white text-2xl md:text-3xl font-extrabold mb-2">
-              Welcome Kartik Maandothiya.
+              Welcome {session?.user?.name}.
             </h1>
 
             <p className="text-lg font-normal text-gray-500 dark:text-gray-400 mb-6">
