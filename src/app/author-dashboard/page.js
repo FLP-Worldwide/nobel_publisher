@@ -57,11 +57,12 @@ export default function AuthorDashboard() {
 
     try {
       setLoading(true);
+
       const res = await fetch(`${API_BASE}/books/${id}`, {
         method: "DELETE",
         headers: authHeaders(),
-        credentials: "include", // keep if your API uses cookies in addition to Bearer
       });
+
       if (!res.ok) throw new Error(`Delete failed: ${res.status}`);
       await fetchBooks();
     } catch (e) {
