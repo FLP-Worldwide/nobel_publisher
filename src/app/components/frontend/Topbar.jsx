@@ -4,7 +4,7 @@ import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
 
 export default function Topbar() {
-  const { data: session } = useSession();
+  // const { data: session } = useSession();
 
   return (
     <nav className="bg-white border-b border-gray-200 dark:bg-gray-900">
@@ -13,18 +13,13 @@ export default function Topbar() {
         <Link href="#" className="text-gray-500 dark:text-white hover:underline">
           Support
         </Link>
-
-        {/* Right: Auth Links */}
-        {session ? (
-          <></>
-        ) : (
-          <Link
-            href="/login"
-            className="text-blue-900 dark:text-white hover:underline"
+     
+         <Link
+            href="#"
+            className="text-blue-900 dark:text-white hover:underline "
           >
-            Login / Signup
+            Request Callback
           </Link>
-        )}
       </div>
     </nav>
   );

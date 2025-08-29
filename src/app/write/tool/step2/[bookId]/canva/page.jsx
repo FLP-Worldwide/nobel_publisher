@@ -190,7 +190,7 @@ export default function EditorPage({ params }) {
         <div className="flex flex-1 gap-2 mb-2"><ArrowLeft className="text-xs" />
           <p className="text-sm mb-2"> Back to dashboard</p>
         </div>
-        <h2 className="text-md font-bold mb-4">And She Left...</h2>
+        <h2 className="text-md font-bold mb-4">Book Name here.</h2>
 
         {/* Front Matter */}
         <Disclosure defaultOpen>
@@ -234,10 +234,6 @@ export default function EditorPage({ params }) {
 
       {/* Chapter List */}
       <ul className="mt-2 space-y-2">
-
-      <li className='flex justify-between items-center px-2 py-1 rounded cursor-pointer' > <span className="truncate w-4/5"> Chapter - 1 </span> <div className="flex gap-2"> <Trash className="h-4 w-4 text-gray-300 cursor-pointer hover:text-red-400" /> <Eye className="h-4 w-4 text-gray-300 cursor-pointer hover:text-white" /> </div> </li>
-
-
         {chapters.map((ch, idx) => (
           <li
             key={ch.id}

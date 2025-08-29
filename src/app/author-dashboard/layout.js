@@ -2,6 +2,7 @@ import React from 'react'
 import { Geist, Geist_Mono } from "next/font/google";
 import Navbar from '../components/frontend/Navbar';
 import AuthorTopbar from '../components/dashbaord/Topbar';
+import Footer from '../components/frontend/Footer';
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -25,6 +26,7 @@ export default function AuthorLayout({ children }) {
         <AuthorTopbar/>
         <Navbar/>
         {children}
+        <Footer/>
       </body>
     </html>
   )

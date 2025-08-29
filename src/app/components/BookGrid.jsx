@@ -25,11 +25,13 @@ export default function BookGrid({ heading }) {
             key={index}
             className="group rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow"
           >
+            <a href="/book/bookid">
             <img
               src={book}
               alt={`Book ${index + 1}`}
               className="w-full h-90 object-cover group-hover:scale-105 transition-transform"
             />
+            </a>
           </div>
         ))}
       </div>

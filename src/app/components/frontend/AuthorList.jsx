@@ -56,7 +56,7 @@ export default function AuthorList() {
         {categories.map((cat) => (
           <SwiperSlide key={cat.id}>
             <a
-              href="#"
+              href="/author"
               className="flex flex-col items-center bg-white border border-gray-200 rounded-lg shadow-sm md:flex-row hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
             >
               <img

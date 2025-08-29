@@ -38,11 +38,13 @@ export default function CategoryList() {
       >
         {categories.map((cat, index) => (
           <SwiperSlide className="flex flex-col items-center justify-center">
-          <img
-            src={cat.img}
-            alt={cat.name}
-            className="w-32 h-32 md:w-36 md:h-36 lg:w-40 lg:h-40 rounded-full object-cover border-2 border-gray-200 shadow-md hover:scale-110 transition-transform"
-          />
+            <a href="/search">
+              <img
+                src={cat.img}
+                alt={cat.name}
+                className="w-32 h-32 md:w-36 md:h-36 lg:w-40 lg:h-40 rounded-full object-cover border-2 border-gray-200 shadow-md hover:scale-110 transition-transform"
+              />
+            </a>
           <p className="mt-3 text-sm md:text-base font-medium text-gray-700 text-center">
             {cat.name}
           </p>

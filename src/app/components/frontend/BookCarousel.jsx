@@ -37,11 +37,13 @@ export default function BookCarousel({heading}) {
       >
         {books.map((book, index) => (
           <SwiperSlide key={index}>
-            <img
-              src={book}
-              alt={`Book ${index + 1}`}
-              className="w-full h-90 object-cover rounded-lg shadow-md hover:scale-105 transition-transform"
-            />
+            <a href="/book/bookid">
+              <img
+                src={book}
+                alt={`Book ${index + 1}`}
+                className="w-full h-90 object-cover rounded-lg shadow-md hover:scale-105 transition-transform"
+              />
+            </a>
           </SwiperSlide>
         ))}
       </Swiper>

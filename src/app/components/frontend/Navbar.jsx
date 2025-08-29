@@ -2,6 +2,8 @@
 import React from "react";
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
+import UserDropdown from "./UserDropdown";
+import CartDropdown from "./CartDropdown";
 
 export default function Navbar() {
   const { data: session } = useSession();
@@ -17,7 +19,7 @@ export default function Navbar() {
           <ul className="hidden md:flex space-x-6 font-medium">
             <li>
               <Link
-                href="#"
+                href="/bookstore"
                 className="text-gray-900 hover:text-blue-600 dark:text-white"
               >
                 Collections
@@ -69,29 +71,12 @@ export default function Navbar() {
 
         {/* Right: Request Call + User info + Logout */}
         <div className="flex items-center space-x-4">
-          <Link
-            href="#"
-            className="bg-blue-900 text-white px-6 py-2 rounded-md hover:bg-blue-800 transition text-sm"
-          >
-            Request Call
-          </Link>
+         
+          <CartDropdown />
+          
 
-          {session && (
-            <>
-              <Link href="/author-dashboard" >
-                <span className="text-sm text-gray-700 dark:text-gray-200">
-                  Hi, {session.user?.name || session.user?.email}
-                </span>
-              </Link>
+          <UserDropdown/>
 
-              <button
-                onClick={() => signOut({ callbackUrl: "/" })}
-                className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition text-sm"
-              >
-                Logout
-              </button>
-            </>
-          )}
         </div>
       </div>
     </nav>
