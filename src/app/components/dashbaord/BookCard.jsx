@@ -87,8 +87,8 @@ export default function BookCard({
     <div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-2xl hover:shadow-xl transition p-6 w-full mb-5">
       <div className="flex justify-between items-start gap-4">
         {/* Left: Thumb + Info */}
-        <div className="flex items-center gap-4">
-          <div className="w-20 h-20 rounded-lg shadow-sm overflow-hidden bg-gray-100 dark:bg-gray-700">
+        <div className="flex  gap-4">
+          <div className=" w-20 rounded-lg shadow-sm overflow-hidden bg-gray-100 dark:bg-gray-700">
             <img
               src={coverSrc}
               alt={book?.title ? `${book.title} cover` : "Book cover"}
@@ -119,6 +119,11 @@ export default function BookCard({
               {book?.authorName || "Unknown Author"}
             </p>
 
+            <p className="text-sm">
+              Language: <span className="font-semibold">{book?.language || "-"}</span>
+            </p>
+
+
             {book?.pdfUrl && (
               <a
                 href={book.pdfUrl}
@@ -137,7 +142,7 @@ export default function BookCard({
           {rawStatus !== "PUBLISHED" && (
             <button
               onClick={() => onContinue?.(bookId)}
-              className="bg-blue-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition"
+              className="underline  text-sm font-bold transition cursor-pointer"
             >
               Continue Publishing
             </button>
@@ -155,10 +160,7 @@ export default function BookCard({
 
       {/* Progress row */}
       <div className="mt-4 bg-gray-50 dark:bg-gray-700 p-3 rounded-lg text-sm text-gray-600 dark:text-gray-300 flex items-center gap-3 flex-wrap">
-        <p>
-          Language: <span className="font-semibold">{book?.language || "-"}</span>
-        </p>
-
+        
         <CheckCircle className="w-5 h-5 text-green-600" />
         <span className="text-green-600 font-medium">Book Details</span>
 

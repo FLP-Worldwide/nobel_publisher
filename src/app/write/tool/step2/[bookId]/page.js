@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import AuthorSidebar from "@/app/components/dashbaord/AuthorSidebar";
 import AuthorTopbar from "@/app/components/dashbaord/Topbar";
 import CoverUploadModal from "@/app/components/CoverUploadModal";
+import SignedImage from "@/app/components/SignedImage";
 
 const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
 
@@ -80,6 +81,7 @@ export default function WriteToolDesign() {
     });
     if (!res.ok) {
       const txt = await res.text().catch(() => "");
+
       throw new Error(txt || `Failed to load design (${res.status})`);
     }
     return res.json();
@@ -88,6 +90,16 @@ export default function WriteToolDesign() {
   const { data, error, isLoading, mutate } = useSWR(swrKey, fetcher, {
     revalidateOnFocus: false,
   });
+
+
+  // Book details
+  const swrBookKey = canFetch ? [`${API_BASE}/books/${bookId}`, accessToken] : null;
+  const {
+    data: book,
+    error: bookError,
+    isLoading: bookLoading,
+  } = useSWR(swrBookKey, fetcher, { revalidateOnFocus: false });
+
 
   // Hydrate form with saved values
   useEffect(() => {
@@ -125,6 +137,7 @@ export default function WriteToolDesign() {
             body: JSON.stringify(payload),
           });
           const json = await res.json().catch(() => ({}));
+          console.log(json, "====")
           if (!res.ok) throw new Error(json?.message || "Failed to save design");
           return { ...(data || {}), ...payload };
         },
@@ -270,6 +283,10 @@ export default function WriteToolDesign() {
                     <span className="block font-bold text-lg text-blue-900">Use our Cover Creator</span>
                     <p className="text-sm text-gray-600 mt-1">Start with templates, add images and text to create a professional-looking cover.</p>
                     <button onClick={() => setModalOpen(true)} type="button" className="mt-4 px-4 py-2 text-white bg-blue-900 rounded-lg hover:bg-blue-800">Launch Cover Creator Tool</button>
+                  
+                
+                    <SignedImage keyName={book?.frontCoverKey} alt="Front Cover" className="w-40 h-60 object-cover" />
+                  
                   </div>
                 </label>
               </div>
