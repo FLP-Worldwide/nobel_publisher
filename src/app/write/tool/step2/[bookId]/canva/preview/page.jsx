@@ -94,12 +94,12 @@ export default function PreviewPage(props) {
   return (
     <div className="min-h-screen bg-gray-700">
       <div className="flex justify-between px-4 py-1">
-        <Link href="/write/tool/step2/23/canva/">
+        <Link href={`/write/tool/step2/${bookId}/canva/`}>
           <button className="px-2 font-bold py-2 text-sm text-white rounded shadow hover:underline disabled:opacity-70">
             Close
           </button>
         </Link>
-        <Link href="/write/tool/step2/23">
+        <Link href={`/write/tool/step2/${bookId}`}>
           <button className="px-2 font-bold py-2 text-sm text-white rounded shadow hover:underline disabled:opacity-70">
             Save and Continue
           </button>

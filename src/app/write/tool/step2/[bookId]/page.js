@@ -6,7 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import AuthorSidebar from "@/app/components/dashbaord/AuthorSidebar";
 import AuthorTopbar from "@/app/components/dashbaord/Topbar";
 import CoverUploadModal from "@/app/components/CoverUploadModal";
-import SignedImage from "@/app/components/SignedImage";
+import SignedS3Image from "@/app/components/SignedS3Image";
 
 const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
 
@@ -279,14 +279,29 @@ export default function WriteToolDesign() {
               <div className="space-y-6">
                 <label className={`block border rounded-lg p-6 cursor-pointer transition ${coverWorkflow === "CoverCreator" ? "border-blue-500 bg-blue-50" : "border-gray-300 bg-white hover:border-blue-600"}`}>
                   <input type="radio" name="coverWorkflow" value="CoverCreator" checked={coverWorkflow === "CoverCreator"} onChange={() => setCoverWorkflow("CoverCreator")} className="hidden" />
-                  <div>
-                    <span className="block font-bold text-lg text-blue-900">Use our Cover Creator</span>
-                    <p className="text-sm text-gray-600 mt-1">Start with templates, add images and text to create a professional-looking cover.</p>
-                    <button onClick={() => setModalOpen(true)} type="button" className="mt-4 px-4 py-2 text-white bg-blue-900 rounded-lg hover:bg-blue-800">Launch Cover Creator Tool</button>
-                  
-                
-                    <SignedImage keyName={book?.frontCoverKey} alt="Front Cover" className="w-40 h-60 object-cover" />
-                  
+                  <div className="flex flex-wrap justify-between">
+                      <div>
+                        <span className="block font-bold text-lg text-blue-900">Use our Cover Creator</span>
+                        <p className="text-sm text-gray-600 mt-1">Start with templates, add images and text to create a professional-looking cover.</p>
+                        <button onClick={() => setModalOpen(true)} type="button" className="mt-4 px-4 py-2 text-white bg-blue-900 rounded-lg hover:bg-blue-800">Launch Cover Creator Tool</button>
+                      </div>
+
+                      <div className="flex">
+                        <SignedS3Image
+                          s3Key={book?.backCoverKey}
+                          directUrl={book?.backCoverUrl || book?.thumbnail}
+                          accessToken={session?.user?.accessToken}
+                          alt="Front cover"
+                          className="w-20 object-cover"
+                        />
+                        <SignedS3Image
+                          s3Key={book?.frontCoverKey}
+                          directUrl={book?.frontCoverUrl || book?.thumbnail}
+                          accessToken={session?.user?.accessToken}
+                          alt="Front cover"
+                          className="w-20 object-cover"
+                        />
+                      </div>
                   </div>
                 </label>
               </div>
