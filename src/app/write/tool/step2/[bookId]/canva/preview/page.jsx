@@ -6,18 +6,13 @@ import { use, useEffect, useState } from "react";
 import Link from "next/link";
 
 export default function PreviewPage(props) {
-  // 1) Unwrap promised params (Next.js App Router)
-  const { bookId } = use(props.params);
-
-  // 2) Auth session (NextAuth)
+  const { bookId } = use(props.params); 
   const { data: session } = useSession();
 
-  // 3) Local state
   const [previewBook, setPreviewBook] = useState(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
 
-  // 4) Helpers
   const API = process.env.NEXT_PUBLIC_API_URL;
 
   const authHeaders = (token) => ({
@@ -25,41 +20,62 @@ export default function PreviewPage(props) {
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   });
 
-  // Convert your API response → BookPreview props (keeping HTML/content as-is)
+  // ✅ Normalize API response for BookPreview
   const toPreviewProps = (b) => {
     const chapters = Array.isArray(b?.chapters) ? b.chapters : [];
 
-    const backMatterChapter = chapters.find((c) =>
-      /^(back\s*matter)$/i.test(c?.title?.trim() || "")
-    );
+    const frontmatter = chapters
+      .filter((c) =>
+        /^(dedication|foreword|preface)$/i.test(c?.title?.trim() || "")
+      )
+      .map((fm) => ({
+        id: fm.id,
+        title: fm.title,
+        content: fm.content,
+        type: "frontmatter",
+      }));
 
     const normalChapters = chapters
-      .filter((c) => c?.id && c?.title && c?.content)
-      .filter((c) => !/^(back\s*matter)$/i.test(c.title?.trim() || ""))
-      .map((c) => ({
-        id: c.id,
-        title: c.title,
-        content: c.content, // HTML string preserved
-        type: c.type,       // kept in case your component uses it
+      .filter(
+        (c) =>
+          c?.id &&
+          c?.title &&
+          c?.content &&
+          !/^(back\s*matter|dedication|foreword|preface)$/i.test(
+            c.title?.trim() || ""
+          )
+      )
+      .map((ch, idx) => ({
+        id: ch.id,
+        number: idx + 1,
+        title: ch.title,
+        content: ch.content,
+        type: "chapter",
+      }));
+
+    const backmatter = chapters
+      .filter((c) => /^(back\s*matter)$/i.test(c?.title?.trim() || ""))
+      .map((bm) => ({
+        id: bm.id,
+        title: bm.title || "Back Matter",
+        content: bm.content,
+        type: "backmatter",
       }));
 
     return {
       title: b?.title ?? "",
       subtitle: b?.subheading ?? "",
       author: [b?.authorName, b?.coAuthor].filter(Boolean).join(", "),
-      // If you have a copyright field in API later, map it here.
       copyright: b?.copyright ?? "",
+      frontmatter,
       chapters: normalChapters,
-      backmatter: backMatterChapter?.content ?? "",
-      // Anything extra you want to forward (optional):
-      _raw: b, // keeps full original payload available if BookPreview needs more
+      backmatter,
+      _raw: b,
     };
   };
 
-  // 5) Fetch on mount/changes
   useEffect(() => {
     if (!API || !bookId) return;
-
     const controller = new AbortController();
 
     (async () => {
@@ -78,11 +94,10 @@ export default function PreviewPage(props) {
         }
 
         const data = await res.json();
-        // data is your object:
-        // { id, userId, title, language, authorName, coAuthor, chapters: [...], design: {...}, ... }
         setPreviewBook(toPreviewProps(data));
       } catch (e) {
-        if (e?.name !== "AbortError") setErr(e?.message || "Error loading book");
+        if (e?.name !== "AbortError")
+          setErr(e?.message || "Error loading book");
       } finally {
         setLoading(false);
       }
@@ -93,6 +108,7 @@ export default function PreviewPage(props) {
 
   return (
     <div className="min-h-screen bg-gray-700">
+      {/* Toolbar */}
       <div className="flex justify-between px-4 py-1">
         <Link href="/write/tool/step2/23/canva/">
           <button className="px-2 font-bold py-2 text-sm text-white rounded shadow hover:underline disabled:opacity-70">
@@ -109,16 +125,12 @@ export default function PreviewPage(props) {
       {loading && (
         <div className="px-4 py-6 text-white/80">Loading preview…</div>
       )}
-
       {err && (
         <div className="px-4 py-6 text-red-300">
           Failed to load book: {err}
         </div>
       )}
-
-      {!loading && !err && previewBook && (
-        <BookPreview book={previewBook} />
-      )}
+      {!loading && !err && previewBook && <BookPreview book={previewBook} />}
     </div>
   );
 }
