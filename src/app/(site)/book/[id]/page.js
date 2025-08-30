@@ -2,9 +2,11 @@
 import Breadcrumb from '@/app/components/Breadcrumb'
 import BookCarousel from '@/app/components/frontend/BookCarousel';
 import React, { useState } from 'react'
+import { useParams } from 'next/navigation';
 
 export default function Book() {
 
+  const parms = useParams()
   const [expanded, setExpanded] = useState(false);
 
   const toggleDescription = () => {

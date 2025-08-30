@@ -2,43 +2,84 @@
 import React from "react";
 
 export default function BackMatterPage({
-  backmatter,
-  previewWidth = 600,      // screen width for preview
-  bleedInches = 0.125,     // bleed margin (default 0.125in)
-  showSafeBorder = false   // optional safe border highlight
+  section,
+  trimWidthIn = 5,
+  trimHeightIn = 8,
+  dpi = 120,
+  bleedInches = 0.125,
+  safeMarginInches = 0.5, // add safe margin like ChapterPage
+  showGuides = false,
 }) {
-  // 5x8 trim
-  const aspectRatio = 5 / 8;               
-  const previewHeight = previewWidth / aspectRatio;
+  // Convert trim size to px
+  const trimWidth = trimWidthIn * dpi;
+  const trimHeight = trimHeightIn * dpi;
 
-  // scale bleed from trim width (5in)
-  const bleedPercent = bleedInches / 5;    
-  const bleed = previewWidth * bleedPercent;
+  // Add bleed
+  const fullWidth = trimWidth + bleedInches * 2 * dpi;
+  const fullHeight = trimHeight + bleedInches * 2 * dpi;
+
+  // Safe area
+  const safeMargin = safeMarginInches * dpi;
 
   return (
-    <div className="flex justify-center items-center min-h-screen">
-      {/* Page container (gray = bleed area) */}
+    <div className="flex justify-center items-center min-h-screen bg-gray-100">
+      {/* Page with bleed */}
       <div
-        className="relative  shadow-md rounded"
-        style={{ width: previewWidth, height: previewHeight }}
+        className="relative bg-white font-serif shadow-lg"
+        style={{ width: fullWidth, height: fullHeight }}
       >
-        {/* Safe printable area (white trim box) */}
+        {/* Trim area */}
         <div
-          className="absolute bg-white leading-relaxed overflow-hidden"
-          style={{ top: bleed, left: bleed, right: bleed, bottom: bleed }}
+          className="absolute bg-white"
+          style={{
+            top: bleedInches * dpi,
+            left: bleedInches * dpi,
+            width: trimWidth,
+            height: trimHeight,
+          }}
         >
-          {showSafeBorder && (
-            <div className="absolute inset-0 border border-red-300 pointer-events-none" />
-          )}
+          {/* Safe area inside trim */}
+          <div
+            className="absolute overflow-hidden leading-relaxed"
+            style={{
+              top: safeMargin,
+              left: safeMargin,
+              right: safeMargin,
+              bottom: safeMargin,
+            }}
+          >
+            {/* Debug guides */}
+            {showGuides && (
+              <>
+                {/* Trim guide */}
+                <div className="absolute inset-0 border border-blue-100 pointer-events-none" />
+                {/* Safe margin guide */}
+                <div
+                  className="absolute"
+                  style={{
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    border: "1px dashed green",
+                    pointerEvents: "none",
+                  }}
+                />
+              </>
+            )}
 
-          <div className="px-10 py-14">
-            {/* Chapter number */}
-            <h3 className="text-center text-2xl font-serif font-semibold  mb-5">
-            Where Does It Come From?
-            </h3>
-            <p className="text-md text-justify font-serif leading-6">
-              {backmatter}
-            </p>
+            {/* Title only on first page */}
+            {section.title && section.pageIndex === 0 && (
+              <h2 className="text-xl font-bold mb-4 text-center">
+                {section.title}
+              </h2>
+            )}
+
+            {/* Content */}
+            <div
+              className="text-justify leading-6"
+              dangerouslySetInnerHTML={{ __html: section.content }}
+            />
           </div>
         </div>
       </div>
