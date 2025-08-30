@@ -248,7 +248,7 @@ export default function WriteToolDesign() {
 
             {/* Save */}
             <button type="submit" disabled={loading || isLoading} className="inline-flex items-center px-5 py-2.5 mt-6 text-sm font-medium text-white bg-blue-900 rounded-lg hover:bg-blue-800 disabled:opacity-70 disabled:cursor-not-allowed">
-              {loading ? "Saving…" : "Save and Continue"}
+              {loading ? "Saving…" : "Save Design"}
             </button>
 
             {/* Interior Workflow */}
@@ -306,6 +306,13 @@ export default function WriteToolDesign() {
                 </label>
               </div>
             </div>
+
+            {/* Save */}
+            <a href={`/write/tool/step2/${bookId}/pricing_info`} className="inline-flex items-center px-5 py-2.5 mt-6 text-sm font-medium text-white bg-blue-900 rounded-lg hover:bg-blue-800 disabled:opacity-70 disabled:cursor-not-allowed">
+              Continue to pricing
+            </a>
+
+
           </form>
         </div>
       </section>
