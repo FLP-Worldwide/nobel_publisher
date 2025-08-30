@@ -21,7 +21,7 @@ export default function CategoryList() {
   ];
 
   return (
-    <div className="px-6 py-6">
+    <div className="px-6 py-6 bg-white">
       <h4 className="text-2xl font-semibold mb-6">Browse Categories</h4>
       <Swiper
         spaceBetween={10}
@@ -37,7 +37,7 @@ export default function CategoryList() {
         }}
       >
         {categories.map((cat, index) => (
-          <SwiperSlide className="flex flex-col items-center justify-center">
+          <SwiperSlide className="flex flex-col items-center justify-center bg-white">
             <a href="/search">
               <img
                 src={cat.img}

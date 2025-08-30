@@ -75,8 +75,8 @@ export default function BookCarousel({ heading = "Books" }) {
   }, [books]);
 
   return (
-    <div className="px-6 py-6">
-      <h4 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+    <div className="px-6 py-6 bg-white">
+      <h4 className="text-2xl font-bold text-gray-900  mb-4">
         {heading}
       </h4>
 
@@ -85,20 +85,20 @@ export default function BookCarousel({ heading = "Books" }) {
           {Array.from({ length: 6 }).map((_, i) => (
             <div
               key={i}
-              className="w-full h-40 rounded-lg bg-gray-200 dark:bg-gray-800 animate-pulse"
+              className="w-full h-40 rounded-lg bg-gray-200  animate-pulse"
             />
           ))}
         </div>
       )}
 
       {!loading && err && (
-        <div className="text-red-600 dark:text-red-400 text-sm">
+        <div className="text-red-600  text-sm">
           {err}
         </div>
       )}
 
       {!loading && !err && normalizedBooks.length === 0 && (
-        <div className="text-gray-600 dark:text-gray-300 text-sm">
+        <div className="text-gray-600  text-sm">
           No books found.
         </div>
       )}

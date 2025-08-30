@@ -9,7 +9,7 @@ export default function Navbar() {
   const { data: session } = useSession();
 
   return (
-    <nav className="bg-white dark:bg-gray-900 shadow-sm">
+    <nav className="bg-white  shadow-sm">
       <div className="flex items-center justify-between max-w-full mx-auto p-4 px-8">
         {/* Left: Logo + Menu */}
         <div className="flex items-center space-x-8">
@@ -20,7 +20,7 @@ export default function Navbar() {
             <li>
               <Link
                 href="/bookstore"
-                className="text-gray-900 hover:text-blue-600 dark:text-white"
+                className="text-gray-900 hover:text-blue-600 "
               >
                 Collections
               </Link>
@@ -28,7 +28,7 @@ export default function Navbar() {
             <li>
               <Link
                 href="#"
-                className="text-gray-900 hover:text-blue-600 dark:text-white"
+                className="text-gray-900 hover:text-blue-600 "
               >
                 Authors
               </Link>
@@ -36,7 +36,7 @@ export default function Navbar() {
             <li>
               <Link
                 href="#"
-                className="text-gray-900 hover:text-blue-600 dark:text-white"
+                className="text-gray-900 hover:text-blue-600 "
               >
                 Genre
               </Link>
@@ -50,10 +50,10 @@ export default function Navbar() {
             <input
               type="text"
               placeholder="Search by book name, Author name..."
-              className="w-full pl-10 pr-4 py-2 text-sm rounded-lg border border-gray-300 bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              className="w-full pl-10 pr-4 py-2 text-sm rounded-lg border border-gray-300 bg-gray-50 focus:ring-blue-500 focus:border-blue-500  "
             />
             <svg
-              className="absolute left-3 top-2.5 w-4 h-4 text-gray-500 dark:text-gray-400"
+              className="absolute left-3 top-2.5 w-4 h-4 text-gray-500 "
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 20 20"

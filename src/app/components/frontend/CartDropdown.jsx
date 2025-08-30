@@ -10,7 +10,7 @@ export default function CartDropdown() {
       <button
         onClick={() => setOpen(!open)}
         type="button"
-        className="inline-flex items-center rounded-lg justify-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm font-medium leading-none text-gray-900 dark:text-white"
+        className="inline-flex items-center rounded-lg justify-center p-2 hover:bg-gray-100  text-sm font-medium leading-none text-gray-900 "
       >
         <span className="sr-only">Cart</span>
 
@@ -26,30 +26,30 @@ export default function CartDropdown() {
       {/* Dropdown */}
       {open && (
         <div
-          className="absolute right-0 mt-2 w-64 z-10 space-y-4 overflow-hidden rounded-lg bg-white p-4 antialiased shadow-lg dark:bg-gray-800"
+          className="absolute right-0 mt-2 w-64 z-10 space-y-4 overflow-hidden rounded-lg bg-white p-4 antialiased shadow-lg "
         >
           <div className="grid grid-cols-2">
             <div>
               <a
                 href="#"
-                className="truncate text-sm font-semibold leading-none text-gray-900 dark:text-white hover:underline"
+                className="truncate text-sm font-semibold leading-none text-gray-900  hover:underline"
               >
                 Apple iPhone 15
               </a>
-              <p className="mt-0.5 truncate text-sm font-normal text-gray-500 dark:text-gray-400">
+              <p className="mt-0.5 truncate text-sm font-normal text-gray-500 ">
                 $599
               </p>
             </div>
 
             <div className="flex items-center justify-end gap-6">
-              <p className="text-sm font-normal leading-none text-gray-500 dark:text-gray-400">
+              <p className="text-sm font-normal leading-none text-gray-500 ">
                 Qty: 1
               </p>
 
               {/* Remove Button */}
               <button
                 type="button"
-                className="text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-600"
+                className="text-red-600 hover:text-red-700  "
               >
                 <span className="sr-only"> Remove </span>
                 <X className="h-4 w-4" />

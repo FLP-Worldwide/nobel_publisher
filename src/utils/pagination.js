@@ -1,96 +1,135 @@
-import Hypher from "hypher";
-import english from "hyphenation.en-us";
-
-const h = new Hypher(english);
 export function paginateByHeight(contentHtml, pageWidth, pageHeight) {
+  // Exact content area considering safe margins (0.5 inch = 60px)
+  const safeMargin = 60;
+  const contentWidth = pageWidth - safeMargin * 2;
+  const contentHeight = pageHeight - safeMargin * 2;
+
+  // Create hidden container matching your print layout
   const container = document.createElement("div");
-  container.style.width = `${pageWidth}px`;
   container.style.position = "absolute";
   container.style.visibility = "hidden";
-  container.style.lineHeight = "1.6";
+  container.style.top = "-10000px";
+  container.style.left = "-10000px";
+  container.style.width = `${contentWidth}px`;
+  container.style.height = `${contentHeight}px`;
   container.style.fontFamily = "serif";
   container.style.fontSize = "14px";
-  container.style.whiteSpace = "normal";
-  container.style.wordWrap = "break-word";
+  container.style.lineHeight = "1.625";
+  container.style.padding = "0";
+  container.style.margin = "0";
+  container.style.overflow = "hidden";
+  container.style.boxSizing = "border-box";
+  container.style.textAlign = "justify";
+  container.className = "text-justify leading-6";
   document.body.appendChild(container);
 
-  container.innerHTML = contentHtml;
+  try {
+    // Parse content into paragraphs or block elements
+    const tempWrapper = document.createElement("div");
+    tempWrapper.innerHTML = contentHtml;
+    const outerDiv = tempWrapper.querySelector(".text-justify") || tempWrapper;
+    let allParagraphs = Array.from(outerDiv.children);
 
-  const range = document.createRange();
-  const pages = [];
-  let currentPage = document.createElement("div");
+    if (allParagraphs.length === 0) return [contentHtml];
 
-  function pushPage() {
-    if (currentPage.innerHTML.trim()) {
-      pages.push(currentPage.innerHTML);
-      currentPage = document.createElement("div");
-    }
-  }
-
-  function splitTextNode(node, limitBottom) {
-    for (let i = 1; i <= node.textContent.length; i++) {
-      range.setStart(node, 0);
-      range.setEnd(node, i);
-
-      const rects = range.getClientRects();
-      const lastRect = rects[rects.length - 1];
-      if (!lastRect) continue;
-
-      const bottom = lastRect.bottom - container.getBoundingClientRect().top;
-      if (bottom > limitBottom) {
-        return [
-          document.createTextNode(node.textContent.slice(0, i - 1)), // fit part
-          document.createTextNode(node.textContent.slice(i - 1)),    // remainder
-        ];
-      }
-    }
-    return [node.cloneNode(true), null];
-  }
-
-  function processNodes(nodes) {
-    for (let idx = 0; idx < nodes.length; idx++) {
-      const node = nodes[idx];
-
+    function fitsOnPage(els) {
       container.innerHTML = "";
-      container.appendChild(currentPage.cloneNode(true));
-      container.appendChild(node.cloneNode(true));
+      const c = document.createElement("div");
+      c.className = "text-justify leading-6";
+      els.forEach(e => c.appendChild(e.cloneNode(true)));
+      container.appendChild(c);
+      return container.scrollHeight <= container.offsetHeight;
+    }
 
-      if (container.scrollHeight > pageHeight) {
-        if (node.nodeType === Node.TEXT_NODE) {
-          const [first, rest] = splitTextNode(node, pageHeight);
+    function createPageHtml(els) {
+      const div = document.createElement("div");
+      div.className = "text-justify leading-6";
+      els.forEach(e => div.appendChild(e.cloneNode(true)));
+      return div.innerHTML;
+    }
 
-          if (first) currentPage.appendChild(first);
-          pushPage();
+    function splitParagraph(paragraph, currentPageEls) {
+      // Binary search for max words that fit with currentPageEls
+      const text = paragraph.textContent?.trim() || "";
+      if (!text) return [paragraph.cloneNode(true), null];
+      const words = text.split(/\s+/);
+      if (words.length <= 1) return [paragraph.cloneNode(true), null];
 
-          if (rest) {
-            // rest text + remaining siblings
-            const wrapper = document.createElement("p");
-            wrapper.appendChild(rest);
-            processNodes([wrapper, ...nodes.slice(idx + 1)]);
-          } else {
-            processNodes(nodes.slice(idx + 1));
-          }
-          return;
-        } else if (node.nodeType === Node.ELEMENT_NODE) {
-          const clone = node.cloneNode(false);
-          currentPage.appendChild(clone);
+      let low = 1, high = words.length, bestFit = 0;
 
-          let childNodes = Array.from(node.childNodes);
-          pushPage();
-
-          // ✅ add same block remainder + next siblings
-          processNodes([...childNodes, ...nodes.slice(idx + 1)]);
-          return;
+      while (low <= high) {
+        const mid = Math.floor((low + high) / 2);
+        const testP = paragraph.cloneNode(false);
+        if (paragraph.style.cssText) testP.style.cssText = paragraph.style.cssText;
+        testP.textContent = words.slice(0, mid).join(" ");
+        const testEls = [...currentPageEls, testP];
+        if (fitsOnPage(testEls)) {
+          bestFit = mid;
+          low = mid + 1;
+        } else {
+          high = mid - 1;
         }
+      }
+      // If no fit at all (very long word/element), forcibly split off first word
+      if (bestFit == 0) bestFit = 1;
+      if (bestFit >= words.length) return [paragraph.cloneNode(true), null];
+
+      const fitP = paragraph.cloneNode(false);
+      if (paragraph.style.cssText) fitP.style.cssText = paragraph.style.cssText;
+      fitP.textContent = words.slice(0, bestFit).join(" ");
+      const remP = paragraph.cloneNode(false);
+      if (paragraph.style.cssText) remP.style.cssText = paragraph.style.cssText;
+      remP.textContent = words.slice(bestFit).join(" ");
+      return [fitP, remP];
+    }
+
+    // MAIN PAGINATION LOOP
+    const pages = [];
+    let current = [];
+
+    let i = 0;
+    while (i < allParagraphs.length) {
+      const paragraph = allParagraphs[i];
+      if (!paragraph.textContent?.trim() && paragraph.tagName !== "BR") {
+        i++; continue;
+      }
+      let testAdd = [...current, paragraph];
+
+      if (fitsOnPage(testAdd)) {
+        current.push(paragraph);
+        i++;
       } else {
-        currentPage.appendChild(node.cloneNode(true));
+        // Whether current is empty or not, always split paragraph to fill this page
+        if (current.length === 0) {
+          // First on page: split relative to empty
+          const [fit, rest] = splitParagraph(paragraph, []);
+          current.push(fit);
+          pages.push(createPageHtml(current));
+          current = [];
+          if (rest?.textContent?.trim()) {
+            // repeat this step with remainder as the next paragraph
+            allParagraphs.splice(i + 1, 0, rest);
+          }
+          i++;
+        } else {
+          // Not first: split into what fits as last para on current, rest for next
+          const [fit, rest] = splitParagraph(paragraph, current);
+          current.push(fit);
+          pages.push(createPageHtml(current));
+          current = [];
+          if (rest?.textContent?.trim()) {
+            allParagraphs.splice(i + 1, 0, rest);
+          }
+          i++;
+        }
       }
     }
+    // any leftovers
+    if (current.length > 0) pages.push(createPageHtml(current));
+    return pages.length > 0 ? pages : [contentHtml];
+  } finally {
+    if (container.parentNode) {
+      document.body.removeChild(container);
+    }
   }
-
-  processNodes(Array.from(container.childNodes));
-  pushPage();
-
-  document.body.removeChild(container);
-  return pages;
 }
