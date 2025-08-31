@@ -245,10 +245,10 @@ export default function WriteTool() {
         <AuthorTopbar />
         <AuthorSidebar currentStep="information" />
 
-        <section className="bg-white dark:bg-gray-900">
+        <section className="bg-white ">
           <div className="py-8 px-4 mx-auto max-w-full lg:py-16">
             <h1 className="text-2xl font-bold mb-2">Book Informations</h1>
-            <h2 className="mb-4 text-xl font-bold text-gray-900 dark:text-white">
+            <h2 className="mb-4 text-xl font-bold text-gray-900 ">
               Enter all the information about your book - Its language, title and author(s)
             </h2>
 
@@ -278,10 +278,10 @@ export default function WriteTool() {
               <div className="grid gap-4 sm:grid-cols-1 sm:gap-6">
                 {/* Language */}
                 <div className="mb-2">
-                  <label className="block text-lg font-bold text-gray-900 dark:text-white mb-2">
+                  <label className="block text-lg font-bold text-gray-900  mb-2">
                     Book Language <span className="text-red-500">*</span>
                   </label>
-                  <p className="mb-3 text-gray-600 dark:text-gray-400">
+                  <p className="mb-3 text-gray-600 ">
                     Primary language in which your book has been written. In case of bi-lingual or multi-lingual, choose the language that is used the most.
                   </p>
 
@@ -304,7 +304,7 @@ export default function WriteTool() {
 
                 {/* Title */}
                 <div className="sm:col-span-2">
-                  <label htmlFor="title" className="block text-lg font-bold text-gray-900 dark:text-white">
+                  <label htmlFor="title" className="block text-lg font-bold text-gray-900 ">
                     Book Title
                   </label>
                   <p className="mb-2">
@@ -316,7 +316,7 @@ export default function WriteTool() {
                     id="title"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
                     placeholder="Enter book title"
                     required
                   />
@@ -324,7 +324,7 @@ export default function WriteTool() {
 
                 {/* Subtitle */}
                 <div className="sm:col-span-2">
-                  <label htmlFor="subheading" className="block text-lg font-bold text-gray-900 dark:text-white">
+                  <label htmlFor="subheading" className="block text-lg font-bold text-gray-900 ">
                     Book Subtitle
                   </label>
                   <p className="mb-2">
@@ -336,14 +336,14 @@ export default function WriteTool() {
                     id="subheading"
                     value={subheading}
                     onChange={(e) => setSubheading(e.target.value)}
-                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 "
                     placeholder="Enter book subtitle"
                   />
                 </div>
 
                 {/* Author */}
                 <div className="sm:col-span-2">
-                  <label htmlFor="authorName" className="block text-lg font-bold text-gray-900 dark:text-white">
+                  <label htmlFor="authorName" className="block text-lg font-bold text-gray-900 ">
                     Author
                   </label>
                   <p className="mb-2">
@@ -355,7 +355,7 @@ export default function WriteTool() {
                     id="authorName"
                     value={authorName}
                     onChange={(e) => setAuthorName(e.target.value)}
-                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 "
                     placeholder="Enter author name"
                     required
                   />
@@ -363,7 +363,7 @@ export default function WriteTool() {
 
                 {/* Co-Author (optional) */}
                 <div className="sm:col-span-2">
-                  <label htmlFor="coAuthor" className="block text-lg font-bold text-gray-900 dark:text-white">
+                  <label htmlFor="coAuthor" className="block text-lg font-bold text-gray-900 ">
                     Co-Author (optional)
                   </label>
                   <input
@@ -372,14 +372,14 @@ export default function WriteTool() {
                     id="coAuthor"
                     value={coAuthor}
                     onChange={(e) => setCoAuthor(e.target.value)}
-                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 "
                     placeholder="Enter co-author name"
                   />
                 </div>
 
                 {/* Genre */}
                 <div className="sm:col-span-2">
-                  <label className="block text-lg font-bold text-gray-900 dark:text-white">
+                  <label className="block text-lg font-bold text-gray-900 ">
                     Book Genre <span className="text-red-500">*</span>
                   </label>
                   <div className="flex flex-wrap gap-3 mt-2">

@@ -61,8 +61,8 @@ export default function WriteToolDesign() {
   ];
 
   const cardClass = (selected) =>
-    `flex-1 min-w-[250px] max-w-[300px] border rounded-lg p-4 text-center cursor-pointer transition dark:bg-gray-800  
-     ${selected ? "border-blue-500 bg-blue-50 dark:bg-gray-700 dark:text-white" : "border-gray-300 bg-white hover:border-blue-600"}`;
+    `flex-1 min-w-[250px] max-w-[300px] border rounded-lg p-4 text-center cursor-pointer transition   
+     ${selected ? "border-blue-500 bg-blue-50 " : "border-gray-300 bg-white hover:border-blue-600"}`;
 
   // ---------- SWR ----------
   const canFetch = useMemo(
@@ -164,10 +164,10 @@ export default function WriteToolDesign() {
       <AuthorTopbar />
       <AuthorSidebar currentStep="content" />
 
-      <section className="bg-white dark:bg-gray-900">
+      <section className="bg-white">
         <div className="py-8 px-4 mx-auto max-w-full lg:py-16">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Book Content Design</h1>
-          <h2 className="mb-6 text-lg text-gray-600 dark:text-gray-300">
+          <h1 className="text-2xl font-bold text-gray-900  mb-4">Book Content Design</h1>
+          <h2 className="mb-6 text-lg text-gray-600 ">
             Select your book's specifications, add content and design your cover and interior.
           </h2>
 
