@@ -6,7 +6,7 @@ import { use, useEffect, useState } from "react";
 import Link from "next/link";
 
 export default function PreviewPage(props) {
-  const { bookId } = use(props.params); 
+  const { bookId } = use(props.params);
   const { data: session } = useSession();
 
   const [previewBook, setPreviewBook] = useState(null);
@@ -115,7 +115,7 @@ export default function PreviewPage(props) {
             Close
           </button>
         </Link>
-        <Link href="/write/tool/step2/23">
+        <Link href={`/write/tool/step2/${bookId}`}>
           <button className="px-2 font-bold py-2 text-sm text-white rounded shadow hover:underline disabled:opacity-70">
             Save and Continue
           </button>
