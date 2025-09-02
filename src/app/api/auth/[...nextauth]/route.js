@@ -51,14 +51,17 @@ const handler = NextAuth({
     async jwt({ token, user }) {
       // First time login → store tokens
       if (user) {
+        token.id = user.id;
         token.accessToken = user.token;
         token.refreshToken = user.refreshToken;
       }
       return token;
     },
     async session({ session, token }) {
+      console.log("token", token);
       session.user = {
         ...session.user,
+        userId: token.id,
         accessToken: token.accessToken,
         refreshToken: token.refreshToken
       };
