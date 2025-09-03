@@ -84,11 +84,11 @@ export default function BookCard({
   }, [book?.thumbnail, book?.frontCoverUrl, book?.frontCoverKey, API_BASE, accessToken]);
 
   return (
-    <div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-2xl hover:shadow-xl transition p-6 w-full mb-5">
+    <div className="bg-white  border border-gray-300 -700 rounded-2xl hover:shadow-xl transition p-6 w-full mb-5">
       <div className="flex justify-between items-start gap-4">
         {/* Left: Thumb + Info */}
         <div className="flex  gap-4">
-          <div className=" w-20 rounded-lg shadow-sm overflow-hidden bg-gray-100 dark:bg-gray-700">
+          <div className=" w-20 rounded-lg shadow-sm overflow-hidden bg-gray-100 ">
             <img
               src={coverSrc}
               alt={book?.title ? `${book.title} cover` : "Book cover"}
@@ -103,7 +103,7 @@ export default function BookCard({
 
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              <h3 className="text-lg font-semibold text-gray-900 ">
                 {book?.title || "Untitled"}
               </h3>
 
@@ -115,7 +115,7 @@ export default function BookCard({
               </span>
             </div>
 
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-gray-500 ">
               {book?.authorName || "Unknown Author"}
             </p>
 
@@ -142,14 +142,14 @@ export default function BookCard({
           {rawStatus !== "PUBLISHED" && (
             <button
               onClick={() => onContinue?.(bookId)}
-              className="underline  text-sm font-bold transition cursor-pointer"
+              className="underline text-sm font-bold transition cursor-pointer"
             >
               Continue Publishing
             </button>
           )}
           <button
             onClick={() => onDelete?.(bookId)}
-            className="p-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition"
+            className="p-2 rounded-lg border border-gray-300  hover:bg-red-50  transition"
             title="Delete book"
             aria-label="Delete book"
           >
@@ -159,7 +159,7 @@ export default function BookCard({
       </div>
 
       {/* Progress row */}
-      <div className="mt-4 bg-gray-50 dark:bg-gray-700 p-3 rounded-lg text-sm text-gray-600 dark:text-gray-300 flex items-center gap-3 flex-wrap">
+      <div className="mt-4 bg-gray-50  p-3 rounded-lg text-sm text-gray-600  flex items-center gap-3 flex-wrap">
         
         <CheckCircle className="w-5 h-5 text-green-600" />
         <span className="text-green-600 font-medium">Book Details</span>

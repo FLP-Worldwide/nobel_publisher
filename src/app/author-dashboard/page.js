@@ -79,6 +79,7 @@ export default function AuthorDashboard() {
 
   return (
     <>
+    <section className="bg-white">
       <UserHeroSection />
 
       {/* Ads Section */}
@@ -96,10 +97,10 @@ export default function AuthorDashboard() {
         />
       </div>
 
-      <section className="w-full flex justify-center">
+      <section className="w-full flex justify-center ">
         <div className="w-full max-w-6xl px-6">
           <div className="flex items-center gap-5 mb-6">
-            <h2 className="text-gray-900 dark:text-white text-2xl md:text-3xl font-extrabold">
+            <h2 className="text-gray-900  text-2xl md:text-3xl font-extrabold">
               Books
             </h2>
 
@@ -138,6 +139,7 @@ export default function AuthorDashboard() {
             </ul>
           )}
         </div>
+      </section>
       </section>
     </>
   );

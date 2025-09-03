@@ -12,6 +12,8 @@ export default function BookPreview({ book }) {
   const PAGE_WIDTH = 600;
   const PAGE_HEIGHT = 960;
 
+  let pageCounter = 0;
+
   // ✅ TOC calculation
   const indexChapters = useMemo(() => {
     const sections = [
@@ -29,6 +31,7 @@ export default function BookPreview({ book }) {
     });
   }, [book]);
 
+
   // ✅ Build all pages
   const allPages = useMemo(() => {
     const pages = [
@@ -44,19 +47,27 @@ export default function BookPreview({ book }) {
       <BlankPage key="blank-2" />,
     ];
 
+
+  const indexEndIdx = pages.length - 1;
+  
     const renderSection = (section, Component) => {
       const sectionPages = paginateByHeight(section.content, PAGE_WIDTH, PAGE_HEIGHT);
-      return sectionPages.map((pageContent, idx) => (
-        <Component
-          key={`${section.id ?? section.title}-page-${idx}`}
-          section={{
-            ...section,
-            pageIndex: idx,
-            title: idx === 0 ? section.title : null,
-            content: pageContent,
-          }}
-        />
-      ));
+      return sectionPages.map((pageContent, idx) => {
+        pageCounter++;
+        return (
+          <Component
+            key={`${section.id ?? section.title}-page-${idx}`}
+            section={{
+              ...section,
+              pageIndex: idx,
+              title: idx === 0 ? section.title : null,
+              content: pageContent,
+            }}
+            // ✅ add pageNumber only if past index
+            pageNumber={pageCounter > indexEndIdx ? pageCounter : null}
+          />
+        );
+      });
     };
 
     (book.frontmatter || []).forEach((fm) =>

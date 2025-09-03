@@ -3,9 +3,9 @@ import React from 'react'
 export default function HeroBanner() {
   return (
     <>
-      <section className="bg-white dark:bg-gray-900">
+      <section className="bg-white ">
         <div className="py-2 px-8 mx-auto lg:py-4">
-          <div className="bg-cream dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-8 md:p-12 mb-8">
+          <div className="bg-cream  border border-gray-200  rounded-lg p-8 md:p-12 mb-8">
             
             {/* Grid for text + image */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
@@ -14,7 +14,7 @@ export default function HeroBanner() {
               <div>
                 <a
                   href="#"
-                  className="bg-blue-100 text-blue-800 text-xs font-medium inline-flex items-center px-2.5 py-0.5 rounded-md dark:bg-gray-700 dark:text-blue-400 mb-2"
+                  className="bg-blue-100 text-blue-800 text-xs font-medium inline-flex items-center px-2.5 py-0.5 rounded-md   mb-2"
                 >
                   <svg
                     className="w-2.5 h-2.5 me-1.5"
@@ -28,18 +28,18 @@ export default function HeroBanner() {
                   Tutorial
                 </a>
 
-                <h1 className="text-gray-900 dark:text-white text-3xl md:text-5xl font-extrabold mb-2">
+                <h1 className="text-gray-900  text-3xl md:text-5xl font-extrabold mb-2">
                   From Writer to Author — We Make It Happen.
                 </h1>
 
-                <p className="text-lg font-normal text-gray-500 dark:text-gray-400 mb-6">
+                <p className="text-lg font-normal text-gray-500  mb-6">
                   Nobel Books empowers authors to self-publish with ease — from manuscript to market, 
                   we make publishing simple, professional, and accessible.
                 </p>
 
                 <a
                   href="#"
-                  className="inline-flex justify-center items-center py-2.5 px-5 text-base font-medium text-center text-white rounded-lg bg-blue-900 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-900"
+                  className="inline-flex justify-center items-center py-2.5 px-5 text-base font-medium text-center text-white rounded-lg bg-blue-900 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 "
                 >
                   Start Writing
                   <svg

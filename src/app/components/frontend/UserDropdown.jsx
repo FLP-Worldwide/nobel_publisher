@@ -22,7 +22,7 @@ export default function UserDropdown() {
     return (
       <Link
         href="/login"
-        className="text-blue-900 dark:text-white hover:underline"
+        className="text-blue-900  hover:underline"
       >
         Login / Signup
       </Link>
@@ -34,7 +34,7 @@ export default function UserDropdown() {
       {/* Greeting with Dropdown Toggle */}
       <button
         onClick={() => setOpen(!open)}
-        className="inline-flex items-center gap-1 rounded-lg px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700  text-sm font-medium leading-none text-gray-900 dark:text-white"
+        className="inline-flex items-center gap-1 rounded-lg px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700  text-sm font-medium leading-none text-gray-900 "
       >
         Hi, {formatName(session.user)}
         <svg
@@ -60,7 +60,7 @@ export default function UserDropdown() {
           <div className="px-4 py-2 text-xs text-gray-500 dark:text-gray-300">
             Account
           </div>
-          <ul className="p-2 text-sm font-medium text-gray-900 dark:text-white">
+          <ul className="p-2 text-sm font-medium text-gray-900 ">
             <li>
               <a
                 href="/author-dashboard"

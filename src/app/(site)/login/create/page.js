@@ -92,7 +92,7 @@ export default function CreateAccount() {
                 value={form.name}
                 onChange={handleChange}
                 placeholder="Enter your name"
-                className="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="mt-1 text-dark w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 required
               />
             </div>
@@ -108,7 +108,7 @@ export default function CreateAccount() {
                 value={form.email}
                 onChange={handleChange}
                 placeholder="Enter your email"
-                className="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="mt-1 w-full text-dark p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 required
               />
             </div>
@@ -124,7 +124,7 @@ export default function CreateAccount() {
                 value={form.phone}
                 onChange={handleChange}
                 placeholder="Enter your phone number"
-                className="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="mt-1 w-full text-dark p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
             </div>
 
@@ -139,7 +139,7 @@ export default function CreateAccount() {
                 value={form.password}
                 onChange={handleChange}
                 placeholder="Enter your password"
-                className="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="mt-1 w-full text-dark p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 required
               />
             </div>

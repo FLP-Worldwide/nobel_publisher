@@ -16,9 +16,9 @@ import {
     Eraser,
 } from "lucide-react";
 
-export default function Toolbar({ onFormat, onReset, onToggleColumns }) {
+export default function Toolbar({ onFormat, onReset, onToggleColumns, className }) {
     return (
-        <div className="flex flex-wrap justify-between gap-4 mb-4  border-b border-gray-200 ">
+        <div className={`flex flex-wrap justify-between gap-4 border-b border-gray-200 ${className}`}>
             {/* Bold / Italic / Underline / Strike */}
             <button onClick={() => onFormat("bold")} className="toolbar-btn" title="Bold">
                 <Bold className="w-4 h-4" />

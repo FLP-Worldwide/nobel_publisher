@@ -7,16 +7,16 @@ export default function Topbar() {
   // const { data: session } = useSession();
 
   return (
-    <nav className="bg-white border-b border-gray-200 dark:bg-gray-900">
+    <nav className="bg-white  border-b border-gray-200 ">
       <div className="flex justify-between items-center max-w-full mx-auto px-8 py-2 text-sm">
         {/* Left */}
-        <Link href="#" className="text-gray-500 dark:text-white hover:underline">
+        <Link href="#" className="text-gray-500 -white hover:underline">
           Support
         </Link>
      
          <Link
             href="#"
-            className="text-blue-900 dark:text-white hover:underline "
+            className="text-blue-900 -white hover:underline "
           >
             Request Callback
           </Link>

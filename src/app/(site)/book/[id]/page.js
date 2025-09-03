@@ -3,16 +3,69 @@ import Breadcrumb from '@/app/components/Breadcrumb'
 import BookCarousel from '@/app/components/frontend/BookCarousel';
 import React, { useState } from 'react'
 import { useParams } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 
 export default function Book() {
+  const { data: session, status } = useSession();
+  const accessToken = session?.user?.accessToken;
 
-  const parms = useParams()
+  const params = useParams();
   const [expanded, setExpanded] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const toggleDescription = () => {
-    setExpanded(!expanded);
-  };
-  
+  const toggleDescription = () => setExpanded(!expanded);
+
+
+// Add to cart API
+const addToCart = async (bookId, price) => {
+  try {
+    setLoading(true);
+
+    if (accessToken) {
+      // ✅ Logged-in user → Send to backend
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/cart/items`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ bookId, qty: 1, price }),
+      });
+
+      if (!res.ok) throw new Error("Failed to add to cart");
+      const data = await res.json();
+      console.log("Cart updated:", data);
+      alert("Added to cart ✅");
+    } else {
+      // ✅ Guest user → Save to localStorage
+      const existingCart = JSON.parse(localStorage.getItem("guest_cart") || "[]");
+
+      // Check if book already exists
+      const existingItemIndex = existingCart.findIndex(
+        (item) => item.bookId === bookId
+      );
+
+      if (existingItemIndex > -1) {
+        // Update qty if already in cart
+        existingCart[existingItemIndex].qty += 1;
+      } else {
+        // Add as new item
+        existingCart.push({ bookId, qty: 1, price });
+      }
+
+      localStorage.setItem("guest_cart", JSON.stringify(existingCart));
+      console.log("Cart saved locally:", existingCart);
+      alert("Added to cart (local) ✅");
+    }
+  } catch (err) {
+    console.error(err);
+    alert("Error adding to cart ❌");
+  } finally {
+    setLoading(false);
+  }
+};
+
+
   return (
     <>
       <div class="max-w-full px-4">
@@ -106,11 +159,12 @@ export default function Book() {
                   <p class="text-2xl font-extrabold text-gray-900 sm:text-3xl dark:text-white">$1,249.99</p>
 
                   <div class="mt-6 flex flex-col gap-4 w-full">
+
                     <a href="#" class="flex items-center justify-center py-2.5 px-5 text-sm font-medium text-gray-900 bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:text-white">
                       Add to Favorites
                     </a>
 
-                    <a href="#" class="text-white mt-4 sm:mt-0 bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800 flex items-center justify-center" role="button"  >
+                    <a href="#" onClick={()=>addToCart(1,100)} class="text-white mt-4 sm:mt-0 bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800 flex items-center justify-center" role="button"  >
                       <svg class="w-5 h-5 -ms-2 me-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" > <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4h1.5L8 16m0 0h8m-8 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm8 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm.75-3H7.5M11 7H6.312M17 4v6m-3-3h6" /> </svg>
                       Buy Now
                     </a>

@@ -3,6 +3,7 @@ import React from "react";
 
 export default function ChapterPage({
   section,
+  pageNumber,
   trimWidthIn = 5,
   trimHeightIn = 8,
   dpi = 120,
@@ -28,6 +29,7 @@ export default function ChapterPage({
         className="relative bg-white shadow-lg"
         style={{ width: fullWidth, height: fullHeight }}
       >
+       
         {/* Trim area (actual cut size) */}
         <div
           className="absolute bg-white"
@@ -38,6 +40,15 @@ export default function ChapterPage({
             height: trimHeight,
           }}
         >
+              {pageNumber && pageNumber % 2 !== 0 && (
+                <div
+                  className="absolute text-xs text-gray-500"
+                  style={{ top: 16, left: 24 }}
+                >
+                  {pageNumber}
+                </div>
+              )}
+      
           {/* Safe text area */}
           <div
             className="absolute overflow-hidden font-serif leading-relaxed"

@@ -6,7 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import AuthorSidebar from "@/app/components/dashbaord/AuthorSidebar";
 import AuthorTopbar from "@/app/components/dashbaord/Topbar";
 import CoverUploadModal from "@/app/components/CoverUploadModal";
-import SignedImage from "@/app/components/SignedImage";
+import SignedS3Image from "@/app/components/SignedS3Image";
 
 const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
 
@@ -61,8 +61,8 @@ export default function WriteToolDesign() {
   ];
 
   const cardClass = (selected) =>
-    `flex-1 min-w-[250px] max-w-[300px] border rounded-lg p-4 text-center cursor-pointer transition dark:bg-gray-800  
-     ${selected ? "border-blue-500 bg-blue-50 dark:bg-gray-700 dark:text-white" : "border-gray-300 bg-white hover:border-blue-600"}`;
+    `flex-1 min-w-[250px] max-w-[300px] border rounded-lg p-4 text-center cursor-pointer transition   
+     ${selected ? "border-blue-500 bg-blue-50 " : "border-gray-300 bg-white hover:border-blue-600"}`;
 
   // ---------- SWR ----------
   const canFetch = useMemo(
@@ -164,10 +164,10 @@ export default function WriteToolDesign() {
       <AuthorTopbar />
       <AuthorSidebar currentStep="content" />
 
-      <section className="bg-white dark:bg-gray-900">
+      <section className="bg-white">
         <div className="py-8 px-4 mx-auto max-w-full lg:py-16">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Book Content Design</h1>
-          <h2 className="mb-6 text-lg text-gray-600 dark:text-gray-300">
+          <h1 className="text-2xl font-bold text-gray-900  mb-4">Book Content Design</h1>
+          <h2 className="mb-6 text-lg text-gray-600 ">
             Select your book's specifications, add content and design your cover and interior.
           </h2>
 
@@ -248,7 +248,7 @@ export default function WriteToolDesign() {
 
             {/* Save */}
             <button type="submit" disabled={loading || isLoading} className="inline-flex items-center px-5 py-2.5 mt-6 text-sm font-medium text-white bg-blue-900 rounded-lg hover:bg-blue-800 disabled:opacity-70 disabled:cursor-not-allowed">
-              {loading ? "Saving…" : "Save and Continue"}
+              {loading ? "Saving…" : "Save Design"}
             </button>
 
             {/* Interior Workflow */}
@@ -279,18 +279,40 @@ export default function WriteToolDesign() {
               <div className="space-y-6">
                 <label className={`block border rounded-lg p-6 cursor-pointer transition ${coverWorkflow === "CoverCreator" ? "border-blue-500 bg-blue-50" : "border-gray-300 bg-white hover:border-blue-600"}`}>
                   <input type="radio" name="coverWorkflow" value="CoverCreator" checked={coverWorkflow === "CoverCreator"} onChange={() => setCoverWorkflow("CoverCreator")} className="hidden" />
-                  <div>
-                    <span className="block font-bold text-lg text-blue-900">Use our Cover Creator</span>
-                    <p className="text-sm text-gray-600 mt-1">Start with templates, add images and text to create a professional-looking cover.</p>
-                    <button onClick={() => setModalOpen(true)} type="button" className="mt-4 px-4 py-2 text-white bg-blue-900 rounded-lg hover:bg-blue-800">Launch Cover Creator Tool</button>
-                  
-                
-                    <SignedImage keyName={book?.frontCoverKey} alt="Front Cover" className="w-40 h-60 object-cover" />
-                  
+                  <div className="flex flex-wrap justify-between">
+                      <div>
+                        <span className="block font-bold text-lg text-blue-900">Use our Cover Creator</span>
+                        <p className="text-sm text-gray-600 mt-1">Start with templates, add images and text to create a professional-looking cover.</p>
+                        <button onClick={() => setModalOpen(true)} type="button" className="mt-4 px-4 py-2 text-white bg-blue-900 rounded-lg hover:bg-blue-800">Launch Cover Creator Tool</button>
+                      </div>
+
+                      <div className="flex">
+                        <SignedS3Image
+                          s3Key={book?.backCoverKey}
+                          directUrl={book?.backCoverUrl || book?.thumbnail}
+                          accessToken={session?.user?.accessToken}
+                          alt="Front cover"
+                          className="w-20 object-cover"
+                        />
+                        <SignedS3Image
+                          s3Key={book?.frontCoverKey}
+                          directUrl={book?.frontCoverUrl || book?.thumbnail}
+                          accessToken={session?.user?.accessToken}
+                          alt="Front cover"
+                          className="w-20 object-cover"
+                        />
+                      </div>
                   </div>
                 </label>
               </div>
             </div>
+
+            {/* Save */}
+            <a href={`/write/tool/step2/${bookId}/pricing_info`} className="inline-flex items-center px-5 py-2.5 mt-6 text-sm font-medium text-white bg-blue-900 rounded-lg hover:bg-blue-800 disabled:opacity-70 disabled:cursor-not-allowed">
+              Continue to pricing
+            </a>
+
+
           </form>
         </div>
       </section>

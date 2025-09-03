@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { signIn } from "next-auth/react";
+import { getSession, signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
 export default function Login() {
@@ -17,27 +17,57 @@ export default function Login() {
     e.preventDefault();
     setError("");
     setLoading(true);
-
-    // NOTE: NextAuth will call your Express /auth/login via the Credentials `authorize` you configured.
+  
     const res = await signIn("credentials", {
       email,
       password,
-      redirect: false, // handle redirect manually so we can show errors here
-      // You can pass anything else you want to read in callbacks via `req.body`, but not needed here.
+      redirect: false,
     });
-
+  
     setLoading(false);
-
+  
     if (res?.ok) {
-      // (optional) persist "remember me" client hint
+      try {
+        // ✅ get accessToken after login
+        const session = await getSession();
+        const accessToken = session?.user?.accessToken;
+  
+        // ✅ load guest cart
+        const guestCart = JSON.parse(localStorage.getItem("guest_cart") || "[]");
+  
+        if (guestCart.length > 0 && accessToken) {
+          for (const item of guestCart) {
+            const { bookId, qty, price } = item;
+  
+            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/cart/items`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${accessToken}`,
+              },
+              body: JSON.stringify({ bookId, qty, price }),
+            });
+          }
+  
+          // ✅ clear only after syncing
+          localStorage.removeItem("guest_cart");
+        }
+      } catch (err) {
+        console.error("Cart sync error:", err);
+      }
+  
+      // remember me
       if (remember) localStorage.setItem("rememberMe", "1");
       else localStorage.removeItem("rememberMe");
+  
       router.push("/author-dashboard");
     } else {
       setError(res?.error || "Invalid email or password.");
     }
   }
 
+
+  
   return (
     <div className="min-h-90 flex items-center justify-center py-4 bg-gray-50">
       <div className="flex bg-white shadow-lg rounded-lg overflow-hidden max-w-4xl w-full">
@@ -72,7 +102,7 @@ export default function Login() {
                 id="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                className="w-full text-dark p-2.5 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                 placeholder="name@example.com"
                 required
               />
@@ -88,7 +118,7 @@ export default function Login() {
                   id="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full p-2.5 pr-12 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full text-dark p-2.5 pr-12 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                   required
                 />
                 <button

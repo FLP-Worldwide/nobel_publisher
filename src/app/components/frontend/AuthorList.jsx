@@ -38,8 +38,8 @@ export default function AuthorList() {
   ];
 
   return (
-    <div className="px-6 py-6">
-        <h4 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+    <div className="px-6 py-6 bg-white">
+        <h4 className="text-2xl font-bold text-gray-900  mb-4">
             Popular Authors
         </h4>
       <Swiper
@@ -57,7 +57,7 @@ export default function AuthorList() {
           <SwiperSlide key={cat.id}>
             <a
               href="/author"
-              className="flex flex-col items-center bg-white border border-gray-200 rounded-lg shadow-sm md:flex-row hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
+              className="flex flex-col items-center bg-white border border-gray-200 rounded-lg shadow-sm md:flex-row hover:bg-gray-100"
             >
               <img
                 className="object-cover w-full rounded-t-lg h-32 md:h-32 md:w-24 md:rounded-none md:rounded-s-lg"
@@ -65,10 +65,10 @@ export default function AuthorList() {
                 alt={cat.name}
               />
               <div className="flex flex-col justify-between p-3 leading-normal">
-                <h5 className="mb-1 text-lg font-bold tracking-tight text-gray-900 dark:text-white">
+                <h5 className="mb-1 text-lg font-bold tracking-tight text-gray-900 ">
                   {cat.name}
                 </h5>
-                <p className="text-sm font-normal text-gray-700 dark:text-gray-400 line-clamp-2">
+                <p className="text-sm font-normal text-gray-700  line-clamp-2">
                   {cat.desc}
                 </p>
               </div>

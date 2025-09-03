@@ -21,6 +21,7 @@
     "pdfmake": "^0.2.20",
     "react": "19.1.0",
     "react-dom": "19.1.0",
+    "react-hot-toast": "^2.6.0",
     "swiper": "^11.2.10",
     "swr": "^2.3.6"
   },

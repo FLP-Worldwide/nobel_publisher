@@ -24,7 +24,7 @@ export default function EditorArea({ editorRef, content, setContent, isTwoColumn
   return (
     <div
       ref={editorRef}
-      className={`w-full min-h-screen px-12 py-4 bg-white focus:outline-none text-left text-lg font-mono placeholder-editor ${
+      className={`w-full min-h-screen px-12 py-4 bg-white focus:outline-none text-left text-lg font-serif placeholder-editor ${
         isTwoColumn ? "editor-two-col" : ""
       }`}
       contentEditable

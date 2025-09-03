@@ -299,11 +299,12 @@ export default function EditorPage({ params }) {
         method: "POST",
         headers: authHeaders(),
         body: JSON.stringify({
-          title: `Chapter ${nextN} - Untitled`,
+          title: `Chapter ${nextN}`,
           type: "chapter", // real chapter
-          content: "<p>Start new chapter...</p>",
+          content: "<p>Begin writig here...</p>",
         }),
       });
+
       const created = await res.json();
       if (!res.ok) throw new Error(created?.message || "Failed to create chapter");
 
@@ -502,24 +503,19 @@ export default function EditorPage({ params }) {
             {saving ? "Saving…" : "Save"}
           </button>
 
-          <a
-            href={`/write/tool/step2/${bookId}/canva/preview`}
-            className="px-4 py-2 bg-blue-200 text-sm text-black font-bold rounded shadow hover:bg-blue-300"
-          >
-            Preview and Finish
+          <a href={`/write/tool/step2/${bookId}/canva/preview`}>
+            <button
+              // onClick={() => setShowModal(true)}
+              className="px-4 py-2 bg-blue-200 text-sm text-black font-bold rounded shadow hover:bg-blue-300"
+            >
+              Preview and Finish
+            </button>
           </a>
-
-          <button
-            onClick={() => setShowModal(true)}
-            className="px-4 py-2 bg-red-400 text-sm text-white font-bold rounded shadow hover:red-500-300"
-          >
-            View PDF
-          </button>
         </div>
 
         <div className="w-full max-w-4xl bg-white shadow-lg rounded-lg py-4 px-4 my-6">
           {/* Toolbar */}
-          <Toolbar onFormat={formatText} onReset={resetEditor} onToggleColumns={setIsTwoColumn} />
+          <Toolbar onFormat={formatText} onReset={resetEditor} onToggleColumns={setIsTwoColumn} className="mb-4"/>
 
           {/* Chapter Title */}
           <input
@@ -537,6 +533,8 @@ export default function EditorPage({ params }) {
             setContent={setContent}
             isTwoColumn={isTwoColumn}
           />
+          <Toolbar onFormat={formatText} onReset={resetEditor} onToggleColumns={setIsTwoColumn} className="mb-0" />
+
         </div>
       </div>
 
