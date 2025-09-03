@@ -1,12 +1,13 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { ShoppingCart, ChevronDown, X } from "lucide-react";
+import { useSession } from "next-auth/react";
 
 export default function CartDropdown() {
   const [open, setOpen] = useState(false);
   const [cart, setCart] = useState([]);
-  const accessToken =
-    typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
+  const { data: session } = useSession();
+  const accessToken = session?.user?.accessToken;
 
   // Load cart (API or localStorage)
   useEffect(() => {
@@ -14,13 +15,14 @@ export default function CartDropdown() {
       if (accessToken) {
         try {
           const res = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/cart/items`,
+            `${process.env.NEXT_PUBLIC_API_URL}/cart`,
             {
               headers: { Authorization: `Bearer ${accessToken}` },
             }
           );
           if (res.ok) {
             const data = await res.json();
+            console.log("Fetched cart data:", data);
             setCart(data.items || []);
           }
         } catch (err) {

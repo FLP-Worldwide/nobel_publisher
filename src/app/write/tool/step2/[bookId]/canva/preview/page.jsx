@@ -6,7 +6,7 @@ import { use, useEffect, useState } from "react";
 import Link from "next/link";
 
 export default function PreviewPage(props) {
-  const { bookId } = use(props.params); 
+  const { bookId } = use(props.params);
   const { data: session } = useSession();
 
   const [previewBook, setPreviewBook] = useState(null);

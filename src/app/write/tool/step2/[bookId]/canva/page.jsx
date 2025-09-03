@@ -80,7 +80,7 @@ export default function EditorPage({ params }) {
 
     const want = [
       { title: "Dedication", type: "intro", content: "<p>Write your dedication here…</p>" },
-      { title: "Foreword",   type: "preface", content: "<p>Write the foreword here…</p>" },
+      { title: "Foreword", type: "preface", content: "<p>Write the foreword here…</p>" },
     ];
 
     for (const fm of want) {
@@ -369,9 +369,8 @@ export default function EditorPage({ params }) {
                     <li
                       key={ch.id}
                       onClick={() => loadChapter(ch.id)}
-                      className={`text-sm flex justify-between items-center px-2 py-1 rounded cursor-pointer ${
-                        ch.id === currentId ? "bg-green-500 text-white" : "hover:bg-gray-700"
-                      }`}
+                      className={`text-sm flex justify-between items-center px-2 py-1 rounded cursor-pointer ${ch.id === currentId ? "bg-green-500 text-white" : "hover:bg-gray-700"
+                        }`}
                     >
                       <span>{ch.title}</span>
                       <Eye className="h-4 w-4 text-gray-300" />
@@ -402,16 +401,14 @@ export default function EditorPage({ params }) {
               <li
                 key={ch.id}
                 onClick={() => loadChapter(ch.id)}
-                className={`flex justify-between items-center px-2 py-1 rounded cursor-pointer ${
-                  ch.id === currentId ? "bg-green-500 text-white" : "hover:bg-gray-700"
-                }`}
+                className={`flex justify-between items-center px-2 py-1 rounded cursor-pointer ${ch.id === currentId ? "bg-green-500 text-white" : "hover:bg-gray-700"
+                  }`}
               >
                 <span className="truncate w-4/5">{ch.title}</span>
                 <div className="flex gap-2">
                   <Trash
-                    className={`h-4 w-4 cursor-pointer ${
-                      deletingId === ch.id ? "opacity-50" : "text-gray-300 hover:text-red-400"
-                    }`}
+                    className={`h-4 w-4 cursor-pointer ${deletingId === ch.id ? "opacity-50" : "text-gray-300 hover:text-red-400"
+                      }`}
                     title={deletingId === ch.id ? "Deleting..." : "Delete"}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -450,16 +447,14 @@ export default function EditorPage({ params }) {
                       <li
                         key={ch.id}
                         onClick={() => loadChapter(ch.id)}
-                        className={`text-sm flex justify-between items-center px-2 py-1 rounded cursor-pointer ${
-                          ch.id === currentId ? "bg-green-500 text-white" : "hover:bg-gray-700"
-                        }`}
+                        className={`text-sm flex justify-between items-center px-2 py-1 rounded cursor-pointer ${ch.id === currentId ? "bg-green-500 text-white" : "hover:bg-gray-700"
+                          }`}
                       >
                         <span>{ch.title}</span>
                         <div className="flex gap-2">
                           <Trash
-                            className={`h-4 w-4 cursor-pointer ${
-                              deletingId === ch.id ? "opacity-50" : "text-gray-300 hover:text-red-400"
-                            }`}
+                            className={`h-4 w-4 cursor-pointer ${deletingId === ch.id ? "opacity-50" : "text-gray-300 hover:text-red-400"
+                              }`}
                             title={deletingId === ch.id ? "Deleting..." : "Delete"}
                             onClick={(e) => {
                               e.stopPropagation();
@@ -490,11 +485,10 @@ export default function EditorPage({ params }) {
           <div>
             {msg && (
               <div
-                className={`px-3 w-2xl text-sm py-1 rounded ${
-                  msg.startsWith("✅")
-                    ? "border-green-300 bg-green-50 text-green-700"
-                    : "border-yellow-2 00 bg-yellow-50 text-yellow-700"
-                }`}
+                className={`px-3 w-2xl text-sm py-1 rounded ${msg.startsWith("✅")
+                  ? "border-green-300 bg-green-50 text-green-700"
+                  : "border-yellow-2 00 bg-yellow-50 text-yellow-700"
+                  }`}
               >
                 {msg}
               </div>
@@ -553,9 +547,6 @@ export default function EditorPage({ params }) {
           frontMatter={chapters.filter((c) => isFM(c))}
           chapters={chapters.filter((c) => !isFM(c) && !isBM(c.title))}
           backMatter={chapters.filter((c) => isBM(c.title))}
-          apiBase={API}
-          bookId={bookId}
-          accessToken={accessToken}
         />
       )}
     </div>
