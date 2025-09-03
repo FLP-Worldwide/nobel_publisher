@@ -270,19 +270,30 @@ export default function Checkout() {
                             <div className="space-y-4">
                                 <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Payment</h3>
                                 <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                                    {["credit-card", "pay-on-delivery", "paypal-2"].map((id) => (
-                                        <div key={id} className="rounded-lg border border-gray-200 bg-gray-50 p-4 ps-4 dark:border-gray-700 dark:bg-gray-800">
-                                            <div className="flex items-start">
-                                                <div className="flex h-5 items-center">
-                                                    <input id={id} type="radio" name="paymentMethod" checked={formData.paymentMethod === id} onChange={handleRadioChange} className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-600 dark:border-gray-600 dark:bg-gray-700" />
-                                                </div>
-                                                <div className="ms-4 text-sm">
-                                                    <label htmlFor={id} className="font-medium leading-none text-gray-900 dark:text-white"> {id === "credit-card" ? "Credit Card" : id === "pay-on-delivery" ? "Payment on delivery" : "Paypal account"} </label>
-                                                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{id === "credit-card" ? "Pay with your credit card" : id === "pay-on-delivery" ? "+$15 payment processing fee" : "Connect to your account"}</p>
-                                                </div>
-                                            </div>
+                                <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 ps-4 dark:border-gray-700 dark:bg-gray-800">
+                                    <div className="flex items-start">
+                                        <div className="flex h-5 items-center">
+                                        <input
+                                            id="UPI"
+                                            type="radio"
+                                            name="paymentMethod"
+                                            checked={formData.paymentMethod === "UPI"}
+                                            onChange={handleRadioChange}
+                                            className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-600 dark:border-gray-600 dark:bg-gray-700"
+                                        />
                                         </div>
-                                    ))}
+                                        <div className="ms-4 text-sm">
+                                        <label htmlFor="UPI" className="font-medium leading-none text-gray-900 dark:text-white">
+                                            UPI or Netbanking
+                                        </label>
+                                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                            Pay instantly using your UPI ID
+                                        </p>
+                                        </div>
+                                    </div>
+                                    </div>
+
+
                                 </div>
                             </div>
 
@@ -290,20 +301,29 @@ export default function Checkout() {
                             <div className="space-y-4">
                                 <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Delivery Methods</h3>
                                 <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                                    {["dhl", "fedex", "express"].map((id) => (
-                                        <div key={id} className="rounded-lg border border-gray-200 bg-gray-50 p-4 ps-4 dark:border-gray-700 dark:bg-gray-800">
-                                            <div className="flex items-start">
-                                                <div className="flex h-5 items-center">
-                                                    <input id={id} type="radio" name="deliveryMethod" checked={formData.deliveryMethod === id} onChange={handleRadioChange} className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-600 dark:border-gray-600 dark:bg-gray-700" />
-                                                </div>
-                                                <div className="ms-4 text-sm">
-                                                    <label htmlFor={id} className="font-medium leading-none text-gray-900 dark:text-white">
-                                                        {id === "dhl" ? "$15 - DHL Fast Delivery" : id === "fedex" ? "Free Delivery - FedEx" : "$49 - Express Delivery"}
-                                                    </label>
-                                                </div>
-                                            </div>
+                                <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 ps-4 dark:border-gray-700 dark:bg-gray-800">
+                                    <div className="flex items-start">
+                                        <div className="flex h-5 items-center">
+                                        <input
+                                            id="StandardDelivery"
+                                            type="radio"
+                                            name="deliveryMethod"
+                                            checked={formData.deliveryMethod === "StandardDelivery"}
+                                            onChange={handleRadioChange}
+                                            className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-600 dark:border-gray-600 dark:bg-gray-700"
+                                        />
                                         </div>
-                                    ))}
+                                        <div className="ms-4 text-sm">
+                                        <label htmlFor="StandardDelivery" className="font-medium leading-none text-gray-900 dark:text-white">
+                                            Standard Delivery – ₹75
+                                        </label>
+                                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                            Delivered within 4-7 business days
+                                        </p>
+                                        </div>
+                                    </div>
+                                    </div>
+
                                 </div>
                             </div>
 
@@ -326,16 +346,9 @@ export default function Checkout() {
                                 </li>
                                 <li className="flex items-center justify-between gap-4 py-3">
                                     <span className="text-base text-gray-500 dark:text-gray-400">Savings</span>
-                                    <span className="text-base font-medium text-green-500">{cart.savings}</span>
+                                    <span className="text-base font-medium text-green-500">₹75</span>
                                 </li>
-                                <li className="flex items-center justify-between gap-4 py-3">
-                                    <span className="text-base text-gray-500 dark:text-gray-400">Store Pickup</span>
-                                    <span className="text-base font-medium text-gray-900 dark:text-white">{cart.storePickup}</span>
-                                </li>
-                                <li className="flex items-center justify-between gap-4 py-3">
-                                    <span className="text-base text-gray-500 dark:text-gray-400">Tax</span>
-                                    <span className="text-base font-medium text-gray-900 dark:text-white">{cart.tax}</span>
-                                </li>
+                                
                                 <li className="flex items-center justify-between gap-4 py-3">
                                     <span className="text-base font-bold text-gray-900 dark:text-white">Total</span>
                                     <span className="text-base font-bold text-gray-900 dark:text-white">{cart.total}</span>
