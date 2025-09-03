@@ -1,157 +1,195 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import {
-    CheckCircle,
-    ChevronDown,
-    Phone,
-    Mail,
-    User,
-    Globe,
-    MapPin,
+  CheckCircle,
+  ChevronDown,
+  Phone,
+  Mail,
+  User,
+  Globe,
+  MapPin,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 
 export default function Checkout() {
-    const { data: session } = useSession();
-    const accessToken = session?.user?.accessToken;
-    const [cart, setCart] = useState({
-        subtotal: 0,
-        savings: 0,
-        storePickup: 0,
-        tax: 0,
-        total: 0,
-    });
+  const { data: session } = useSession();
+  const accessToken = session?.user?.accessToken;
 
-    const initialFormData = {
-        your_name: "",
-        your_email: "",
-        phone: "",
-        country: "IN",
-        state: "",
-        city: "",
-        full_address: "",
-        pincode: "",
-        paymentMethod: "credit-card",
-        deliveryMethod: "dhl",
-        voucher: "",
-      };
+  const [cart, setCart] = useState({
+    subtotal: 0,
+    savings: 0,
+    storePickup: 0,
+    tax: 0,
+    total: 0,
+  });
 
-    // 🔹 Form state
-    const [formData, setFormData] = useState({
-        your_name: "",
-        your_email: "",
-        phone: "",
-        country: "IN",
-        state: "",
-        city: "",
-        full_address: "",
-        pincode: "",
-        paymentMethod: "credit-card",
-        deliveryMethod: "dhl",
-        voucher: "",
-    });
+  const [formData, setFormData] = useState({
+    your_name: "",
+    your_email: "",
+    phone: "",
+    country: "IN",
+    state: "",
+    city: "",
+    full_address: "",
+    pincode: "",
+    paymentMethod: "credit-card",
+    deliveryMethod: "dhl",
+    voucher: "",
+  });
+// Handle input changes
+const handleChange = (e) => {
+    const { id, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [id]: value,
+    }));
+  };
+  
+  const handleRadioChange = (e) => {
+    const { name, id } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: id,
+    }));
+  };
+  
+  
+  // Step 1: Initiate PhonePe Payment
+const initiatePayment = async () => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/phonepe/initiate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`, // Send token if user is logged in
+        },
+        body: JSON.stringify({
+          amount: cart.total * 100, // Convert to paise for PhonePe
+          redirectUrl: `${window.location.origin}/payment/callback`,
+        }),
+      });
+  
+      console.log("Raw fetch response:", response);
+  
+      // ✅ Parse the JSON body
+      const data = await response.json();
+      console.log("Parsed JSON response:", data);
+  
+      // ✅ Use the parsed data
+      if (data.success && data.redirectUrl) {
+        window.location.href = data.redirectUrl; // Redirect to PhonePe
+      } else {
+        alert(`Payment initiation failed: ${data.error || "Unknown error"}`);
+      }
+    } catch (err) {
+      console.error("Payment initiation error:", err);
+    }
+  };
+  
 
-    // 🔹 Handle input change
-    const handleChange = (e) => {
-        const { id, value } = e.target;
-        setFormData((prev) => ({ ...prev, [id]: value }));
-    };
+  
+  // Step 2: Place Order After Successful Payment
+  const placeOrder = async () => {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/checkout`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          userId: session?.user?.id,
+          delivery: {
+            name: formData.your_name,
+            email: formData.your_email,
+            phone: formData.phone,
+            addressLine1: formData.full_address,
+            city: formData.city,
+            state: formData.state,
+            postalCode: formData.pincode,
+            country: formData.country,
+          },
+          paymentMethod: formData.paymentMethod === "credit-card" ? "CARD" : "COD",
+          shippingMethod: formData.deliveryMethod === "dhl" ? "EXPRESS" : "STANDARD",
+        }),
+      });
 
-    // 🔹 Handle radio button change
-    const handleRadioChange = (e) => {
-        const { name, id } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: id }));
-    };
+      const data = await res.json();
 
-    // 🔹 Form submit
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        console.log("✅ Submitted Form:", formData);
-        try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/checkout`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}`, },
+      if (res.ok) {
+        alert("Order placed successfully!");
+        console.log("✅ Order created:", data);
+        sessionStorage.removeItem("pendingOrder");
+      } else {
+        alert("Failed to place order: " + data.error);
+      }
+    } catch (err) {
+      console.error("❌ Error placing order:", err);
+    }
+  };
 
-                body: JSON.stringify({
-                    userId: session?.user?.id, // 👈 next-auth से lo
-                    delivery: {
-                        name: formData.your_name,
-                        email: formData.your_email,
-                        phone: formData.phone,
-                        addressLine1: formData.full_address,
-                        addressLine2: "", // optional
-                        city: formData.city,
-                        state: formData.state,
-                        postalCode: formData.pincode,
-                        country: formData.country,
-                    },
-                    paymentMethod:
-                        formData.paymentMethod === "credit-card"
-                            ? "CARD"
-                            : formData.paymentMethod === "pay-on-delivery"
-                                ? "COD"
-                                : "PAYPAL", // mapping UI → Enum
-                    shippingMethod:
-                        formData.deliveryMethod === "dhl"
-                            ? "EXPRESS"
-                            : formData.deliveryMethod === "express"
-                                ? "EXPRESS"
-                                : "STANDARD",
-                }),
-            });
+  // Step 3: Detect callback from PhonePe
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get("status");
+    const merchantOrderId = params.get("merchantOrderId");
 
+    // If coming back from PhonePe after payment
+    if (status && merchantOrderId) {
+      const pendingOrder = sessionStorage.getItem("pendingOrder");
+
+      if (status === "success" && pendingOrder) {
+        placeOrder();
+      } else if (status === "failure") {
+        alert("Payment failed. Please try again.");
+      }
+    }
+  }, []);
+
+  // Load cart items
+  useEffect(() => {
+    const loadCart = async () => {
+      try {
+        let items = [];
+
+        if (accessToken) {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/cart`, {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          });
+          if (res.ok) {
             const data = await res.json();
-            if (res.ok) {
-                console.log("✅ Order created:", data);
-                alert("Order placed successfully!");
-            } else {
-                console.error("❌ Order error:", data.error);
-                alert("Failed: " + data.error);
-            }
-        } catch (err) {
-            console.error("❌ API error:", err);
+            items = data.items || [];
+          }
+        } else {
+          items = JSON.parse(localStorage.getItem("guest_cart") || "[]");
         }
+
+        const subtotal = items.reduce(
+          (acc, item) => acc + Number(item.price) * (item.qty || 1),
+          0
+        );
+
+        const savings = 0;
+        const storePickup = 0;
+        const tax = 0;
+        const total = subtotal - savings + storePickup + tax;
+
+        setCart({ subtotal, savings, storePickup, tax, total });
+      } catch (err) {
+        console.error("Error fetching cart:", err);
+      }
     };
 
-    // 🔹 Load cart
-    useEffect(() => {
-        const loadCart = async () => {
-            try {
-                let items = [];
+    loadCart();
+  }, [accessToken]);
 
-                if (accessToken) {
-                    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/cart`, {
-                        headers: { Authorization: `Bearer ${accessToken}` },
-                    });
-                    if (res.ok) {
-                        const data = await res.json();
-                        items = data.items || [];
-                        console.log("Fetched cart (auth):", data);
-                    }
-                } else {
-                    items = JSON.parse(localStorage.getItem("guest_cart") || "[]");
-                    console.log("Fetched cart (guest):", items);
-                }
+  // Form submission will now trigger PhonePe flow instead of direct checkout
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    await initiatePayment();
+  };
+  
 
-                const subtotal =
-                    items?.reduce(
-                        (acc, item) => acc + Number(item.price) * (item.qty || 1),
-                        0
-                    ) || 0;
-
-                const savings = 0;
-                const storePickup = 0;
-                const tax = 0;
-                const total = subtotal - savings + storePickup + tax;
-
-                setCart({ subtotal, savings, storePickup, tax, total });
-            } catch (err) {
-                console.error("Error fetching cart:", err);
-            }
-        };
-
-        loadCart();
-    }, [accessToken]);
 
     return (
         <>
