@@ -61,37 +61,36 @@ export default function UserDropdown() {
             Account
           </div>
           <ul className="p-2 text-sm font-medium text-gray-900 ">
+            {session.user?.role === "admin" && (
+              <li>
+                <Link href="/admin" className="block rounded-md px-3 py-2 font-semibold text-blue-800 hover:bg-blue-50">
+                  Review desk
+                </Link>
+              </li>
+            )}
             <li>
-              <a
+              <Link
                 href="/author-dashboard"
                 className="block px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600"
               >
                 Dashboard
-              </a>
+              </Link>
             </li>
             <li>
-              <a
+              <Link
                 href="/author-dashboard/update"
                 className="block px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600"
               >
                 Update Details
-              </a>
+              </Link>
             </li>
             <li>
-              <a
-                href="/author-dashboard/orders"
+              <Link
+                href="/author-dashboard/order"
                 className="block px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600"
               >
                 My Orders
-              </a>
-            </li>
-            <li>
-              <a
-                href="author-dashboard/wallet"
-                className="block px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600"
-              >
-                Earnings
-              </a>
+              </Link>
             </li>
           </ul>
           <div className="p-2 border-t border-gray-100 dark:border-gray-600">

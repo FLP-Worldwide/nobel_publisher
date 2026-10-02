@@ -168,7 +168,7 @@ export default function WriteToolDesign() {
         <div className="py-8 px-4 mx-auto max-w-full lg:py-16">
           <h1 className="text-2xl font-bold text-gray-900  mb-4">Book Content Design</h1>
           <h2 className="mb-6 text-lg text-gray-600 ">
-            Select your book's specifications, add content and design your cover and interior.
+            Select your book&apos;s specifications, add content and design your cover and interior.
           </h2>
 
           {error && <div className="mb-4 p-3 rounded border border-red-300 bg-red-50 text-red-700">{error.message}</div>}

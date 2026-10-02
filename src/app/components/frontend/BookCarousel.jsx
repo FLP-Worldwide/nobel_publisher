@@ -1,140 +1,93 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Swiper, SwiperSlide } from "swiper/react";
-import { Autoplay } from "swiper/modules";
-import "swiper/css";
+import { useEffect, useState } from "react";
+import { ArrowRight, BookOpen } from "lucide-react";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL; // e.g. https://api.example.com
+const API = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
 
-export default function BookCarousel({ heading = "Books" }) {
+function priceLabel(value, currency = "INR") {
+  const amount = Number(value);
+  if (!Number.isFinite(amount)) return "Price coming soon";
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: currency || "INR",
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
+
+export default function BookCarousel({ heading = "Published books", limit }) {
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState("");
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    let isMounted = true;
-
-    async function load() {
-      if (!API_BASE) {
-        setErr("Missing NEXT_PUBLIC_API_URL");
-        setLoading(false);
-        return;
-      }
-      try {
-        setLoading(true);
-        setErr("");
-        const res = await fetch(`${API_BASE}/books/all`, {
-          // If your public endpoint is different, e.g. /books/public, change here
-          method: "GET",
-         
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-        if (!res.ok) {
-          const txt = await res.text();
-          throw new Error(txt || `Request failed: ${res.status}`);
-        }
-        const data = await res.json();
-        if (isMounted) setBooks(Array.isArray(data) ? data : []);
-      } catch (e) {
-        if (isMounted) setErr(e.message || "Failed to load books");
-      } finally {
-        if (isMounted) setLoading(false);
-      }
+    if (!API) {
+      setError("The bookstore is not configured yet.");
+      setLoading(false);
+      return;
     }
-
-    load();
-    return () => {
-      isMounted = false;
-    };
+    const controller = new AbortController();
+    (async () => {
+      try {
+        const response = await fetch(`${API}/books/all`, { signal: controller.signal, cache: "no-store" });
+        const data = await response.json().catch(() => []);
+        if (!response.ok) throw new Error(data?.message || "Published books could not be loaded.");
+        setBooks(Array.isArray(data) ? data : []);
+      } catch (fetchError) {
+        if (fetchError.name !== "AbortError") setError(fetchError.message || "Published books could not be loaded.");
+      } finally {
+        setLoading(false);
+      }
+    })();
+    return () => controller.abort();
   }, []);
 
-  const normalizedBooks = useMemo(() => {
-    return (books || []).map((b) => {
-      // Try common cover locations; tweak these keys to match your API
-      const cover =
-        b.cover ||
-        b.coverUrl ||
-        b.image ||
-        b.thumbnail ||
-        b?.design?.coverUrl ||
-        b?.design?.cover ||
-        "https://images.unsplash.com/photo-1512820790803-83ca734da794?w=400";
-
-      const title = b.title || b.name || "Untitled";
-      return {
-        id: b.id ?? b._id ?? "",
-        title,
-        cover,
-        slug: b.slug, // optional, if you have slugs
-      };
-    });
-  }, [books]);
+  const visibleBooks = typeof limit === "number" ? books.slice(0, limit) : books;
 
   return (
-    <div className="px-6 py-6 bg-white">
-      <h4 className="text-2xl font-bold text-gray-900  mb-4">
-        {heading}
-      </h4>
+    <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:py-16">
+      <div className="mb-7 flex items-end justify-between gap-4">
+        <div>
+          <p className="text-sm font-bold uppercase tracking-[0.16em] text-blue-800">Nobel Books bookstore</p>
+          <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950">{heading}</h2>
+        </div>
+        <Link href="/bookstore" className="hidden items-center gap-2 text-sm font-bold text-blue-800 hover:text-blue-950 sm:inline-flex">View catalogue <ArrowRight className="h-4 w-4" /></Link>
+      </div>
 
       {loading && (
-        <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div
-              key={i}
-              className="w-full h-40 rounded-lg bg-gray-200  animate-pulse"
-            />
+        <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-5">
+          {Array.from({ length: 5 }).map((_, index) => <div key={index} className="aspect-[5/8] animate-pulse rounded-2xl bg-slate-100" />)}
+        </div>
+      )}
+
+      {!loading && error && <p role="alert" className="rounded-2xl border border-red-200 bg-red-50 p-5 text-red-800">{error}</p>}
+
+      {!loading && !error && visibleBooks.length === 0 && (
+        <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center">
+          <BookOpen className="mx-auto h-10 w-10 text-slate-300" />
+          <p className="mt-3 font-semibold text-slate-700">The first approved books will appear here.</p>
+        </div>
+      )}
+
+      {!loading && !error && visibleBooks.length > 0 && (
+        <div className="grid grid-cols-2 gap-x-5 gap-y-8 sm:grid-cols-3 lg:grid-cols-5">
+          {visibleBooks.map((book) => (
+            <Link key={book.id} href={`/book/${book.id}`} className="group min-w-0">
+              <div className="aspect-[5/8] overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-sm transition group-hover:-translate-y-1 group-hover:shadow-xl">
+                {book.frontCoverUrl ? (
+                  <img src={book.frontCoverUrl} alt={`${book.title} cover`} className="h-full w-full object-cover" loading="lazy" />
+                ) : (
+                  <div className="flex h-full flex-col items-center justify-center p-5 text-center text-slate-400"><BookOpen className="h-9 w-9" /><span className="mt-3 text-sm font-semibold">Cover coming soon</span></div>
+                )}
+              </div>
+              <h3 className="mt-4 truncate text-base font-bold text-slate-950 group-hover:text-blue-800">{book.title || "Untitled"}</h3>
+              <p className="mt-1 truncate text-sm text-slate-600">{book.authorName || "Independent author"}</p>
+              <p className="mt-2 text-sm font-bold text-slate-900">{priceLabel(book.retailPrice, book.currency)}</p>
+            </Link>
           ))}
         </div>
       )}
-
-      {!loading && err && (
-        <div className="text-red-600  text-sm">
-          {err}
-        </div>
-      )}
-
-      {!loading && !err && normalizedBooks.length === 0 && (
-        <div className="text-gray-600  text-sm">
-          No books found.
-        </div>
-      )}
-
-      {!loading && !err && normalizedBooks.length > 0 && (
-        <Swiper
-          spaceBetween={15}
-          slidesPerView={3}
-          autoplay={{ delay: 2500 }}
-          loop
-          modules={[Autoplay]}
-          breakpoints={{
-            640: { slidesPerView: 3 },
-            768: { slidesPerView: 4 },
-            1024: { slidesPerView: 6 },
-            1280: { slidesPerView: 6 },
-          }}
-        >
-          {normalizedBooks.map((book, index) => {
-            // Build the link. Prefer slug if you have it.
-            const href = book.slug ? `/book/${book.slug}` : `/book/${book.id}`;
-            return (
-              <SwiperSlide key={book.id || index}>
-                <Link href={href} className="block">
-                  <img
-                    src={book.cover}
-                    alt={book.title}
-                    className="w-full h-40 md:h-44 object-cover rounded-lg shadow-md hover:scale-105 transition-transform"
-                    loading="lazy"
-                  />
-                </Link>
-              </SwiperSlide>
-            );
-          })}
-        </Swiper>
-      )}
-    </div>
+    </section>
   );
 }

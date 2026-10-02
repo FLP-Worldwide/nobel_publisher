@@ -37,8 +37,111 @@ body {
   display: block;
 }
 
-/* Two column layout */
+/* Manuscript editor */
+.manuscript-editor {
+  min-height: min(70vh, 760px);
+  overflow-wrap: anywhere;
+}
+
+.manuscript-editor p,
+.manuscript-prose p {
+  margin: 0 0 1em;
+}
+
+.manuscript-editor ul,
+.manuscript-editor ol,
+.manuscript-prose ul,
+.manuscript-prose ol {
+  margin: 0 0 1em 1.5em;
+}
+
+.manuscript-editor ul,
+.manuscript-prose ul {
+  list-style: disc;
+}
+
+.manuscript-editor ol,
+.manuscript-prose ol {
+  list-style: decimal;
+}
+
+.manuscript-prose a {
+  color: #1d4ed8;
+  text-decoration: underline;
+}
+
 .editor-two-col {
   column-count: 2;
-  column-gap: 2rem; /* space between columns */
+  column-gap: 3rem;
+  column-rule: 1px solid #e2e8f0;
+}
+
+.toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.375rem;
+  color: #475569;
+}
+
+.toolbar-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.toolbar-btn:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+.toolbar-btn-active {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+@media (max-width: 767px) {
+  .editor-two-col {
+    column-count: 1;
+    column-rule: 0;
+  }
+}
+
+@media print {
+  @page {
+    margin: 0.5in;
+  }
+
+  body {
+    background: white !important;
+  }
+
+  .book-preview-controls {
+    display: none !important;
+  }
+
+  .book-reading-view,
+  .book-print-pages {
+    border: 0 !important;
+    box-shadow: none !important;
+    background: white !important;
+    padding: 0 !important;
+  }
+
+  .book-reading-view > section {
+    break-before: page;
+  }
+
+  .book-print-pages > section {
+    break-after: page;
+  }
+
+  .book-preview-page-scale {
+    zoom: 1 !important;
+  }
+
+  .book-page {
+    box-shadow: none !important;
+  }
 }

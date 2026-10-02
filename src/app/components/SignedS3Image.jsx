@@ -63,7 +63,13 @@ export default function SignedS3Image({
       src={url || fallback}
       alt={alt}
       className={className}
-      onError={(e) => (e.currentTarget.src = fallback)}
+      onError={(event) => {
+        if (event.currentTarget.src.endsWith(fallback)) {
+          event.currentTarget.onerror = null;
+          return;
+        }
+        event.currentTarget.src = fallback;
+      }}
       loading="lazy"
     />
   );

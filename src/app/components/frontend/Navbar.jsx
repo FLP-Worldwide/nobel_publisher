@@ -1,82 +1,32 @@
 "use client";
-import React from "react";
-import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
 import UserDropdown from "./UserDropdown";
 import CartDropdown from "./CartDropdown";
 
 export default function Navbar() {
-  const { data: session } = useSession();
-
   return (
-    <nav className="bg-white  shadow-sm">
-      <div className="flex items-center justify-between max-w-full mx-auto p-4 px-8">
-        {/* Left: Logo + Menu */}
-        <div className="flex items-center space-x-8">
+    <nav className="border-b border-slate-200 bg-white shadow-sm" aria-label="Main navigation">
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
+        <div className="flex min-w-0 items-center gap-7">
           <Link href="/" className="flex items-center space-x-2">
-            <img src="/logo.png" className="h-12" alt="Logo" />
+            <img src="/logo.png" className="h-10 w-auto sm:h-12" alt="Nobel Books" />
           </Link>
-          <ul className="hidden md:flex space-x-6 font-medium">
+          <ul className="hidden items-center gap-6 text-sm font-semibold text-slate-700 md:flex">
             <li>
-              <Link
-                href="/bookstore"
-                className="text-gray-900 hover:text-blue-600 "
-              >
-                Collections
-              </Link>
+              <Link href="/bookstore" className="hover:text-blue-700">Bookstore</Link>
             </li>
             <li>
-              <Link
-                href="#"
-                className="text-gray-900 hover:text-blue-600 "
-              >
-                Authors
-              </Link>
+              <Link href="/write/tool" className="hover:text-blue-700">Write a book</Link>
             </li>
             <li>
-              <Link
-                href="#"
-                className="text-gray-900 hover:text-blue-600 "
-              >
-                Genre
-              </Link>
+              <Link href="/author-dashboard" className="hover:text-blue-700">My books</Link>
             </li>
           </ul>
         </div>
 
-        {/* Center: Search */}
-        <div className="flex-1 mx-8 max-w-lg hidden md:block">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search by book name, Author name..."
-              className="w-full pl-10 pr-4 py-2 text-sm rounded-lg border border-gray-300 bg-gray-50 focus:ring-blue-500 focus:border-blue-500  "
-            />
-            <svg
-              className="absolute left-3 top-2.5 w-4 h-4 text-gray-500 "
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 20 20"
-            >
-              <path
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"
-              />
-            </svg>
-          </div>
-        </div>
-
-        {/* Right: Request Call + User info + Logout */}
-        <div className="flex items-center space-x-4">
-         
+        <div className="flex shrink-0 items-center gap-3">
           <CartDropdown />
-          
-
-          <UserDropdown/>
-
+          <UserDropdown />
         </div>
       </div>
     </nav>

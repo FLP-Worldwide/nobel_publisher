@@ -139,8 +139,8 @@ export default function WriteTool() {
       },
     });
     if (!res.ok) {
-      const txt = await res.text().catch(() => "");
-      throw new Error(txt || `Failed to load book (${res.status})`);
+      const result = await res.json().catch(() => ({}));
+      throw new Error(result?.message || `Could not load this book (${res.status})`);
     }
     return res.json();
   };

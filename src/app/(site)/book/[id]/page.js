@@ -1,220 +1,231 @@
 "use client";
-import Breadcrumb from '@/app/components/Breadcrumb'
-import BookCarousel from '@/app/components/frontend/BookCarousel';
-import React, { useState } from 'react'
-import { useParams } from 'next/navigation';
-import { useSession } from 'next-auth/react';
 
-export default function Book() {
-  const { data: session, status } = useSession();
-  const accessToken = session?.user?.accessToken;
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  ArrowLeft,
+  BookOpen,
+  CheckCircle2,
+  Languages,
+  PackageCheck,
+  ShoppingCart,
+  Tag,
+} from "lucide-react";
+import SignedS3Image from "@/app/components/SignedS3Image";
 
+const API = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
+
+function formatPrice(value, currency = "INR") {
+  const amount = Number(value);
+  if (!Number.isFinite(amount)) return null;
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: currency || "INR",
+    maximumFractionDigits: 2,
+  }).format(amount);
+}
+
+export default function PublishedBookPage() {
   const params = useParams();
-  const [expanded, setExpanded] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const { data: session } = useSession();
+  const bookId = Array.isArray(params?.id) ? params.id[0] : params?.id;
+  const [book, setBook] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [adding, setAdding] = useState(false);
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
 
-  const toggleDescription = () => setExpanded(!expanded);
-
-
-// Add to cart API
-const addToCart = async (bookId, price) => {
-  try {
-    setLoading(true);
-
-    if (accessToken) {
-      // ✅ Logged-in user → Send to backend
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/cart/items`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({ bookId, qty: 1, price }),
-      });
-
-      if (!res.ok) throw new Error("Failed to add to cart");
-      const data = await res.json();
-      console.log("Cart updated:", data);
-      alert("Added to cart ✅");
-    } else {
-      // ✅ Guest user → Save to localStorage
-      const existingCart = JSON.parse(localStorage.getItem("guest_cart") || "[]");
-
-      // Check if book already exists
-      const existingItemIndex = existingCart.findIndex(
-        (item) => item.bookId === bookId
-      );
-
-      if (existingItemIndex > -1) {
-        // Update qty if already in cart
-        existingCart[existingItemIndex].qty += 1;
-      } else {
-        // Add as new item
-        existingCart.push({ bookId, qty: 1, price });
-      }
-
-      localStorage.setItem("guest_cart", JSON.stringify(existingCart));
-      console.log("Cart saved locally:", existingCart);
-      alert("Added to cart (local) ✅");
+  useEffect(() => {
+    if (!bookId || !API) {
+      setLoading(false);
+      setError("The bookstore is not configured yet.");
+      return;
     }
-  } catch (err) {
-    console.error(err);
-    alert("Error adding to cart ❌");
-  } finally {
-    setLoading(false);
-  }
-};
 
+    const controller = new AbortController();
+    (async () => {
+      try {
+        const response = await fetch(`${API}/books/public/${bookId}`, {
+          cache: "no-store",
+          signal: controller.signal,
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data?.message || "This published book could not be found.");
+        setBook(data);
+      } catch (fetchError) {
+        if (fetchError.name !== "AbortError") {
+          setError(fetchError.message || "This published book could not be found.");
+        }
+      } finally {
+        setLoading(false);
+      }
+    })();
+
+    return () => controller.abort();
+  }, [bookId]);
+
+  const price = useMemo(
+    () => formatPrice(book?.retailPrice, book?.currency),
+    [book?.currency, book?.retailPrice],
+  );
+
+  async function addToCart() {
+    if (!book || !price) return;
+    setAdding(true);
+    setError("");
+    setNotice("");
+
+    try {
+      const token = session?.user?.accessToken;
+      if (token) {
+        const response = await fetch(`${API}/cart/items`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ bookId: book.id, qty: 1 }),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data?.message || "The book could not be added to your cart.");
+      } else {
+        const existing = JSON.parse(window.localStorage.getItem("guest_cart") || "[]");
+        const index = existing.findIndex((item) => Number(item.bookId) === Number(book.id));
+        if (index >= 0) {
+          existing[index].qty = Number(existing[index].qty || 0) + 1;
+        } else {
+          existing.push({
+            bookId: book.id,
+            qty: 1,
+            title: book.title,
+            authorName: book.authorName,
+            price: Number(book.retailPrice),
+            coverUrl: book.frontCoverUrl || "",
+          });
+        }
+        window.localStorage.setItem("guest_cart", JSON.stringify(existing));
+        window.dispatchEvent(new Event("cart-updated"));
+      }
+      setNotice(session ? "Added to your cart." : "Saved in your cart. Sign in when you are ready to check out.");
+    } catch (cartError) {
+      setError(cartError.message || "The book could not be added to your cart.");
+    } finally {
+      setAdding(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <main className="mx-auto min-h-[65vh] max-w-7xl px-4 py-12 sm:px-6">
+        <div className="animate-pulse rounded-3xl bg-slate-100 p-10 text-slate-500">Opening the book…</div>
+      </main>
+    );
+  }
+
+  if (!book) {
+    return (
+      <main className="mx-auto min-h-[65vh] max-w-3xl px-4 py-16 text-center sm:px-6">
+        <BookOpen className="mx-auto h-12 w-12 text-slate-300" />
+        <h1 className="mt-5 text-2xl font-bold text-slate-950">Book unavailable</h1>
+        <p className="mt-2 text-slate-600">{error || "This book is not in the published catalogue."}</p>
+        <Link href="/bookstore" className="mt-7 inline-flex items-center gap-2 rounded-xl bg-blue-800 px-5 py-3 font-bold text-white hover:bg-blue-900">
+          <ArrowLeft className="h-4 w-4" /> Browse published books
+        </Link>
+      </main>
+    );
+  }
+
+  const author = [book.authorName, book.coAuthor].filter(Boolean).join(" with ");
+  const attributes = [
+    { label: "Language", value: book.language, icon: Languages },
+    { label: "Genre", value: book.genre, icon: Tag },
+    { label: "Format", value: book.design?.bindingType?.replaceAll("_", " "), icon: BookOpen },
+    { label: "Trim size", value: book.design?.size?.replaceAll("_", " "), icon: PackageCheck },
+  ].filter((item) => item.value);
 
   return (
-    <>
-      <div class="max-w-full px-4">
-        <Breadcrumb />
-        <section class="py-8 bg-white md:py-16 dark:bg-gray-900 antialiased">
-          <div class=" px-4 mx-auto">
-            <div class="lg:grid lg:grid-cols-12 lg:gap-8 xl:gap-16">
+    <main className="bg-gradient-to-b from-slate-50 to-white">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:py-14">
+        <Link href="/bookstore" className="inline-flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-blue-800">
+          <ArrowLeft className="h-4 w-4" /> Back to bookstore
+        </Link>
 
-
-              <div class="lg:col-span-4 shrink-0 max-w-md lg:max-w-lg mx-auto">
-                <img class="w-full dark:hidden" src="https://i5.walmartimages.com/seo/The-Boy-Behind-the-Blog-Paperback_96c23ff6-f032-452a-9b14-342b56d12a4f.e9d4d3506a6787f0ca8e630b42ae01c4.jpeg?odnHeight=768&odnWidth=768&odnBg=FFFFFF" alt="Light Mode iMac" />
-              </div>
-
-
-              <div class="mt-6 sm:mt-8 lg:mt-0 lg:col-span-5">
-                <h1 class="text-xl font-semibold text-gray-900 sm:text-4xl dark:text-white">
-                  The Macro Faire
-                </h1>
-                <p>An Investor's Guide To Macroeconomics
-                </p>
-
-                <div class="mt-4 sm:items-center sm:gap-4 sm:flex">
-
-                  <div class="flex items-center gap-2">
-                    <div class="flex items-center gap-1 text-yellow-300">
-                      <svg class="w-4 h-4 text-yellow-300" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24" > <path d="M13.849 4.22c-.684-1.626-3.014-1.626-3.698 0L8.397 8.387l-4.552.361c-1.775.14-2.495 2.331-1.142 3.477l3.468 2.937-1.06 4.392c-.413 1.713 1.472 3.067 2.992 2.149L12 19.35l3.897 2.354c1.52.918 3.405-.436 2.992-2.15l-1.06-4.39 3.468-2.938c1.353-1.146.633-3.336-1.142-3.477l-4.552-.36-1.754-4.17Z" /> </svg> <svg class="w-4 h-4 text-yellow-300" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24" > <path d="M13.849 4.22c-.684-1.626-3.014-1.626-3.698 0L8.397 8.387l-4.552.361c-1.775.14-2.495 2.331-1.142 3.477l3.468 2.937-1.06 4.392c-.413 1.713 1.472 3.067 2.992 2.149L12 19.35l3.897 2.354c1.52.918 3.405-.436 2.992-2.15l-1.06-4.39 3.468-2.938c1.353-1.146.633-3.336-1.142-3.477l-4.552-.36-1.754-4.17Z" /> </svg> <svg class="w-4 h-4 text-yellow-300" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24" > <path d="M13.849 4.22c-.684-1.626-3.014-1.626-3.698 0L8.397 8.387l-4.552.361c-1.775.14-2.495 2.331-1.142 3.477l3.468 2.937-1.06 4.392c-.413 1.713 1.472 3.067 2.992 2.149L12 19.35l3.897 2.354c1.52.918 3.405-.436 2.992-2.15l-1.06-4.39 3.468-2.938c1.353-1.146.633-3.336-1.142-3.477l-4.552-.36-1.754-4.17Z" /> </svg> <svg class="w-4 h-4 text-yellow-300" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24" > <path d="M13.849 4.22c-.684-1.626-3.014-1.626-3.698 0L8.397 8.387l-4.552.361c-1.775.14-2.495 2.331-1.142 3.477l3.468 2.937-1.06 4.392c-.413 1.713 1.472 3.067 2.992 2.149L12 19.35l3.897 2.354c1.52.918 3.405-.436 2.992-2.15l-1.06-4.39 3.468-2.938c1.353-1.146.633-3.336-1.142-3.477l-4.552-.36-1.754-4.17Z" /> </svg> <svg class="w-4 h-4 text-yellow-300" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24" > <path d="M13.849 4.22c-.684-1.626-3.014-1.626-3.698 0L8.397 8.387l-4.552.361c-1.775.14-2.495 2.331-1.142 3.477l3.468 2.937-1.06 4.392c-.413 1.713 1.472 3.067 2.992 2.149L12 19.35l3.897 2.354c1.52.918 3.405-.436 2.992-2.15l-1.06-4.39 3.468-2.938c1.353-1.146.633-3.336-1.142-3.477l-4.552-.36-1.754-4.17Z" /> </svg>
-                    </div>
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">(5.0)</p>
-                    <a href="#" class="text-sm font-medium text-gray-900 underline hover:no-underline dark:text-white">345 Reviews</a>
-                  </div>
-                </div>
-
-                <hr class="my-6 md:my-8 border-gray-200 dark:border-gray-800" />
-
-                <p id="description"
-                  className={`text-gray-700 transition-all duration-300 ${
-                    expanded ? "line-clamp-none" : "line-clamp-4"
-                  }`}>
-                  “Crude prices to surge to USD 300 a barrel”, “Rupee to slide further”, “World Bank cuts India’s GDP forecast”: these news headlines are just the tip of the iceberg. How the markets react to the macroeconomic environment is heavily news-driven, given that the same data can be interpreted in several ways. To complicate things further, investors today have an overwhelming array of choices at every level, including asset classes, geography, investment horizons, and reasons to invest! ‘The Macro Faire’, your DIY kit to top-down investing, aims to help build an understanding of macro data starting from the very basics. It will equip you with a set of tools that will let you interpret data in all market conditions and make better investing decisions. If you’ve been putting off diving deeper into macroeconomics because you believe it’s too complex, this is just the book you need to get you over the hump, one chapter at a time! 
-                </p>
-
-                <button
-                   id="toggleBtn"
-                  onClick={toggleDescription}
-                  className="mt-3 text-primary hover:underline font-medium"
-                >
-                  {expanded ? "Read Less" : "Read More"}
-                </button>
-
-
-                <div class="mt-12 border-t border-gray-200 dark:border-gray-700 pt-8">
-                  <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                    Also Available On
-                  </h2>
-                  <div class="flex items-center space-x-6 mb-8">
-                    <a href="#">
-                      Buy on Amazon Kinddle Book
-                    </a>
-                    <a href="#">
-                    Buy on Flipkart
-                    </a>
-                    <a href="#">
-                    Buy on Amazon
-                    </a>
-                  </div>
-                  <div class="border-t border-gray-200 dark:border-gray-700 pt-8">
-                    <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">
-                      Ratings & Reviews
-                    </h2>
-
-                    <div class="flex items-center mb-6">
-                      <span class="text-4xl font-bold text-gray-900 dark:text-white">4.5</span>
-                      <div class="ml-3">
-                        <div class="flex items-center">
-                          <svg class="w-4 h-4 text-yellow-300" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24" > <path d="M13.849 4.22c-.684-1.626-3.014-1.626-3.698 0L8.397 8.387l-4.552.361c-1.775.14-2.495 2.331-1.142 3.477l3.468 2.937-1.06 4.392c-.413 1.713 1.472 3.067 2.992 2.149L12 19.35l3.897 2.354c1.52.918 3.405-.436 2.992-2.15l-1.06-4.39 3.468-2.938c1.353-1.146.633-3.336-1.142-3.477l-4.552-.36-1.754-4.17Z" /> </svg> <svg class="w-4 h-4 text-yellow-300" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24" > <path d="M13.849 4.22c-.684-1.626-3.014-1.626-3.698 0L8.397 8.387l-4.552.361c-1.775.14-2.495 2.331-1.142 3.477l3.468 2.937-1.06 4.392c-.413 1.713 1.472 3.067 2.992 2.149L12 19.35l3.897 2.354c1.52.918 3.405-.436 2.992-2.15l-1.06-4.39 3.468-2.938c1.353-1.146.633-3.336-1.142-3.477l-4.552-.36-1.754-4.17Z" /> </svg> <svg class="w-4 h-4 text-yellow-300" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24" > <path d="M13.849 4.22c-.684-1.626-3.014-1.626-3.698 0L8.397 8.387l-4.552.361c-1.775.14-2.495 2.331-1.142 3.477l3.468 2.937-1.06 4.392c-.413 1.713 1.472 3.067 2.992 2.149L12 19.35l3.897 2.354c1.52.918 3.405-.436 2.992-2.15l-1.06-4.39 3.468-2.938c1.353-1.146.633-3.336-1.142-3.477l-4.552-.36-1.754-4.17Z" /> </svg> <svg class="w-4 h-4 text-yellow-300" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24" > <path d="M13.849 4.22c-.684-1.626-3.014-1.626-3.698 0L8.397 8.387l-4.552.361c-1.775.14-2.495 2.331-1.142 3.477l3.468 2.937-1.06 4.392c-.413 1.713 1.472 3.067 2.992 2.149L12 19.35l3.897 2.354c1.52.918 3.405-.436 2.992-2.15l-1.06-4.39 3.468-2.938c1.353-1.146.633-3.336-1.142-3.477l-4.552-.36-1.754-4.17Z" /> </svg> <svg class="w-4 h-4 text-yellow-300" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24" > <path d="M13.849 4.22c-.684-1.626-3.014-1.626-3.698 0L8.397 8.387l-4.552.361c-1.775.14-2.495 2.331-1.142 3.477l3.468 2.937-1.06 4.392c-.413 1.713 1.472 3.067 2.992 2.149L12 19.35l3.897 2.354c1.52.918 3.405-.436 2.992-2.15l-1.06-4.39 3.468-2.938c1.353-1.146.633-3.336-1.142-3.477l-4.552-.36-1.754-4.17Z" /> </svg>
-                        </div>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Based on 1,234 reviews</p>
-                      </div>
-                    </div>
-
-
-                  </div>
-                </div>
-
-
-              </div>
-
-
-              <div class="mt-6 sm:mt-8 lg:mt-0 lg:col-span-3  ">
-                <div class="border-2 rounded-md border-gray-200 p-4 flex flex-col items-start">
-                  <p class="text-2xl font-extrabold text-gray-900 sm:text-3xl dark:text-white">$1,249.99</p>
-
-                  <div class="mt-6 flex flex-col gap-4 w-full">
-
-                    <a href="#" class="flex items-center justify-center py-2.5 px-5 text-sm font-medium text-gray-900 bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:text-white">
-                      Add to Favorites
-                    </a>
-
-                    <a href="#" onClick={()=>addToCart(1,100)} class="text-white mt-4 sm:mt-0 bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800 flex items-center justify-center" role="button"  >
-                      <svg class="w-5 h-5 -ms-2 me-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" > <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4h1.5L8 16m0 0h8m-8 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm8 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm.75-3H7.5M11 7H6.312M17 4v6m-3-3h6" /> </svg>
-                      Buy Now
-                    </a>
-                  </div>
-                </div>
-              </div>
-
+        <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(260px,360px)_minmax(0,1fr)_300px] lg:gap-12">
+          <div className="mx-auto w-full max-w-[360px]">
+            <div className="aspect-[5/8] overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-xl">
+              <SignedS3Image
+                directUrl={book.frontCoverUrl}
+                alt={`${book.title} front cover`}
+                className="h-full w-full object-cover"
+              />
             </div>
           </div>
 
-          
-          <div class=" mx-auto p-6 bg-white border border-gray-200 rounded-lg shadow-sm md:grid md:grid-cols-6 gap-8">
-  
+          <article className="min-w-0">
+            <p className="text-sm font-bold uppercase tracking-[0.16em] text-blue-800">Published book</p>
+            <h1 className="mt-3 text-4xl font-black tracking-tight text-slate-950 sm:text-5xl">{book.title}</h1>
+            {book.subheading && <p className="mt-3 text-xl leading-8 text-slate-600">{book.subheading}</p>}
+            <p className="mt-5 text-lg font-semibold text-slate-800">by {author || "Independent author"}</p>
 
-              <div class="flex justify-center md:col-span-1">
-                <img class="w-40 h-40 rounded-full object-cover" 
-                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSQf85Mvi1uopaEpb5ZeoCaT0lDT90XN_Z8bg&s" 
-                    alt="Profile photo"/>
+            {attributes.length > 0 && (
+              <dl className="mt-8 grid gap-3 sm:grid-cols-2">
+                {attributes.map(({ label, value, icon: Icon }) => (
+                  <div key={label} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3">
+                    <Icon className="h-5 w-5 text-blue-800" />
+                    <div><dt className="text-xs font-bold uppercase tracking-wide text-slate-500">{label}</dt><dd className="mt-0.5 capitalize text-slate-800">{String(value).toLowerCase()}</dd></div>
+                  </div>
+                ))}
+              </dl>
+            )}
+
+            <section className="mt-9 border-t border-slate-200 pt-8">
+              <h2 className="text-xl font-bold text-slate-950">About this book</h2>
+              <p className="mt-3 whitespace-pre-wrap text-base leading-8 text-slate-700">{book.description || "The author has not added a description yet."}</p>
+            </section>
+
+            {book.authorBiography && (
+              <section className="mt-8 border-t border-slate-200 pt-8">
+                <h2 className="text-xl font-bold text-slate-950">About {book.authorName || "the author"}</h2>
+                <p className="mt-3 whitespace-pre-wrap leading-8 text-slate-700">{book.authorBiography}</p>
+              </section>
+            )}
+
+            {Array.isArray(book.categories) && book.categories.length > 0 && (
+              <div className="mt-8 flex flex-wrap gap-2" aria-label="Book categories">
+                {book.categories.map((category) => <span key={category} className="rounded-full bg-slate-100 px-3 py-1.5 text-sm font-semibold text-slate-700">{category}</span>)}
               </div>
+            )}
+          </article>
 
-
-              <div class="md:col-span-5 flex flex-col justify-center">
-                <h2 class="text-2xl font-bold text-gray-900">Kartik Maandothiya</h2>
-                <p class="mt-2 text-gray-600">
-                  I’m Kartik Mandothiya, Delhi is my birth town and little we know it is bordered by the state of Haryana on three sides and by Uttar Pradesh to the east. 
-                  For this reason, sometimes you will get a touch of the local language of Delhi as included little Bihari, Haryanvi or maybe Bhojpuri.
-                </p>
-                <p class="mt-2 text-gray-600">
-                  I love fashion, movies, music, Designs, food and even more better Chai rather than Coffee.
-                </p>
-                <a href="#" class="mt-2 text-red-500 hover:underline">Read More...</a>
-
-
-                <h3 class="mt-6 text-lg font-semibold text-gray-900">Achievements</h3>
-                <div class="flex items-center space-x-4 mt-3">
-                  <img src="https://i.pinimg.com/1200x/4d/87/36/4d87367ae22dc29bdbcf38f827c5c629.jpg" alt="badge" class="w-12 h-12 rounded-full"/>
-                  <img src="https://i.pinimg.com/1200x/4d/87/36/4d87367ae22dc29bdbcf38f827c5c629.jpg" alt="badge" class="w-12 h-12 rounded-full"/>
-                  <img src="https://i.pinimg.com/1200x/4d/87/36/4d87367ae22dc29bdbcf38f827c5c629.jpg" alt="badge" class="w-12 h-12 rounded-full"/>
-                  <a href="#" class="text-red-500 hover:underline">View All</a>
-                </div>
-              </div>
-            </div>
-
-
-            <BookCarousel heading={"Similer Book"}/>  
-        </section>
-
-        
+          <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-5 shadow-lg lg:sticky lg:top-6">
+            {price ? (
+              <>
+                <p className="text-sm text-slate-500">Paperback price</p>
+                <p className="mt-1 text-3xl font-black text-slate-950">{price}</p>
+                <p className="mt-3 flex items-center gap-2 text-sm text-emerald-700"><CheckCircle2 className="h-4 w-4" /> Available to order</p>
+                <button
+                  type="button"
+                  onClick={addToCart}
+                  disabled={adding}
+                  className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-800 px-5 py-3.5 font-bold text-white hover:bg-blue-900 disabled:cursor-wait disabled:opacity-60"
+                >
+                  <ShoppingCart className="h-5 w-5" /> {adding ? "Adding…" : "Add to cart"}
+                </button>
+                <p className="mt-3 text-xs leading-5 text-slate-500">Delivery charges and the final total are shown at checkout.</p>
+              </>
+            ) : (
+              <>
+                <p className="font-bold text-slate-950">Ordering is not available yet</p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">The author has not set a retail price for this edition.</p>
+              </>
+            )}
+            {notice && <p role="status" className="mt-4 rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800">{notice}</p>}
+            {error && <p role="alert" className="mt-4 rounded-xl bg-red-50 p-3 text-sm text-red-800">{error}</p>}
+          </aside>
+        </div>
       </div>
-    </>
-  )
-
+    </main>
+  );
 }

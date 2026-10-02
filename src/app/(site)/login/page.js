@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { Suspense, useState } from "react";
 import { getSession, signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
-export default function Login() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
@@ -27,17 +28,18 @@ export default function Login() {
     setLoading(false);
   
     if (res?.ok) {
+      let loggedInSession = null;
       try {
         // ✅ get accessToken after login
-        const session = await getSession();
-        const accessToken = session?.user?.accessToken;
+        loggedInSession = await getSession();
+        const accessToken = loggedInSession?.user?.accessToken;
   
         // ✅ load guest cart
         const guestCart = JSON.parse(localStorage.getItem("guest_cart") || "[]");
   
         if (guestCart.length > 0 && accessToken) {
           for (const item of guestCart) {
-            const { bookId, qty, price } = item;
+            const { bookId, qty } = item;
   
             await fetch(`${process.env.NEXT_PUBLIC_API_URL}/cart/items`, {
               method: "POST",
@@ -45,7 +47,7 @@ export default function Login() {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${accessToken}`,
               },
-              body: JSON.stringify({ bookId, qty, price }),
+              body: JSON.stringify({ bookId, qty }),
             });
           }
   
@@ -60,7 +62,9 @@ export default function Login() {
       if (remember) localStorage.setItem("rememberMe", "1");
       else localStorage.removeItem("rememberMe");
   
-      router.push("/author-dashboard");
+      const callbackUrl = searchParams.get("callbackUrl");
+      const destination = callbackUrl || (loggedInSession?.user?.role === "admin" ? "/admin" : "/author-dashboard");
+      router.push(destination);
     } else {
       setError(res?.error || "Invalid email or password.");
     }
@@ -74,12 +78,11 @@ export default function Login() {
         {/* Left Image / Text Section */}
         <div className="hidden md:flex w-1/2 bg-blue-400 flex-col justify-center items-center text-white p-8">
           <h2 className="text-2xl font-bold mb-4 text-center">
-            Join the fastest growing publishing platform in the world
+            Your book starts here
           </h2>
-          <p className="text-sm italic text-center">
-            "An Excellent and Dedicated Team with an established presence in the publishing industry."
+          <p className="text-sm text-center text-blue-50">
+            Write privately, preview every page, receive an editorial decision, and pay ₹199 only after approval.
           </p>
-          <p className="mt-2 text-sm font-semibold">- Vivek Sreedhar</p>
         </div>
 
         {/* Right Form Section */}
@@ -163,5 +166,13 @@ export default function Login() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function Login() {
+  return (
+    <Suspense fallback={<div className="min-h-90 bg-gray-50 py-16 text-center text-sm text-gray-600">Opening sign in…</div>}>
+      <LoginForm />
+    </Suspense>
   );
 }

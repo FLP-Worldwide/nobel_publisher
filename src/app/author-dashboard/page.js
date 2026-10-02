@@ -1,146 +1,177 @@
 "use client";
-import React, { useEffect, useState, useCallback } from "react";
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import UserHeroSection from "../components/dashbaord/UserHeroSection";
-import BookCard from "../components/dashbaord/BookCard";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL;
+import BookCard from "../components/dashbaord/BookCard";
+import UserHeroSection from "../components/dashbaord/UserHeroSection";
+import { BookOpen, Loader2, Plus, RefreshCw } from "lucide-react";
+import { useSession } from "next-auth/react";
+import Link from "next/link";
+import { useCallback, useEffect, useMemo, useState } from "react";
+
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
 
 export default function AuthorDashboard() {
-  const router = useRouter();
-  const { data: session, status } = useSession();
+  const { data: session, status: sessionStatus } = useSession();
   const accessToken = session?.user?.accessToken;
 
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState("");
+  const [deletingId, setDeletingId] = useState(null);
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
 
-  const authHeaders = useCallback(() => {
-    const base = { "Content-Type": "application/json" };
-    return accessToken ? { ...base, Authorization: `Bearer ${accessToken}` } : base;
-  }, [accessToken]);
+  const authHeaders = useMemo(
+    () => ({
+      "Content-Type": "application/json",
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+    }),
+    [accessToken]
+  );
 
   const fetchBooks = useCallback(async () => {
+    if (sessionStatus === "loading") return;
     if (!API_BASE) {
-      setErr("API base URL is not configured. Set NEXT_PUBLIC_API_URL in your env.");
+      setError("The publishing service is not configured.");
       setLoading(false);
       return;
     }
+    if (!accessToken) {
+      setError("Please sign in as an author to view your books.");
+      setLoading(false);
+      return;
+    }
+
     try {
-      setErr("");
+      setError("");
       setLoading(true);
-      const res = await fetch(`${API_BASE}/books`, { headers: authHeaders() });
-      if (!res.ok) throw new Error(`Failed to load books: ${res.status}`);
-      const data = await res.json();
-      setBooks(Array.isArray(data) ? data : []);
-    } catch (e) {
-      console.error("Fetch books error:", e);
-      setErr(e?.message || "Failed to load books");
+      const response = await fetch(`${API_BASE}/books`, {
+        headers: authHeaders,
+        cache: "no-store",
+      });
+      const result = await response.json().catch(() => ([]));
+      if (!response.ok) throw new Error(result?.message || `Could not load books (${response.status})`);
+      setBooks(Array.isArray(result) ? result : []);
+    } catch (fetchError) {
+      setError(fetchError?.message || "Could not load your books.");
       setBooks([]);
     } finally {
       setLoading(false);
     }
-  }, [authHeaders]);
+  }, [accessToken, authHeaders, sessionStatus]);
 
   useEffect(() => {
-    // Wait until NextAuth knows whether we're logged in to avoid 401 flashes.
-    if (status === "loading") return;
-    // If your /books endpoint allows public reads, this still works when unauthenticated.
     fetchBooks();
-  }, [status, accessToken, fetchBooks]);
+  }, [fetchBooks]);
 
   async function handleDelete(id) {
-    if (!API_BASE) return alert("Missing NEXT_PUBLIC_API_URL");
-    const ok = window.confirm("Delete this book permanently?");
-    if (!ok) return;
+    if (!API_BASE || !id) return;
+    const book = books.find((item) => (item.id ?? item._id) === id);
+    const confirmed = window.confirm(
+      `Move “${book?.title || "this book"}” to trash? It will no longer appear on your dashboard.`
+    );
+    if (!confirmed) return;
 
     try {
-      setLoading(true);
-
-      const res = await fetch(`${API_BASE}/books/${id}`, {
+      setDeletingId(id);
+      setNotice("");
+      const response = await fetch(`${API_BASE}/books/${id}`, {
         method: "DELETE",
-        headers: authHeaders(),
+        headers: authHeaders,
       });
-
-      if (!res.ok) throw new Error(`Delete failed: ${res.status}`);
-      await fetchBooks();
-    } catch (e) {
-      console.error(e);
-      alert(e?.message || "Failed to delete book");
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result?.message || `Could not move book to trash (${response.status})`);
+      setBooks((current) => current.filter((item) => (item.id ?? item._id) !== id));
+      setNotice("Book moved to trash.");
+    } catch (deleteError) {
+      setError(deleteError?.message || "Could not move the book to trash.");
     } finally {
-      setLoading(false);
+      setDeletingId(null);
     }
   }
 
-  function handleContinue(id) {
-    router.push(`/write/tool/${id}`);
-  }
-
   return (
-    <>
-    <section className="bg-white">
-      <UserHeroSection />
+    <main className="min-h-screen bg-slate-50">
+      <UserHeroSection books={books} loading={loading} />
 
-      {/* Ads Section */}
-      <div className="px-8 mb-4">
-        <img
-          src="https://notionpress.com/new-rewamp/images/weekly_contest/IAC_Sep_25/21_IAC_Web_Banner_May_27.webp"
-          alt="Contest banner"
-        />
-      </div>
-      <div className="mt-8 px-8 mb-4">
-        <img
-          className="w-full"
-          src="https://notionpress.com/new-rewamp/images/write_contest/story_dashboard_banner.png"
-          alt="Story dashboard banner"
-        />
-      </div>
-
-      <section className="w-full flex justify-center ">
-        <div className="w-full max-w-6xl px-6">
-          <div className="flex items-center gap-5 mb-6">
-            <h2 className="text-gray-900  text-2xl md:text-3xl font-extrabold">
-              Books
+      <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14" aria-labelledby="your-books-heading">
+        <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-sm font-bold uppercase tracking-[0.14em] text-blue-700">Your library</p>
+            <h2 id="your-books-heading" className="mt-2 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
+              Your books
             </h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              Open a book to continue working or see exactly where it is in review and publishing.
+            </p>
+          </div>
+          <Link
+            href="/write/tool"
+            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-blue-800 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-blue-900 focus:outline-none focus:ring-4 focus:ring-blue-200"
+          >
+            <Plus className="h-5 w-5" aria-hidden="true" />
+            Start a new book
+          </Link>
+        </div>
 
+        {error && (
+          <div role="alert" className="mb-6 flex flex-col gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800 sm:flex-row sm:items-center sm:justify-between">
+            <span>{error}</span>
             <button
-              onClick={() => router.push("write/tool")}
-              className="bg-blue-500 text-white px-8 py-3 font-semibold rounded-lg text-lg flex items-center gap-2 shadow-[8px_8px_0px_black] hover:bg-blue-600 transition"
+              type="button"
+              onClick={fetchBooks}
+              className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-lg border border-red-300 bg-white px-3 py-2 font-bold transition hover:bg-red-100 focus:outline-none focus:ring-4 focus:ring-red-100"
             >
-
-              Start a New Book →
+              <RefreshCw className="h-4 w-4" aria-hidden="true" />
+              Try again
             </button>
           </div>
+        )}
 
-          {err && (
-            <div className="mb-4 rounded-md border border-red-300 bg-red-50 p-3 text-red-700">
-              {err}
-            </div>
-          )}
+        {notice && (
+          <div role="status" className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
+            {notice}
+          </div>
+        )}
 
-          {loading ? (
-            <div className="animate-pulse text-gray-600">Loading books…</div>
-          ) : books.length === 0 ? (
-            <div className="text-gray-600">No books yet. Start your first one!</div>
-          ) : (
-            <ul className="space-y-4">
-              {books.map((b) => (
-                <li key={b.id || b._id}>
+        {loading ? (
+          <div className="flex min-h-64 items-center justify-center rounded-2xl border border-slate-200 bg-white">
+            <Loader2 className="mr-3 h-5 w-5 animate-spin text-blue-700" aria-hidden="true" />
+            <span className="text-sm font-medium text-slate-600">Loading your books…</span>
+          </div>
+        ) : books.length === 0 && !error ? (
+          <div className="rounded-3xl border border-dashed border-slate-300 bg-white px-6 py-14 text-center sm:py-20">
+            <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
+              <BookOpen className="h-7 w-7" aria-hidden="true" />
+            </span>
+            <h3 className="mt-5 text-xl font-bold text-slate-950">Start your first book</h3>
+            <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-600">
+              Add the title and author details first. You can save your progress and return whenever you are ready.
+            </p>
+            <Link
+              href="/write/tool"
+              className="mt-6 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-blue-800 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-blue-900 focus:outline-none focus:ring-4 focus:ring-blue-200"
+            >
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              Create your first book
+            </Link>
+          </div>
+        ) : (
+          <ul className="space-y-5" aria-busy={Boolean(deletingId)}>
+            {books.map((book) => {
+              const id = book.id ?? book._id;
+              return (
+                <li key={id} className={deletingId === id ? "pointer-events-none opacity-60" : ""}>
                   <BookCard
                     API_BASE={API_BASE}
                     accessToken={accessToken}
-                    book={b}
+                    book={book}
                     onDelete={handleDelete}
-                    onContinue={handleContinue}
                   />
                 </li>
-              ))}
-            </ul>
-          )}
-        </div>
+              );
+            })}
+          </ul>
+        )}
       </section>
-      </section>
-    </>
+    </main>
   );
 }

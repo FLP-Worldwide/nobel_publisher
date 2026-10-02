@@ -9,6 +9,8 @@ const redirectAfterAuth = "/author-dashboard";
 // Protected pages (must be logged in)
 const protectedRoutes = [
   "/author-dashboard",
+  "/write",
+  "/admin",
   "/dashboard",
   "/account",
   "/orders",
@@ -38,6 +40,12 @@ export async function middleware(req) {
     return NextResponse.redirect(url);
   }
 
+  if (pathname.startsWith("/admin") && token?.role !== "admin") {
+    const url = req.nextUrl.clone();
+    url.pathname = "/author-dashboard";
+    return NextResponse.redirect(url);
+  }
+
   // Default → allow
   return NextResponse.next();
 }
@@ -48,6 +56,8 @@ export const config = {
     "/login",
     "/login/create",
     "/author-dashboard/:path*",
+    "/write/:path*",
+    "/admin/:path*",
     "/dashboard/:path*",
     "/account/:path*",
     "/orders/:path*",

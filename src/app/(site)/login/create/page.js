@@ -58,16 +58,17 @@ export default function CreateAccount() {
         {/* Left Section */}
         <div className="hidden md:flex w-1/2 bg-blue-500 flex-col justify-center items-center text-white p-8">
           <h2 className="text-3xl font-bold mb-4 text-center">
-            Create your account
+            Start your author account
           </h2>
           <p className="text-center text-lg">
-            Join us and explore amazing books with personalized recommendations.
+            Write your manuscript, review the complete preview, and publish after editorial approval.
           </p>
         </div>
 
         {/* Right Form */}
         <div className="w-full md:w-1/2 p-8">
-          <h3 className="text-2xl font-bold text-gray-900 mb-6">Sign Up</h3>
+          <h3 className="text-2xl font-bold text-gray-900 mb-2">Create your author account</h3>
+          <p className="mb-6 text-sm leading-6 text-gray-600">Your account includes the complete writing and publishing workspace.</p>
 
           {error && (
             <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md p-2">

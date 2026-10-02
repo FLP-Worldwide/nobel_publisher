@@ -1,102 +1,54 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import Link from "next/link";
+import { Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { LoaderCircle, ShieldAlert } from "lucide-react";
 
-export default function PaymentCallback() {
+function PaymentCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [loading, setLoading] = useState(true);
+  const publishingBookId = searchParams.get("publishingBookId");
+  const isPublishingReturn = searchParams.get("flow") === "publishing" && /^\d+$/.test(publishingBookId || "");
 
   useEffect(() => {
-    const finalizeOrder = async () => {
-      try {
-        const status = searchParams.get("status");
-        const merchantOrderId = searchParams.get("merchantOrderId");
+    if (isPublishingReturn) {
+      // The pricing page asks the API to verify the provider order. A browser
+      // return parameter is never treated as proof of payment.
+      router.replace(`/write/tool/step2/${publishingBookId}/pricing_info?payment=returned`);
+    }
+  }, [isPublishingReturn, publishingBookId, router]);
 
-        console.log("📥 Payment Callback Query Params:", {
-          status,
-          merchantOrderId,
-        });
-
-        // Retrieve stored pending order data
-        const pendingOrderRaw = sessionStorage.getItem("pendingOrder");
-        if (!pendingOrderRaw) {
-          alert("Order session expired. Please try again.");
-          router.push("/checkout");
-          return;
-        }
-
-        const pendingOrder = JSON.parse(pendingOrderRaw);
-
-        if (!pendingOrder?.accessToken) {
-          alert("Authentication expired. Please log in again.");
-          router.push("/checkout");
-          return;
-        }
-
-        // ✅ If payment was successful, finalize order
-        if (status === "success") {
-          console.log("✅ Payment successful, placing order...");
-
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/checkout`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${pendingOrder.accessToken}`,
-            },
-            body: JSON.stringify({
-              userId: pendingOrder.userId,
-              delivery: {
-                name: pendingOrder.formData?.your_name,
-                email: pendingOrder.formData?.your_email,
-                phone: pendingOrder.formData?.phone,
-                addressLine1: pendingOrder.formData?.full_address,
-                city: pendingOrder.formData?.city,
-                state: pendingOrder.formData?.state,
-                postalCode: pendingOrder.formData?.pincode,
-                country: pendingOrder.formData?.country,
-              },
-              paymentMethod: "CARD",
-              shippingMethod: "EXPRESS",
-              merchantOrderId,
-            }),
-          });
-
-          const data = await response.json();
-
-          if (response.ok) {
-            alert("🎉 Payment successful and order placed!");
-            sessionStorage.removeItem("pendingOrder");
-            router.push("/orders"); // Redirect to orders page
-          } else {
-            alert("❌ Failed to place order: " + (data.error || "Unknown error"));
-            router.push("/checkout");
-          }
-        } else {
-          // ❌ Payment failed or was canceled
-          alert("❌ Payment failed or canceled. Please try again.");
-          router.push("/checkout");
-        }
-      } catch (err) {
-        console.error("❌ Error finalizing order:", err);
-        alert("Something went wrong while placing your order.");
-        router.push("/checkout");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    finalizeOrder();
-  }, [searchParams, router]);
+  if (isPublishingReturn) {
+    return (
+      <main className="grid min-h-[60vh] place-items-center px-4">
+        <div className="text-center">
+          <LoaderCircle className="mx-auto h-8 w-8 animate-spin text-blue-800" aria-hidden="true" />
+          <h1 className="mt-4 text-xl font-bold">Verifying your ₹199 publishing payment</h1>
+          <p className="mt-2 text-sm text-slate-600">Keep this page open while the secure status check completes.</p>
+        </div>
+      </main>
+    );
+  }
 
   return (
-    <div className="flex justify-center items-center h-100">
-      {loading ? (
-        <p className="text-lg font-semibold">Processing your payment, please wait...</p>
-      ) : (
-        <p className="text-lg font-semibold">Redirecting...</p>
-      )}
-    </div>
+    <main className="grid min-h-[60vh] place-items-center px-4 py-12">
+      <section className="w-full max-w-lg rounded-2xl border border-amber-200 bg-white p-7 text-center shadow-sm">
+        <ShieldAlert className="mx-auto h-9 w-9 text-amber-700" aria-hidden="true" />
+        <h1 className="mt-4 text-2xl font-bold text-slate-950">Payment could not be verified</h1>
+        <p className="mt-3 leading-7 text-slate-600">No order was placed from this browser return. Please return to checkout and try again after a secure payment option is available.</p>
+        <Link href="/checkout" className="mt-6 inline-flex rounded-xl bg-slate-950 px-5 py-3 text-sm font-bold text-white hover:bg-slate-800">
+          Return to checkout
+        </Link>
+      </section>
+    </main>
+  );
+}
+
+export default function PaymentCallback() {
+  return (
+    <Suspense fallback={<main className="grid min-h-[60vh] place-items-center"><p className="font-semibold">Opening payment status…</p></main>}>
+      <PaymentCallbackContent />
+    </Suspense>
   );
 }

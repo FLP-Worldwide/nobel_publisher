@@ -30,6 +30,7 @@ const handler = NextAuth({
             id: data.user.id,
             name: data.user.name,
             email: data.user.email,
+            role: data.user.role,
             token: data.token, // from Express backend
             // refreshToken: data.refreshToken
           };
@@ -52,6 +53,7 @@ const handler = NextAuth({
       // First time login → store tokens
       if (user) {
         token.id = user.id;
+        token.role = user.role;
         token.accessToken = user.token;
         token.refreshToken = user.refreshToken;
       }
@@ -61,6 +63,7 @@ const handler = NextAuth({
       session.user = {
         ...session.user,
         userId: token.id,
+        role: token.role,
         accessToken: token.accessToken,
         refreshToken: token.refreshToken
       };

@@ -1,78 +1,53 @@
-import React from 'react'
+import Link from "next/link";
+import { BookOpenText, CheckCircle2, IndianRupee, ScanText } from "lucide-react";
+
+const journey = [
+  { icon: BookOpenText, title: "Write", text: "Build your book chapter by chapter in a private workspace." },
+  { icon: ScanText, title: "Preview", text: "Check the complete interior and every section before submission." },
+  { icon: CheckCircle2, title: "Review", text: "Receive an editorial decision and clear change notes." },
+  { icon: IndianRupee, title: "Publish", text: "Pay ₹199 only after approval, then order author copies." },
+];
 
 export default function HeroBanner() {
   return (
-    <>
-      <section className="bg-white ">
-        <div className="py-2 px-8 mx-auto lg:py-4">
-          <div className="bg-cream  border border-gray-200  rounded-lg p-8 md:p-12 mb-8">
-            
-            {/* Grid for text + image */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-              
-              {/* Left Content */}
-              <div>
-                <a
-                  href="#"
-                  className="bg-blue-100 text-blue-800 text-xs font-medium inline-flex items-center px-2.5 py-0.5 rounded-md   mb-2"
-                >
-                  <svg
-                    className="w-2.5 h-2.5 me-1.5"
-                    aria-hidden="true"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="currentColor"
-                    viewBox="0 0 20 14"
-                  >
-                    <path d="M11 0H2a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2Zm8.585 1.189a.994.994 0 0 0-.9-.138l-2.965.983a1 1 0 0 0-.685.949v8a1 1 0 0 0 .675.946l2.965 1.02a1.013 1.013 0 0 0 1.032-.242A1 1 0 0 0 20 12V2a1 1 0 0 0-.415-.811Z"/>
-                  </svg>
-                  Tutorial
-                </a>
-
-                <h1 className="text-gray-900  text-3xl md:text-5xl font-extrabold mb-2">
-                  From Writer to Author — We Make It Happen.
-                </h1>
-
-                <p className="text-lg font-normal text-gray-500  mb-6">
-                  Nobel Books empowers authors to self-publish with ease — from manuscript to market, 
-                  we make publishing simple, professional, and accessible.
-                </p>
-
-                <a
-                  href="#"
-                  className="inline-flex justify-center items-center py-2.5 px-5 text-base font-medium text-center text-white rounded-lg bg-blue-900 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 "
-                >
-                  Start Writing
-                  <svg
-                    className="w-3.5 h-3.5 ms-2 rtl:rotate-180"
-                    aria-hidden="true"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 14 10"
-                  >
-                    <path
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M1 5h12m0 0L9 1m4 4L9 9"
-                    />
-                  </svg>
-                </a>
-              </div>
-
-              {/* Right Image */}
-              <div className="flex justify-center">
-                <img
-                  src="https://png.pngtree.com/png-vector/20230811/ourmid/pngtree-cartoon-typewriter-cartoon-symbol-vector-illustration-background-png-image_6842029.png"
-                  alt="Vintage Typewriter"
-                  className="rounded-lg  w-full max-w-md"
-                />
-              </div>
+    <section className="bg-white px-4 py-6 sm:px-8 lg:py-10">
+      <div className="mx-auto max-w-7xl overflow-hidden rounded-3xl border border-blue-100 bg-[radial-gradient(circle_at_top_right,_#dbeafe,_#fff_55%)] px-6 py-10 sm:px-10 lg:px-14 lg:py-16">
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(360px,.9fr)] lg:items-center">
+          <div>
+            <span className="inline-flex rounded-full bg-blue-100 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-blue-900">
+              Self-publishing for authors
+            </span>
+            <h1 className="mt-5 max-w-3xl text-4xl font-black tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
+              Take your book from first draft to published.
+            </h1>
+            <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
+              Write in one place, inspect the complete book preview, submit it for editorial review, and pay a simple ₹199 publishing fee only after approval.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link href="/write/tool" className="rounded-xl bg-blue-950 px-6 py-3.5 text-sm font-bold text-white hover:bg-blue-900">
+                Start writing →
+              </Link>
+              <Link href="/bookstore" className="rounded-xl border border-slate-300 bg-white px-6 py-3.5 text-sm font-bold text-slate-800 hover:bg-slate-50">
+                Browse published books
+              </Link>
             </div>
-
+            <p className="mt-4 text-xs text-slate-500">No publishing fee before approval. Your draft remains private.</p>
           </div>
+
+          <ol className="grid gap-3 sm:grid-cols-2" aria-label="How publishing works">
+            {journey.map(({ icon: Icon, title, text }, index) => (
+              <li key={title} className="rounded-2xl border border-white/80 bg-white/85 p-5 shadow-sm backdrop-blur">
+                <div className="flex items-center justify-between">
+                  <span className="rounded-xl bg-blue-950 p-2 text-white"><Icon className="h-5 w-5" /></span>
+                  <span className="text-xs font-black text-slate-300">0{index + 1}</span>
+                </div>
+                <h2 className="mt-4 font-bold text-slate-950">{title}</h2>
+                <p className="mt-1 text-sm leading-6 text-slate-600">{text}</p>
+              </li>
+            ))}
+          </ol>
         </div>
-      </section>
-    </>
-  )
+      </div>
+    </section>
+  );
 }

@@ -1,35 +1,44 @@
 "use client";
+
 import { useEffect } from "react";
+import { sanitizeManuscriptHtml } from "./sanitizeHtml";
 
-export default function EditorArea({ editorRef, content, setContent, isTwoColumn }) {
-  // ✅ Set initial content only once
+export default function EditorArea({
+  editorRef,
+  content,
+  setContent,
+  isTwoColumn,
+  ariaLabel = "Chapter content",
+}) {
   useEffect(() => {
-    if (editorRef.current && !editorRef.current.innerHTML) {
-      editorRef.current.innerHTML = content;
-    }
-  }, [editorRef, content]);
+    const editor = editorRef.current;
+    if (!editor || document.activeElement === editor) return;
+    const safeContent = sanitizeManuscriptHtml(content);
+    if (editor.innerHTML !== safeContent) editor.innerHTML = safeContent;
+  }, [content, editorRef]);
 
-  const handleInput = (e) => {
-    let value = e.target.innerHTML;
-
-    // If only <br> or empty HTML → reset to truly empty
-    if (value === "<br>" || value.trim() === "") {
+  const handleInput = (event) => {
+    let value = event.currentTarget.innerHTML;
+    if (value === "<br>" || !value.trim()) {
       value = "";
-      e.target.innerHTML = "";
+      event.currentTarget.innerHTML = "";
     }
-
-    setContent(value);
+    setContent(sanitizeManuscriptHtml(value));
   };
 
   return (
     <div
       ref={editorRef}
-      className={`w-full min-h-screen px-12 py-4 bg-white focus:outline-none text-left text-lg font-serif placeholder-editor ${
+      className={`placeholder-editor manuscript-editor w-full bg-white px-5 py-8 font-serif text-base leading-8 text-slate-800 outline-none sm:px-12 sm:py-10 sm:text-lg ${
         isTwoColumn ? "editor-two-col" : ""
       }`}
       contentEditable
       suppressContentEditableWarning
       onInput={handleInput}
+      role="textbox"
+      aria-label={ariaLabel}
+      aria-multiline="true"
+      spellCheck="true"
     />
   );
 }

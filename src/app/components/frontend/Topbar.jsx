@@ -1,25 +1,10 @@
-"use client";
 import React from "react";
-import { useSession, signOut } from "next-auth/react";
-import Link from "next/link";
 
 export default function Topbar() {
-  // const { data: session } = useSession();
-
   return (
-    <nav className="bg-white  border-b border-gray-200 ">
-      <div className="flex justify-between items-center max-w-full mx-auto px-8 py-2 text-sm">
-        {/* Left */}
-        <Link href="#" className="text-gray-500 -white hover:underline">
-          Support
-        </Link>
-     
-         <Link
-            href="#"
-            className="text-blue-900 -white hover:underline "
-          >
-            Request Callback
-          </Link>
+    <nav className="border-b border-blue-100 bg-blue-50">
+      <div className="mx-auto flex max-w-7xl justify-center px-4 py-2 text-center text-xs font-semibold text-blue-950 sm:text-sm">
+        Private drafts · Complete preview · Editorial review · ₹199 only after approval
       </div>
     </nav>
   );

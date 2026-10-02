@@ -1,86 +1,14 @@
 "use client";
-import React from "react";
 
-export default function TitlePage({
-  title,
-  subtitle,
-  author,
-  trimWidthIn = 5,
-  trimHeightIn = 8,
-  dpi = 120,
-  bleedInches = 0.125,
-  safeMarginInches = 0.5, // added safe margin
-  showGuides = false,
-}) {
-  // Convert trim size to px
-  const trimWidth = trimWidthIn * dpi;
-  const trimHeight = trimHeightIn * dpi;
+import PageShell from "./PageShell";
 
-  // Add bleed
-  const fullWidth = trimWidth + bleedInches * 2 * dpi;
-  const fullHeight = trimHeight + bleedInches * 2 * dpi;
-
-  // Safe area
-  const safeMargin = safeMarginInches * dpi;
-
+export default function TitlePage({ title, subtitle, author, ...pageProps }) {
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-100">
-      {/* Page with bleed */}
-      <div
-        className="relative bg-white shadow-lg font-serif"
-        style={{ width: fullWidth, height: fullHeight }}
-      >
-        {/* Trim area */}
-        <div
-          className="absolute bg-white"
-          style={{
-            top: bleedInches * dpi,
-            left: bleedInches * dpi,
-            width: trimWidth,
-            height: trimHeight,
-          }}
-        >
-          {/* Safe text/content area */}
-          <div
-            className="absolute flex flex-col items-center justify-center text-center"
-            style={{
-              top: safeMargin,
-              left: safeMargin,
-              right: safeMargin,
-              bottom: safeMargin,
-            }}
-          >
-            {/* Debug guides */}
-            {showGuides && (
-              <>
-                {/* Trim guide */}
-                <div className="absolute inset-0 border border-blue-100 pointer-events-none" />
-                {/* Safe margin guide */}
-                <div
-                  className="absolute"
-                  style={{
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    border: "1px dashed green",
-                    pointerEvents: "none",
-                  }}
-                />
-              </>
-            )}
-
-            {/* Title Page Content */}
-            <h1 className="text-5xl font-extrabold mb-2">{title}</h1>
-            {subtitle && (
-              <h2 className="text-lg italic mb-8">{subtitle}</h2>
-            )}
-            {author && (
-              <p className="mt-6 text-xl font-bold">{author}</p>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
+    <PageShell {...pageProps} safeClassName="flex flex-col items-center justify-center px-4 text-center">
+      <h1 className="break-words text-4xl font-bold leading-tight text-slate-950">{title || "Untitled book"}</h1>
+      {subtitle && <h2 className="mt-4 text-lg italic leading-relaxed text-slate-600">{subtitle}</h2>}
+      <div className="mt-9 h-px w-14 bg-slate-300" />
+      <p className="mt-7 text-lg font-semibold text-slate-800">{author || "Author"}</p>
+    </PageShell>
   );
 }
