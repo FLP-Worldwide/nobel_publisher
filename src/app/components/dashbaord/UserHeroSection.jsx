@@ -27,13 +27,13 @@ export default function UserHeroSection({ books = [], loading = false }) {
   ];
 
   return (
-    <section className="border-b border-slate-200 bg-gradient-to-br from-slate-950 via-blue-950 to-blue-900 text-white">
+    <section className="border-b border-stone-200 bg-[#f5f3ee] text-stone-900">
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(520px,0.9fr)] lg:items-end">
           <div>
-            <p className="text-sm font-bold uppercase tracking-[0.16em] text-blue-200">Author dashboard</p>
-            <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Welcome back, {firstName}</h1>
-            <p className="mt-3 max-w-xl text-base leading-7 text-blue-100">
+            <p className="text-sm font-bold uppercase tracking-[0.16em] text-[#517b6b]">Nobel / Writing desk</p>
+            <h1 className="mt-3 font-serif text-4xl tracking-tight sm:text-5xl">Your next chapter, {firstName}.</h1>
+            <p className="mt-3 max-w-xl text-base leading-7 text-stone-500">
               Write, preview, submit, and track every book from one clear publishing workspace.
             </p>
           </div>
@@ -42,12 +42,12 @@ export default function UserHeroSection({ books = [], loading = false }) {
             {stats.map((stat) => {
               const Icon = stat.icon;
               return (
-                <div key={stat.label} className="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur-sm">
+                <div key={stat.label} className="rounded-2xl border border-stone-200 bg-white p-4 backdrop-blur-sm">
                   <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${stat.background} ${stat.color}`}>
                     <Icon className="h-4 w-4" aria-hidden="true" />
                   </div>
-                  <dd className="mt-3 text-2xl font-bold text-white">{loading ? "—" : stat.value}</dd>
-                  <dt className="mt-1 text-xs font-medium leading-5 text-blue-100">{stat.label}</dt>
+                  <dd className="mt-3 text-2xl font-bold text-stone-900">{loading ? "—" : stat.value}</dd>
+                  <dt className="mt-1 text-xs font-medium leading-5 text-stone-500">{stat.label}</dt>
                 </div>
               );
             })}

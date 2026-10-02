@@ -145,3 +145,21 @@ body {
     box-shadow: none !important;
   }
 }
+
+/* Shared measurement and print typography; never collapse rich-text markup. */
+.print-manuscript { font-family: Georgia, 'Times New Roman', serif; font-size: 14px; line-height: 24px; overflow-wrap: anywhere; }
+.manuscript-prose { overflow-wrap: anywhere; }
+.manuscript-prose b, .manuscript-prose strong { font-weight: 700; }
+.manuscript-prose i, .manuscript-prose em { font-style: italic; }
+.manuscript-prose h1 { font-size: 1.8em; font-weight: 700; margin-bottom: 1em; }
+.manuscript-prose h2 { font-size: 1.5em; font-weight: 700; margin-bottom: .8em; }
+.manuscript-prose h3 { font-size: 1.2em; font-weight: 700; margin-bottom: .7em; }
+.manuscript-prose div:empty, .manuscript-prose p:empty { min-height: 1em; }
+.manuscript-editor [data-page-break], .book-reading-view [data-page-break] { display: block; border-top: 1px dashed #a8a29e; margin: 2rem 0; }
+.manuscript-editor [data-page-break]::before { content: 'Page break'; font: 11px Arial; color: #78716c; }
+@media print {
+  .print-spread { display: block !important; margin: 0 !important; }
+  .print-leaf { width: auto !important; break-after: page; }
+  .print-leaf > div { height: auto !important; }
+  .book-preview-page-scale { transform: none !important; }
+}

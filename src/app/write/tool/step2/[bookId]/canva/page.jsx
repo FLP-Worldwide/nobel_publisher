@@ -1,4 +1,5 @@
 "use client";
+import BookEditGuard from "@/app/components/dashbaord/BookEditGuard";
 
 import { use, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
@@ -49,7 +50,7 @@ function clearDraft(bookId, chapterId) {
   }
 }
 
-export default function EditorPage({ params }) {
+function EditorPage({ params }) {
   const { bookId } = use(params);
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -515,4 +516,9 @@ export default function EditorPage({ params }) {
       </main>
     </div>
   );
+}
+
+export default function ProtectedBookPage() {
+ const p = useParams(); const raw = p?.bookId ?? p?.id; const id = Array.isArray(raw) ? raw[0] : raw;
+ return <BookEditGuard bookId={id}><EditorPage /></BookEditGuard>;
 }

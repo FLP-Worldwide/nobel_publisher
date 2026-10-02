@@ -10,10 +10,10 @@ export const metadata = {
 export default function AuthorLayout({ children }) {
   return (
     <>
-      <AuthorTopbar />
+
       <Navbar />
       {children}
-      <Footer />
+
     </>
   );
 }

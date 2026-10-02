@@ -15,7 +15,7 @@ export default function BackMatterPage({ section, pageNumber, ...pageProps }) {
         <h2 className="break-words text-center text-2xl font-bold leading-snug">{section.title}</h2>
       )}
       <div
-        className={`manuscript-prose text-justify text-sm leading-6 ${section?.title && section.pageIndex === 0 ? "mt-7" : ""}`}
+        className={`manuscript-prose print-manuscript ${section?.title && section.pageIndex === 0 ? "mt-7" : ""}`}
         dangerouslySetInnerHTML={{ __html: safeContent }}
       />
     </PageShell>

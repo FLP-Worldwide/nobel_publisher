@@ -26,6 +26,8 @@ const handler = NextAuth({
             return null; // login failed
           }
 
+          if (credentials?.accountType === "buyer" && data.user.role !== "buyer") throw new Error("Use Author sign in for this account.");
+          if (credentials?.accountType !== "buyer" && data.user.role === "buyer") throw new Error("Use Reader sign in for this account.");
           return {
             id: data.user.id,
             name: data.user.name,
@@ -36,7 +38,7 @@ const handler = NextAuth({
           };
         } catch (err) {
           console.error("Authorize error:", err);
-          return null;
+          throw new Error(err.message || "Unable to sign in");
         }
       }
     })

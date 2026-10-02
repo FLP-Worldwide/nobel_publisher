@@ -1,4 +1,5 @@
 "use client";
+import BookEditGuard from "@/app/components/dashbaord/BookEditGuard";
 
 import AuthorSidebar from "@/app/components/dashbaord/AuthorSidebar";
 import AuthorTopbar from "@/app/components/dashbaord/Topbar";
@@ -64,7 +65,7 @@ async function readJson(response) {
   return body;
 }
 
-export default function Metadata() {
+function Metadata() {
   const router = useRouter();
   const params = useParams();
   const bookId = Array.isArray(params?.bookId) ? params.bookId[0] : params?.bookId;
@@ -230,7 +231,7 @@ export default function Metadata() {
   }
 
   return (
-    <section className="min-h-screen bg-slate-50 lg:ml-64">
+    <section className="min-h-screen bg-slate-50 ">
       <AuthorTopbar />
       <AuthorSidebar currentStep="metadata" />
 
@@ -503,4 +504,9 @@ export default function Metadata() {
       </main>
     </section>
   );
+}
+
+export default function ProtectedBookPage() {
+ const p = useParams(); const raw = p?.bookId ?? p?.id; const id = Array.isArray(raw) ? raw[0] : raw;
+ return <BookEditGuard bookId={id}><Metadata /></BookEditGuard>;
 }

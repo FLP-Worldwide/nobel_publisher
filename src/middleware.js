@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 
 // Auth pages
-const authPages = ["/login", "/login/create"];
+const authPages = ["/login", "/login/create", "/buyer/login", "/buyer/signup"];
 const redirectAfterAuth = "/author-dashboard";
 
 // Protected pages (must be logged in)
@@ -28,14 +28,14 @@ export async function middleware(req) {
   // 🔹 Case 1: Block logged-in users from login/signup
   if (authPages.includes(pathname) && token) {
     const url = req.nextUrl.clone();
-    url.pathname = redirectAfterAuth;
+    url.pathname = token.role === "buyer" ? "/account" : token.role === "admin" ? "/admin" : redirectAfterAuth;
     return NextResponse.redirect(url);
   }
 
   // 🔹 Case 2: Protect private routes
   if (protectedRoutes.some((route) => pathname.startsWith(route)) && !token) {
     const url = req.nextUrl.clone();
-    url.pathname = "/login"; // redirect to login if not authed
+    url.pathname = pathname.startsWith("/account") || pathname.startsWith("/orders") ? "/buyer/login" : "/login";
     url.searchParams.set("callbackUrl", pathname); // return after login
     return NextResponse.redirect(url);
   }
@@ -46,6 +46,9 @@ export async function middleware(req) {
     return NextResponse.redirect(url);
   }
 
+  if (token?.role === "buyer" && (pathname.startsWith("/write") || pathname.startsWith("/author-dashboard"))) {
+    const url = req.nextUrl.clone(); url.pathname = "/account"; url.search = ""; return NextResponse.redirect(url);
+  }
   // Default → allow
   return NextResponse.next();
 }
@@ -53,6 +56,7 @@ export async function middleware(req) {
 // Match both auth & protected pages
 export const config = {
   matcher: [
+    "/buyer/:path*",
     "/login",
     "/login/create",
     "/author-dashboard/:path*",

@@ -70,23 +70,23 @@ export default function UserDropdown() {
             )}
             <li>
               <Link
-                href="/author-dashboard"
+                href={session.user?.role === "buyer" ? "/account" : "/author-dashboard"}
                 className="block px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600"
               >
                 Dashboard
               </Link>
             </li>
-            <li>
+            {session.user?.role !== "buyer" && <li>
               <Link
                 href="/author-dashboard/update"
                 className="block px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600"
               >
                 Update Details
               </Link>
-            </li>
+            </li>}
             <li>
               <Link
-                href="/author-dashboard/order"
+                href={session.user?.role === "buyer" ? "/account" : "/author-dashboard/order"}
                 className="block px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600"
               >
                 My Orders

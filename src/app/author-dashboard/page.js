@@ -89,15 +89,15 @@ export default function AuthorDashboard() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50">
+    <main className="min-h-screen bg-[#fbfaf7]">
       <UserHeroSection books={books} loading={loading} />
 
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14" aria-labelledby="your-books-heading">
         <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-sm font-bold uppercase tracking-[0.14em] text-blue-700">Your library</p>
+            <p className="text-sm font-bold uppercase tracking-[0.14em] text-blue-700">WORK IN PROGRESS</p>
             <h2 id="your-books-heading" className="mt-2 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
-              Your books
+              Your bookshelf
             </h2>
             <p className="mt-2 text-sm leading-6 text-slate-600">
               Open a book to continue working or see exactly where it is in review and publishing.
@@ -155,7 +155,7 @@ export default function AuthorDashboard() {
             </Link>
           </div>
         ) : (
-          <ul className="space-y-5" aria-busy={Boolean(deletingId)}>
+          <ul className="grid gap-5 xl:grid-cols-2" aria-busy={Boolean(deletingId)}>
             {books.map((book) => {
               const id = book.id ?? book._id;
               return (

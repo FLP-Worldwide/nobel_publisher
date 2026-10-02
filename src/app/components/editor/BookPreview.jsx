@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { BookOpenText, FileText, Ruler, Settings2 } from "lucide-react";
 import TitlePage from "../bookpages/5x8/design-1/TitlePage";
 import CopyrightPage from "../bookpages/5x8/design-1/CopyrightPage";
@@ -41,7 +41,9 @@ function normalizeSections(book) {
 }
 
 export default function BookPreview({ book }) {
-  const [viewMode, setViewMode] = useState("reading");
+  const [viewMode, setViewMode] = useState("pages");
+  const printArea = useRef(null);
+  const [availableWidth, setAvailableWidth] = useState(900);
   const [zoom, setZoom] = useState(60);
   const [showGuides, setShowGuides] = useState(false);
   const [pageData, setPageData] = useState({ pages: [], navigation: [], indexEntries: [] });
@@ -53,8 +55,18 @@ export default function BookPreview({ book }) {
   const pageHeight = trim.height * DPI;
 
   useEffect(() => {
+    if (!printArea.current) return;
+    const observer = new ResizeObserver(([entry]) => setAvailableWidth(entry.contentRect.width));
+    observer.observe(printArea.current);
+    return () => observer.disconnect();
+  }, [viewMode, paginating]);
+
+  useEffect(() => {
     setPaginating(true);
-    const timer = window.requestAnimationFrame(() => {
+    let cancelled = false;
+    const timer = window.requestAnimationFrame(async () => {
+      await document.fonts.ready;
+      if (cancelled) return;
       // Reserving heading space on every page is conservative, but guarantees
       // that chapter text is never hidden behind a first-page heading.
       const paginationHeight = Math.max(pageHeight - 130, 300);
@@ -110,7 +122,7 @@ export default function BookPreview({ book }) {
       setPageData({ pages, navigation, indexEntries });
       setPaginating(false);
     });
-    return () => window.cancelAnimationFrame(timer);
+    return () => { cancelled = true; window.cancelAnimationFrame(timer); };
   }, [pageHeight, pageWidth, sections]);
 
   const goTo = (item) => {
@@ -243,15 +255,25 @@ export default function BookPreview({ book }) {
         ) : paginating ? (
           <div className="grid min-h-64 place-items-center rounded-2xl bg-white text-sm text-slate-500" role="status">Preparing every page…</div>
         ) : (
-          <div className="book-print-pages space-y-7 overflow-x-auto rounded-2xl bg-slate-200 p-3 sm:p-6">
-            {pageData.pages.map((page, index) => (
-              <section id={`preview-page-${index}`} key={page.key} className="scroll-mt-28" aria-label={`Page ${index + 1}: ${page.label}`}>
-                <div className="book-preview-page-scale mx-auto w-fit" style={{ zoom: zoom / 100 }}>
-                  {renderPage(page)}
-                </div>
-                <p className="book-preview-controls mt-2 text-center text-xs font-medium text-slate-500">Page {index + 1} · {page.label}</p>
-              </section>
-            ))}
+          <div ref={printArea} className="book-print-pages rounded-2xl bg-stone-200 p-2 sm:p-4">
+            <p className="book-preview-controls mb-4 text-center text-xs text-stone-600">Facing pages · even pages on the left, odd pages on the right</p>
+            {Array.from({ length: Math.ceil((pageData.pages.length + 1) / 2) }, (_, spread) => {
+              const indices = [spread * 2 - 1, spread * 2];
+              const scale = Math.min(zoom / 100, Math.max(0.12, (availableWidth - 32) / ((pageWidth + 30) * 2 + 16)));
+              return <div key={spread} className="print-spread mb-6 flex justify-center gap-2">
+                {indices.map(index => {
+                  const page = pageData.pages[index];
+                  return <section id={page ? `preview-page-${index}` : undefined} key={index} className="print-leaf scroll-mt-28" style={{ width: (pageWidth + 30) * scale }} aria-label={page ? `Page ${index + 1}: ${page.label}` : 'Outside of book'}>
+                    {page ? <>
+                      <div style={{ height: (pageHeight + 30) * scale }}>
+                        <div className="book-preview-page-scale" style={{ transform: `scale(${scale})`, transformOrigin: 'top left', width: pageWidth + 30 }}>{renderPage(page)}</div>
+                      </div>
+                      <p className="book-preview-controls mt-2 text-center text-xs text-stone-600">{index + 1} · {page.label}</p>
+                    </> : <div className="book-preview-controls" style={{ height: (pageHeight + 30) * scale }} />}
+                  </section>;
+                })}
+              </div>;
+            })}
           </div>
         )}
       </main>

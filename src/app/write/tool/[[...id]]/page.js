@@ -1,4 +1,5 @@
 "use client";
+import BookEditGuard from "@/app/components/dashbaord/BookEditGuard";
 
 import React, { useEffect, useMemo, useState } from "react";
 import useSWR from "swr";
@@ -11,7 +12,7 @@ const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
 const DRAFT_KEY = "write_tool_new_book_draft_v2";
 const CURRENT_BOOK_ID = "current_book_id";
 
-export default function WriteTool() {
+function WriteTool() {
   const router = useRouter();
   const search = useSearchParams();
   
@@ -241,15 +242,15 @@ export default function WriteTool() {
 
   return (
     <>
-      <section className="lg:ml-64">
-        <AuthorTopbar />
+      <section className="">
+        
         <AuthorSidebar currentStep="information" />
 
         <section className="bg-white ">
           <div className="py-8 px-4 mx-auto max-w-full lg:py-16">
-            <h1 className="text-2xl font-bold mb-2">Book Informations</h1>
+            <h1 className="text-2xl font-bold mb-2">The beginning of your book</h1>
             <h2 className="mb-4 text-xl font-bold text-gray-900 ">
-              Enter all the information about your book - Its language, title and author(s)
+              Give your story a title and tell us who is writing it.
             </h2>
 
             {status === "loading" && (
@@ -308,7 +309,7 @@ export default function WriteTool() {
                     Book Title
                   </label>
                   <p className="mb-2">
-                    Choose a unique title. You can use amazon.com to check if your title has already been taken.
+                    Choose a title that feels true to your story. You can refine it before submitting.
                   </p>
                   <input
                     type="text"
@@ -424,4 +425,9 @@ export default function WriteTool() {
       </section>
     </>
   );
+}
+
+export default function ProtectedBookPage() {
+ const p = useParams(); const search = useSearchParams(); const raw = p?.bookId ?? p?.id ?? search.get("id"); const id = Array.isArray(raw) ? raw[0] : raw;
+ return <BookEditGuard bookId={id}><WriteTool /></BookEditGuard>;
 }

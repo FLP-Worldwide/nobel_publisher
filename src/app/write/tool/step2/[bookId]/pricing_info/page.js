@@ -257,7 +257,7 @@ export default function PricingInfo() {
   }
 
   return (
-    <section className="min-h-screen bg-slate-50 lg:ml-64">
+    <section className="min-h-screen bg-slate-50 ">
       <AuthorTopbar />
       <AuthorSidebar currentStep="pricing" />
 
@@ -362,6 +362,9 @@ export default function PricingInfo() {
                     </button>
                   )}
 
+                  {["APPROVED", "PUBLISHED", "REJECTED"].includes(status) && (
+                    <Link href={`/write/tool/${bookId}`} className="mt-6 block text-sm font-semibold text-[#244d43] underline">Start a revision · review required · no repeat publishing fee after payment</Link>
+                  )}
                   {status === "PUBLISHED" && (
                     <div className="mt-6 flex flex-col gap-3 sm:flex-row">
                       <Link
@@ -391,12 +394,12 @@ export default function PricingInfo() {
                     <div className="border-b border-slate-200 p-5 sm:border-b-0 sm:border-r">
                       <ShieldCheck className="h-5 w-5 text-emerald-700" aria-hidden="true" />
                       <p className="mt-2 text-sm font-bold text-slate-900">Server-verified payment</p>
-                      <p className="mt-1 text-xs leading-5 text-slate-500">The browser cannot mark a book as paid.</p>
+                      <p className="mt-1 text-xs leading-5 text-slate-500">Your book is published after payment is confirmed.</p>
                     </div>
                     <div className="p-5">
                       <BadgeCheck className="h-5 w-5 text-blue-700" aria-hidden="true" />
                       <p className="mt-2 text-sm font-bold text-slate-900">Approved version</p>
-                      <p className="mt-1 text-xs leading-5 text-slate-500">Payment applies to this reviewed revision.</p>
+                      <p className="mt-1 text-xs leading-5 text-slate-500">Pay once per book. Future revisions are reviewed at no extra publishing charge.</p>
                     </div>
                   </div>
                 )}

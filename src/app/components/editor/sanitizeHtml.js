@@ -18,6 +18,8 @@ const ALLOWED_TAGS = new Set([
   "S",
   "STRIKE",
   "STRONG",
+  "SPAN",
+  "HR",
   "U",
   "UL",
 ]);
@@ -39,6 +41,13 @@ const SAFE_STYLE_PROPERTIES = new Set([
   "font-weight",
   "text-align",
   "text-decoration",
+  "font-size",
+  "font-family",
+  "line-height",
+  "break-before",
+  "break-after",
+  "page-break-before",
+  "page-break-after",
 ]);
 
 function safeHref(value) {
@@ -85,8 +94,10 @@ export function sanitizeManuscriptHtml(html = "") {
       return;
     }
 
+    if (element.classList.contains("page-break") || element.classList.contains("pagebreak")) element.setAttribute("data-page-break", "true");
     [...element.attributes].forEach((attribute) => {
       const name = attribute.name.toLowerCase();
+      if (name === "data-page-break") { element.setAttribute(name, "true"); return; }
       if (name === "style") {
         const style = safeStyle(attribute.value);
         if (style) element.setAttribute("style", style);

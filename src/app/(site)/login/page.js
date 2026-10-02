@@ -4,7 +4,7 @@ import React, { Suspense, useState } from "react";
 import { getSession, signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-function LoginForm() {
+function LoginForm({ accountType = "author" }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
@@ -22,6 +22,7 @@ function LoginForm() {
     const res = await signIn("credentials", {
       email,
       password,
+      accountType,
       redirect: false,
     });
   
@@ -63,7 +64,8 @@ function LoginForm() {
       else localStorage.removeItem("rememberMe");
   
       const callbackUrl = searchParams.get("callbackUrl");
-      const destination = callbackUrl || (loggedInSession?.user?.role === "admin" ? "/admin" : "/author-dashboard");
+      const safeCallback = callbackUrl?.startsWith("/") && !callbackUrl.startsWith("//") ? callbackUrl : null;
+      const destination = loggedInSession?.user?.role === "buyer" ? "/account" : safeCallback || (loggedInSession?.user?.role === "admin" ? "/admin" : "/author-dashboard");
       router.push(destination);
     } else {
       setError(res?.error || "Invalid email or password.");
@@ -78,16 +80,16 @@ function LoginForm() {
         {/* Left Image / Text Section */}
         <div className="hidden md:flex w-1/2 bg-blue-400 flex-col justify-center items-center text-white p-8">
           <h2 className="text-2xl font-bold mb-4 text-center">
-            Your book starts here
+            {accountType === "buyer" ? "Your reading journey" : "Your book starts here"}
           </h2>
           <p className="text-sm text-center text-blue-50">
-            Write privately, preview every page, receive an editorial decision, and pay ₹199 only after approval.
+            {accountType === "buyer" ? "Browse independent books and track your orders in your reader account." : "Write privately, preview every page, receive an editorial decision, and pay ₹199 only after approval."}
           </p>
         </div>
 
         {/* Right Form Section */}
         <div className="w-full md:w-1/2 p-8">
-          <h2 className="text-2xl font-bold text-blue-700 mb-6">Login</h2>
+          <h2 className="text-2xl font-bold text-blue-700 mb-6">{accountType === "buyer" ? "Reader sign in" : "Author sign in"}</h2>
 
           {error && (
             <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
@@ -95,6 +97,7 @@ function LoginForm() {
             </div>
           )}
 
+          <p className="mb-5 text-sm text-stone-500">{accountType === "buyer" ? "Here to publish?" : "Here to buy books?"} <a className="font-semibold text-[#244d43] underline" href={accountType === "buyer" ? "/login" : "/buyer/login"}>{accountType === "buyer" ? "Author sign in" : "Reader sign in"}</a></p>
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label htmlFor="email" className="block mb-2 text-sm font-medium text-gray-900">
@@ -158,7 +161,7 @@ function LoginForm() {
 
             <p className="text-sm text-gray-600 mt-4">
               Don’t have an account?{" "}
-              <a href="/login/create" className="text-blue-500 font-medium hover:underline">
+              <a href={accountType === "buyer" ? "/buyer/signup" : "/login/create"} className="text-blue-500 font-medium hover:underline">
                 Sign up here
               </a>
             </p>
@@ -169,10 +172,10 @@ function LoginForm() {
   );
 }
 
-export default function Login() {
+export default function Login({ accountType = "author" }) {
   return (
     <Suspense fallback={<div className="min-h-90 bg-gray-50 py-16 text-center text-sm text-gray-600">Opening sign in…</div>}>
-      <LoginForm />
+      <LoginForm accountType={accountType} />
     </Suspense>
   );
 }

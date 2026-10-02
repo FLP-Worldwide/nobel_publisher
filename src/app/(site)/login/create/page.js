@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export default function CreateAccount() {
+export default function CreateAccount({ accountType = "author" }) {
   const router = useRouter();
   const [form, setForm] = useState({
     name: "",
@@ -31,7 +31,7 @@ export default function CreateAccount() {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(form),
+          body: JSON.stringify({ ...form, accountType }),
         }
       );
 
@@ -44,7 +44,7 @@ export default function CreateAccount() {
       }
 
       setSuccess("Account created successfully! Redirecting to login...");
-      setTimeout(() => router.push("/login"), 1500);
+      setTimeout(() => router.push(accountType === "buyer" ? "/buyer/login" : "/login"), 1500);
     } catch (err) {
       console.error("Signup error:", err);
       setError("Server error. Please try again later.");
@@ -58,7 +58,7 @@ export default function CreateAccount() {
         {/* Left Section */}
         <div className="hidden md:flex w-1/2 bg-blue-500 flex-col justify-center items-center text-white p-8">
           <h2 className="text-3xl font-bold mb-4 text-center">
-            Start your author account
+            {accountType === "buyer" ? "Your next great read" : "Start your author account"}
           </h2>
           <p className="text-center text-lg">
             Write your manuscript, review the complete preview, and publish after editorial approval.
@@ -67,8 +67,8 @@ export default function CreateAccount() {
 
         {/* Right Form */}
         <div className="w-full md:w-1/2 p-8">
-          <h3 className="text-2xl font-bold text-gray-900 mb-2">Create your author account</h3>
-          <p className="mb-6 text-sm leading-6 text-gray-600">Your account includes the complete writing and publishing workspace.</p>
+          <h3 className="text-2xl font-bold text-gray-900 mb-2">{accountType === "buyer" ? "Create a reader account" : "Create your author account"}</h3>
+          <p className="mb-6 text-sm leading-6 text-gray-600">{accountType === "buyer" ? "Buy books and follow your orders." : "Your account includes the complete writing and publishing workspace."}</p>
 
           {error && (
             <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md p-2">
@@ -158,7 +158,7 @@ export default function CreateAccount() {
           <p className="mt-4 text-center text-gray-600">
             Already have an account?{" "}
             <a
-              href="/login"
+              href={accountType === "buyer" ? "/buyer/login" : "/login"}
               className="text-blue-600 font-semibold hover:underline"
             >
               Login
