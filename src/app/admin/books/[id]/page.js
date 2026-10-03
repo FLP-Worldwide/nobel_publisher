@@ -77,7 +77,7 @@ export default function ReviewBookPage() {
 
   const sections = useMemo(() => {
     const chapters = Array.isArray(book?.chapters) ? [...book.chapters] : [];
-    return chapters.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    return chapters.sort((a, b) => (a.position || 0) - (b.position || 0));
   }, [book?.chapters]);
   const totalWords = useMemo(() => sections.reduce((sum, chapter) => sum + wordsIn(chapter.content), 0), [sections]);
   const reviewIsOpen = review?.status === "SUBMITTED";
@@ -108,8 +108,8 @@ export default function ReviewBookPage() {
     }
   }
 
-  if (loading) return <main className="mx-auto max-w-7xl px-4 py-16 text-slate-600">Opening the complete submission…</main>;
-  if (!book) return <main className="mx-auto max-w-7xl px-4 py-16"><p role="alert" className="text-red-700">{error || "Submission not found."}</p></main>;
+  if (loading) return <main className="mx-auto max-w-[1200px] px-4 py-16 text-slate-600">Opening the complete submission…</main>;
+  if (!book) return <main className="mx-auto max-w-[1200px] px-4 py-16"><p role="alert" className="text-red-700">{error || "Submission not found."}</p></main>;
 
   return (
     <main className="mx-auto max-w-[1500px] px-4 py-6 sm:px-6 lg:px-8">

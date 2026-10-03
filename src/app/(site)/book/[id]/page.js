@@ -118,7 +118,7 @@ export default function PublishedBookPage() {
 
   if (loading) {
     return (
-      <main className="mx-auto min-h-[65vh] max-w-7xl px-4 py-12 sm:px-6">
+      <main className="mx-auto min-h-[65vh] max-w-[1200px] px-4 py-12 sm:px-6">
         <div className="animate-pulse rounded-3xl bg-slate-100 p-10 text-slate-500">Opening the book…</div>
       </main>
     );
@@ -147,7 +147,7 @@ export default function PublishedBookPage() {
 
   return (
     <main className="bg-gradient-to-b from-slate-50 to-white">
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:py-14">
+      <div className="mx-auto max-w-[1200px] px-4 py-8 sm:px-6 lg:py-14">
         <Link href="/bookstore" className="inline-flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-blue-800">
           <ArrowLeft className="h-4 w-4" /> Back to bookstore
         </Link>
@@ -165,7 +165,7 @@ export default function PublishedBookPage() {
 
           <article className="min-w-0">
             <p className="text-sm font-bold uppercase tracking-[0.16em] text-blue-800">Published book</p>
-            <h1 className="mt-3 text-4xl font-black tracking-tight text-slate-950 sm:text-5xl">{book.title}</h1>
+            <h1 className="mt-3 text-[28px] font-semibold tracking-tight text-slate-950 sm:text-[32px]">{book.title}</h1>
             {book.subheading && <p className="mt-3 text-xl leading-8 text-slate-600">{book.subheading}</p>}
             <p className="mt-5 text-lg font-semibold text-slate-800">by {author || "Independent author"}</p>
 

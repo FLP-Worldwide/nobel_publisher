@@ -1,53 +1,9 @@
 import Link from "next/link";
-import { BookOpenText, CheckCircle2, IndianRupee, ScanText } from "lucide-react";
-
+import { ArrowUpRight, BookOpenText, CheckCircle2, ScanText, IndianRupee } from "lucide-react";
 const journey = [
-  { icon: BookOpenText, title: "Write", text: "Build your book chapter by chapter in a private workspace." },
-  { icon: ScanText, title: "Preview", text: "Check the complete interior and every section before submission." },
-  { icon: CheckCircle2, title: "Review", text: "Receive an editorial decision and clear change notes." },
-  { icon: IndianRupee, title: "Publish", text: "Pay ₹199 only after approval, then order author copies." },
+  {icon:BookOpenText,title:'Write your story',text:'A private workspace for every chapter.'},
+  {icon:ScanText,title:'See the complete book',text:'Check the manuscript in a facing-page proof.'},
+  {icon:CheckCircle2,title:'Submit for review',text:'Get a decision and clear editorial feedback.'},
+  {icon:IndianRupee,title:'Publish for ₹199',text:'Pay once, after approval. Order author copies.'},
 ];
-
-export default function HeroBanner() {
-  return (
-    <section className="bg-white px-4 py-6 sm:px-8 lg:py-10">
-      <div className="mx-auto max-w-7xl overflow-hidden rounded-3xl border border-blue-100 bg-[radial-gradient(circle_at_top_right,_#dbeafe,_#fff_55%)] px-6 py-10 sm:px-10 lg:px-14 lg:py-16">
-        <div className="grid gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(360px,.9fr)] lg:items-center">
-          <div>
-            <span className="inline-flex rounded-full bg-blue-100 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-blue-900">
-              Self-publishing for authors
-            </span>
-            <h1 className="mt-5 max-w-3xl text-4xl font-black tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
-              Take your book from first draft to published.
-            </h1>
-            <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
-              Write in one place, inspect the complete book preview, submit it for editorial review, and pay a simple ₹199 publishing fee only after approval.
-            </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/write/tool" className="rounded-xl bg-blue-950 px-6 py-3.5 text-sm font-bold text-white hover:bg-blue-900">
-                Start writing →
-              </Link>
-              <Link href="/bookstore" className="rounded-xl border border-slate-300 bg-white px-6 py-3.5 text-sm font-bold text-slate-800 hover:bg-slate-50">
-                Browse published books
-              </Link>
-            </div>
-            <p className="mt-4 text-xs text-slate-500">No publishing fee before approval. Your draft remains private.</p>
-          </div>
-
-          <ol className="grid gap-3 sm:grid-cols-2" aria-label="How publishing works">
-            {journey.map(({ icon: Icon, title, text }, index) => (
-              <li key={title} className="rounded-2xl border border-white/80 bg-white/85 p-5 shadow-sm backdrop-blur">
-                <div className="flex items-center justify-between">
-                  <span className="rounded-xl bg-blue-950 p-2 text-white"><Icon className="h-5 w-5" /></span>
-                  <span className="text-xs font-black text-slate-300">0{index + 1}</span>
-                </div>
-                <h2 className="mt-4 font-bold text-slate-950">{title}</h2>
-                <p className="mt-1 text-sm leading-6 text-slate-600">{text}</p>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </div>
-    </section>
-  );
-}
+export default function HeroBanner(){return <section className="ui-shell !pb-5"><div className="overflow-hidden rounded-2xl bg-[#142b40] text-white"><div className="grid gap-8 p-6 sm:p-9 lg:grid-cols-[1.1fr_1fr] lg:gap-16"><div className="self-center"><p className="text-[10px] font-semibold uppercase tracking-[.2em] text-[#9ebbb2]">Independent voices. Published with care.</p><h1 className="mt-4 max-w-md text-[30px] font-semibold leading-tight tracking-tight sm:text-[36px]">A home for your<br/>next chapter.</h1><p className="mt-4 max-w-md text-sm leading-7 text-slate-300">From your first words to a book readers can hold. Write, preview and publish in one thoughtful workspace.</p><div className="mt-6 flex flex-wrap gap-3"><Link href="/write/tool" className="ui-button !border-[#547b70] !bg-[#3b665c]">Start your book <ArrowUpRight size={15}/></Link><Link href="/bookstore" className="inline-flex items-center gap-2 px-2 py-2 text-xs font-medium text-slate-200">Explore the bookshop →</Link></div><p className="mt-5 text-[11px] text-slate-400">Private drafts. No publishing fee before approval.</p></div><ol className="divide-y divide-white/10" aria-label="How publishing works">{journey.map(({icon:Icon,title,text},i)=><li key={title} className="flex items-start gap-4 py-5 first:pt-1 last:pb-1"><div className="mt-1 rounded-lg bg-white/5 p-2.5 text-[#a0bfb4]"><Icon size={18}/></div><div className="flex-1"><h2 className="text-sm font-semibold">{title}</h2><p className="mt-1.5 text-xs leading-5 text-slate-400">{text}</p></div><span className="text-[11px] text-slate-500">0{i+1}</span></li>)}</ol></div></div></section>}

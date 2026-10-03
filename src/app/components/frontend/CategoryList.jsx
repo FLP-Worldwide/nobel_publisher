@@ -21,11 +21,11 @@ export default function CategoryList() {
   ];
 
   return (
-    <div className="px-6 py-6 bg-white">
-      <h4 className="text-2xl font-semibold mb-6">Browse Categories</h4>
+    <div className="ui-shell">
+      <h4 className="text-lg font-semibold mb-5">Browse Categories</h4>
       <Swiper
-        spaceBetween={10}
-        slidesPerView={4}
+        spaceBetween={16}
+        slidesPerView={3}
         autoplay={{ delay: 2000 }}
         loop={true}
         modules={[Autoplay]}
@@ -37,15 +37,15 @@ export default function CategoryList() {
         }}
       >
         {categories.map((cat, index) => (
-          <SwiperSlide className="flex flex-col items-center justify-center bg-white">
+          <SwiperSlide key={cat.name} className="flex flex-col items-center justify-center bg-white">
             <a href="/search">
               <img
                 src={cat.img}
                 alt={cat.name}
-                className="w-32 h-32 md:w-36 md:h-36 lg:w-40 lg:h-40 rounded-full object-cover border-2 border-gray-200 shadow-md hover:scale-110 transition-transform"
+                className="w-full aspect-[4/3] rounded-lg object-cover border border-slate-200 saturate-50"
               />
             </a>
-          <p className="mt-3 text-sm md:text-base font-medium text-gray-700 text-center">
+          <p className="mt-2 text-xs font-medium text-gray-700 text-center">
             {cat.name}
           </p>
         </SwiperSlide>

@@ -41,9 +41,6 @@ const SAFE_STYLE_PROPERTIES = new Set([
   "font-weight",
   "text-align",
   "text-decoration",
-  "font-size",
-  "font-family",
-  "line-height",
   "break-before",
   "break-after",
   "page-break-before",
@@ -97,6 +94,7 @@ export function sanitizeManuscriptHtml(html = "") {
     if (element.classList.contains("page-break") || element.classList.contains("pagebreak")) element.setAttribute("data-page-break", "true");
     [...element.attributes].forEach((attribute) => {
       const name = attribute.name.toLowerCase();
+      if (element.tagName === "OL" && name === "start" && /^\d+$/.test(attribute.value)) return;
       if (name === "data-page-break") { element.setAttribute(name, "true"); return; }
       if (name === "style") {
         const style = safeStyle(attribute.value);
@@ -118,5 +116,5 @@ export function sanitizeManuscriptHtml(html = "") {
     }
   });
 
-  return root.innerHTML;
+  return root.innerHTML.replace(/(?:<br\s*\/?>(?:\s|&nbsp;)*){3,}/gi, "<br><br>");
 }

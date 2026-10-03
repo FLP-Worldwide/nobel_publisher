@@ -6,7 +6,6 @@ import {
   AlignLeft,
   AlignRight,
   Bold,
-  Columns2,
   Eraser,
   Italic,
   List,
@@ -38,7 +37,7 @@ function ToolButton({ label, onClick, active = false, children }) {
       type="button"
       onMouseDown={(event) => event.preventDefault()}
       onClick={onClick}
-      className={`toolbar-btn ${active ? "toolbar-btn-active" : ""}`}
+      className={`toolbar-btn ${label === "Insert page break" ? "!w-auto px-2" : ""} ${active ? "toolbar-btn-active" : ""}`}
       aria-label={label}
       aria-pressed={active || undefined}
       title={label}
@@ -48,7 +47,7 @@ function ToolButton({ label, onClick, active = false, children }) {
   );
 }
 
-export default function Toolbar({ onFormat, onReset, onToggleColumns, isTwoColumn = false }) {
+export default function Toolbar({ onFormat, onReset }) {
   return (
     <div
       className="flex flex-wrap items-center gap-1 border-b border-slate-200 bg-slate-50 px-2 py-2 sm:px-4"
@@ -82,13 +81,6 @@ export default function Toolbar({ onFormat, onReset, onToggleColumns, isTwoColum
         <ToolButton label="Numbered list" onClick={() => onFormat("insertOrderedList")}>
           <ListOrdered className="h-4 w-4" aria-hidden="true" />
         </ToolButton>
-        <ToolButton
-          label={isTwoColumn ? "Use one column" : "Use two columns"}
-          onClick={onToggleColumns}
-          active={isTwoColumn}
-        >
-          <Columns2 className="h-4 w-4" aria-hidden="true" />
-        </ToolButton>
         <ToolButton label="Remove formatting" onClick={() => onFormat("removeFormat")}>
           <RemoveFormatting className="h-4 w-4" aria-hidden="true" />
         </ToolButton>
@@ -97,7 +89,7 @@ export default function Toolbar({ onFormat, onReset, onToggleColumns, isTwoColum
       <span className="mx-1 h-6 w-px bg-slate-200" aria-hidden="true" />
 
       <div className="flex items-center gap-1" role="group" aria-label="Edit history">
-        <ToolButton label="Insert page break" onClick={() => onFormat("insertHTML", '<div data-page-break="true" style="break-before:page"><br></div><p><br></p>')}>↵</ToolButton>
+        <ToolButton label="Insert page break" onClick={() => onFormat("insertHTML", '<div data-page-break="true"></div><p><br></p>')}><span className="whitespace-nowrap text-xs">Page break</span></ToolButton>
         <ToolButton label="Undo" onClick={() => onFormat("undo")}>
           <Undo2 className="h-4 w-4" aria-hidden="true" />
         </ToolButton>

@@ -27,14 +27,14 @@ function normalizeBook(response, design, fallbackAuthor) {
     const title = chapter.title?.trim() || "Untitled section";
     const common = { id: chapter.id, title, content: chapter.content || "" };
     if (
-      (chapter.type && chapter.type !== "chapter") ||
+      (["intro", "preface"].includes(chapter.type)) ||
       FRONT_MATTER_NAMES.test(title)
     ) {
       frontmatter.push({ ...common, type: "frontmatter" });
     } else if (BACK_MATTER_NAMES.test(title)) {
       backmatter.push({ ...common, type: "backmatter" });
     } else {
-      normalChapters.push({ ...common, type: "chapter" });
+      normalChapters.push({ ...common, type: chapter.type === "section" ? "section" : "chapter" });
     }
   });
 
@@ -47,7 +47,8 @@ function normalizeBook(response, design, fallbackAuthor) {
       "Author",
     copyright: book.copyright || "",
     frontmatter,
-    chapters: normalChapters.map((chapter, index) => ({ ...chapter, number: index + 1 })),
+    chapters: normalChapters.map((chapter, index) => ({ ...chapter, number: normalChapters.slice(0, index + 1).filter(c => c.type === "chapter").length })),
+    language: book.language,
     backmatter,
     trimSize: design?.size || book?.design?.size || book?.bookDesign?.size,
     design: design || book?.design || book?.bookDesign || null,
@@ -142,7 +143,7 @@ export default function PreviewPage({ params }) {
   return (
     <div className="min-h-screen bg-slate-100">
       <header className="book-preview-controls sticky top-0 z-30 border-b border-slate-200 bg-white/95 px-3 py-3 shadow-sm backdrop-blur sm:px-6">
-        <div className="mx-auto flex max-w-[1500px] items-center gap-3">
+        <div className="flex w-full items-center gap-3">
           <Link href={`/write/tool/step2/${bookId}/canva`} className="inline-flex items-center gap-2 rounded-lg px-2 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">
             <ArrowLeft className="h-4 w-4" aria-hidden="true" />
             <span className="hidden sm:inline">Back to editor</span>

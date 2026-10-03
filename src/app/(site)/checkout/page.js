@@ -197,7 +197,7 @@ const initiatePayment = async () => {
                 <form
                     onSubmit={handleSubmit}
                     action="#"
-                    className="mx-auto max-w-screen-xl px-4 2xl:px-0"
+                    className="mx-auto max-w-[1200px] px-4 2xl:px-0"
                 >
                     {/* Steps */}
                     <ol className="items-center flex w-full max-w-2xl text-center text-sm font-medium text-gray-500 dark:text-gray-400 sm:text-base">

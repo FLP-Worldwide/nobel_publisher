@@ -4,7 +4,7 @@ export default function PageShell({
   children,
   trimWidthIn = 5,
   trimHeightIn = 8,
-  dpi = 120,
+  dpi = 96,
   bleedInches = 0.125,
   safeMarginInches = 0.5,
   showGuides = false,

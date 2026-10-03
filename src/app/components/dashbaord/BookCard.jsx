@@ -225,7 +225,7 @@ export default function BookCard({ book, onDelete, API_BASE, accessToken }) {
             {action.label}
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Link>
-          {rawStatus !== "PUBLISHED" && (
+          {["DRAFT", "CHANGES_REQUESTED"].includes(rawStatus) && (
             <button
               type="button"
               onClick={() => onDelete?.(bookId)}

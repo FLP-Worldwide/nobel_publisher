@@ -26,34 +26,5 @@ export default function UserHeroSection({ books = [], loading = false }) {
     { label: "Published", value: counts.published, icon: CircleCheckBig, color: "text-emerald-700", background: "bg-emerald-100" },
   ];
 
-  return (
-    <section className="border-b border-stone-200 bg-[#f5f3ee] text-stone-900">
-      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(520px,0.9fr)] lg:items-end">
-          <div>
-            <p className="text-sm font-bold uppercase tracking-[0.16em] text-[#517b6b]">Nobel / Writing desk</p>
-            <h1 className="mt-3 font-serif text-4xl tracking-tight sm:text-5xl">Your next chapter, {firstName}.</h1>
-            <p className="mt-3 max-w-xl text-base leading-7 text-stone-500">
-              Write, preview, submit, and track every book from one clear publishing workspace.
-            </p>
-          </div>
-
-          <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {stats.map((stat) => {
-              const Icon = stat.icon;
-              return (
-                <div key={stat.label} className="rounded-2xl border border-stone-200 bg-white p-4 backdrop-blur-sm">
-                  <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${stat.background} ${stat.color}`}>
-                    <Icon className="h-4 w-4" aria-hidden="true" />
-                  </div>
-                  <dd className="mt-3 text-2xl font-bold text-stone-900">{loading ? "—" : stat.value}</dd>
-                  <dt className="mt-1 text-xs font-medium leading-5 text-stone-500">{stat.label}</dt>
-                </div>
-              );
-            })}
-          </dl>
-        </div>
-      </div>
-    </section>
-  );
+  return <section className="border-b border-slate-200 bg-[#e8eef2]"><div className="ui-shell !py-7"><div className="grid items-center gap-6 lg:grid-cols-[1fr_1.15fr]"><div className="ui-heading !mb-0"><div><p className="ui-eyebrow">Nobel / Author workspace</p><h1>Welcome back, {firstName}.</h1><p>A clear view of your books, drafts and next steps.</p></div></div><dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">{stats.map(({label,value,icon:Icon})=><div key={label} className="rounded-lg border border-slate-200 bg-white px-4 py-3"><div className="flex items-center justify-between text-slate-400"><dt className="text-[11px] font-medium">{label}</dt><Icon size={14}/></div><dd className="mt-2 text-xl font-semibold text-[#19334c]">{loading?'—':value}</dd></div>)}</dl></div></div></section>;
 }

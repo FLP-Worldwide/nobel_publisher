@@ -257,16 +257,15 @@ export default function PricingInfo() {
   }
 
   return (
-    <section className="min-h-screen bg-slate-50 ">
-      <AuthorTopbar />
+    <section className="ui-workspace">
       <AuthorSidebar currentStep="pricing" />
 
-      <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+      <main className="ui-shell">
         <div className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="mb-2 text-sm font-bold uppercase tracking-[0.14em] text-blue-700">Review &amp; publish</p>
-            <h1 className="text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">Your publishing journey</h1>
-            <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
+            <h1 className="text-[26px] font-semibold tracking-tight text-slate-900">Review & release</h1>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
               There are no publishing plans to choose from. Review comes first; the one-time ₹199 fee is due only after approval.
             </p>
           </div>
@@ -307,8 +306,8 @@ export default function PricingInfo() {
                   <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-wide ${TONE_CLASSES[content.tone]}`}>
                     {content.label}
                   </span>
-                  <h2 className="mt-5 text-2xl font-bold text-slate-950 sm:text-3xl">{content.title}</h2>
-                  <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">{content.description}</p>
+                  <h2 className="mt-4 text-xl font-semibold text-slate-900">{content.title}</h2>
+                  <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">{content.description}</p>
 
                   {status === "DRAFT" && (
                     <div className="mt-6 flex flex-col gap-3 sm:flex-row">

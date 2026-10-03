@@ -54,20 +54,20 @@ export default function CreateAccount({ accountType = "author" }) {
 
   return (
     <div className="min-h-90 flex items-center py-4 justify-center bg-gray-50">
-      <div className="flex bg-white shadow-lg rounded-lg overflow-hidden max-w-4xl w-full">
+      <div className="flex bg-white border border-slate-200 shadow-sm rounded-xl overflow-hidden max-w-4xl w-full">
         {/* Left Section */}
-        <div className="hidden md:flex w-1/2 bg-blue-500 flex-col justify-center items-center text-white p-8">
-          <h2 className="text-3xl font-bold mb-4 text-center">
+        <div className="hidden md:flex w-1/2 bg-[#19334c] flex-col justify-center items-center text-white p-8">
+          <h2 className="text-xl font-semibold mb-4 text-center">
             {accountType === "buyer" ? "Your next great read" : "Start your author account"}
           </h2>
-          <p className="text-center text-lg">
-            Write your manuscript, review the complete preview, and publish after editorial approval.
+          <p className="text-center text-sm leading-6">
+            {accountType === "buyer" ? "Discover independent authors and keep track of every order." : "Write your manuscript, review the complete preview, and publish after editorial approval."}
           </p>
         </div>
 
         {/* Right Form */}
         <div className="w-full md:w-1/2 p-8">
-          <h3 className="text-2xl font-bold text-gray-900 mb-2">{accountType === "buyer" ? "Create a reader account" : "Create your author account"}</h3>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">{accountType === "buyer" ? "Create a reader account" : "Create your author account"}</h3>
           <p className="mb-6 text-sm leading-6 text-gray-600">{accountType === "buyer" ? "Buy books and follow your orders." : "Your account includes the complete writing and publishing workspace."}</p>
 
           {error && (

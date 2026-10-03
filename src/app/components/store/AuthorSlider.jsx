@@ -35,7 +35,7 @@ export default function AuthorSlier() {
         }}
       >
         {categories.map((cat, index) => (
-          <SwiperSlide className="flex flex-col items-center justify-center">
+          <SwiperSlide key={`${cat.name}-${index}`} className="flex flex-col items-center justify-center">
             <a href="/author">
           <img
             src={cat.img}

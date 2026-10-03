@@ -46,7 +46,7 @@ export default function ReviewQueuePage() {
   }, [status, loadQueue]);
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <main className="mx-auto max-w-[1200px] px-4 py-8 sm:px-6 lg:px-8">
       <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
           <p className="mb-2 text-sm font-semibold uppercase tracking-[0.16em] text-blue-700">Editorial queue</p>

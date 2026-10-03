@@ -46,11 +46,11 @@ export default function BookCarousel({ heading = "Published books", limit }) {
   const visibleBooks = typeof limit === "number" ? books.slice(0, limit) : books;
 
   return (
-    <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:py-16">
+    <section className="ui-shell !py-6">
       <div className="mb-7 flex items-end justify-between gap-4">
         <div>
-          <p className="text-sm font-bold uppercase tracking-[0.16em] text-blue-800">Nobel Books bookstore</p>
-          <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950">{heading}</h2>
+          <p className="ui-eyebrow">Nobel Books bookstore</p>
+          <h2 className="mt-2 text-xl font-semibold text-slate-900">{heading}</h2>
         </div>
         <Link href="/bookstore" className="hidden items-center gap-2 text-sm font-bold text-blue-800 hover:text-blue-950 sm:inline-flex">View catalogue <ArrowRight className="h-4 w-4" /></Link>
       </div>

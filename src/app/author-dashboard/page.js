@@ -89,14 +89,14 @@ export default function AuthorDashboard() {
   }
 
   return (
-    <main className="min-h-screen bg-[#fbfaf7]">
+    <main className="ui-workspace">
       <UserHeroSection books={books} loading={loading} />
 
-      <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14" aria-labelledby="your-books-heading">
+      <section className="ui-shell" aria-labelledby="your-books-heading">
         <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-sm font-bold uppercase tracking-[0.14em] text-blue-700">WORK IN PROGRESS</p>
-            <h2 id="your-books-heading" className="mt-2 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
+            <p className="ui-eyebrow">WORK IN PROGRESS</p>
+            <h2 id="your-books-heading" className="mt-1 text-xl font-semibold text-slate-800">
               Your bookshelf
             </h2>
             <p className="mt-2 text-sm leading-6 text-slate-600">
@@ -105,7 +105,7 @@ export default function AuthorDashboard() {
           </div>
           <Link
             href="/write/tool"
-            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-blue-800 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-blue-900 focus:outline-none focus:ring-4 focus:ring-blue-200"
+            className="ui-button"
           >
             <Plus className="h-5 w-5" aria-hidden="true" />
             Start a new book

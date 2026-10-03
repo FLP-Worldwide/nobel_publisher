@@ -6,7 +6,6 @@ import useSWR from "swr";
 import { useSession } from "next-auth/react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import AuthorSidebar from "@/app/components/dashbaord/AuthorSidebar";
-import AuthorTopbar from "@/app/components/dashbaord/Topbar";
 
 const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
 const DRAFT_KEY = "write_tool_new_book_draft_v2";
@@ -241,189 +240,37 @@ function WriteTool() {
   }
 
   return (
-    <>
-      <section className="">
-        
-        <AuthorSidebar currentStep="information" />
-
-        <section className="bg-white ">
-          <div className="py-8 px-4 mx-auto max-w-full lg:py-16">
-            <h1 className="text-2xl font-bold mb-2">The beginning of your book</h1>
-            <h2 className="mb-4 text-xl font-bold text-gray-900 ">
-              Give your story a title and tell us who is writing it.
-            </h2>
-
-            {status === "loading" && (
-              <div className="mb-4 rounded border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700">
-                Checking session…
-              </div>
-            )}
-            {error && (
-              <div className="mb-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                {error.message}
-              </div>
-            )}
-            {msg && (
-              <div
-                className={`mb-4 rounded border px-3 py-2 text-sm ${
-                  msg.startsWith("✅")
-                    ? "border-green-200 bg-green-50 text-green-700"
-                    : "border-red-200 bg-red-50 text-red-700"
-                }`}
-              >
-                {msg}
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit}>
-              <div className="grid gap-4 sm:grid-cols-1 sm:gap-6">
-                {/* Language */}
-                <div className="mb-2">
-                  <label className="block text-lg font-bold text-gray-900  mb-2">
-                    Book Language <span className="text-red-500">*</span>
-                  </label>
-                  <p className="mb-3 text-gray-600 ">
-                    Primary language in which your book has been written. In case of bi-lingual or multi-lingual, choose the language that is used the most.
-                  </p>
-
-                  <div className="flex flex-wrap gap-3">
-                    {languages.map((lang) => (
-                      <button
-                        type="button"
-                        key={lang.name}
-                        onClick={() => setSelectedLanguage(lang.name)}
-                        className={`relative px-5 py-2 rounded-lg border text-lg font-medium transition 
-                          ${selectedLanguage === lang.name
-                            ? "bg-blue-50 border-blue-500 text-blue-800"
-                            : "bg-white border-gray-300 text-gray-800 hover:bg-gray-100"}`}
-                      >
-                        {lang.name}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Title */}
-                <div className="sm:col-span-2">
-                  <label htmlFor="title" className="block text-lg font-bold text-gray-900 ">
-                    Book Title
-                  </label>
-                  <p className="mb-2">
-                    Choose a title that feels true to your story. You can refine it before submitting.
-                  </p>
-                  <input
-                    type="text"
-                    name="title"
-                    id="title"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
-                    placeholder="Enter book title"
-                    required
-                  />
-                </div>
-
-                {/* Subtitle */}
-                <div className="sm:col-span-2">
-                  <label htmlFor="subheading" className="block text-lg font-bold text-gray-900 ">
-                    Book Subtitle
-                  </label>
-                  <p className="mb-2">
-                    Subtitle gives more clarity about your book to readers. Recommended for Non-Fiction books
-                  </p>
-                  <input
-                    type="text"
-                    name="subheading"
-                    id="subheading"
-                    value={subheading}
-                    onChange={(e) => setSubheading(e.target.value)}
-                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 "
-                    placeholder="Enter book subtitle"
-                  />
-                </div>
-
-                {/* Author */}
-                <div className="sm:col-span-2">
-                  <label htmlFor="authorName" className="block text-lg font-bold text-gray-900 ">
-                    Author
-                  </label>
-                  <p className="mb-2">
-                    Author name that would go on the book cover. If you write under Pseudonym, mention that as the author name here.
-                  </p>
-                  <input
-                    type="text"
-                    name="authorName"
-                    id="authorName"
-                    value={authorName}
-                    onChange={(e) => setAuthorName(e.target.value)}
-                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 "
-                    placeholder="Enter author name"
-                    required
-                  />
-                </div>
-
-                {/* Co-Author (optional) */}
-                <div className="sm:col-span-2">
-                  <label htmlFor="coAuthor" className="block text-lg font-bold text-gray-900 ">
-                    Co-Author (optional)
-                  </label>
-                  <input
-                    type="text"
-                    name="coAuthor"
-                    id="coAuthor"
-                    value={coAuthor}
-                    onChange={(e) => setCoAuthor(e.target.value)}
-                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 "
-                    placeholder="Enter co-author name"
-                  />
-                </div>
-
-                {/* Genre */}
-                <div className="sm:col-span-2">
-                  <label className="block text-lg font-bold text-gray-900 ">
-                    Book Genre <span className="text-red-500">*</span>
-                  </label>
-                  <div className="flex flex-wrap gap-3 mt-2">
-                    {genres.map((g) => (
-                      <button
-                        type="button"
-                        key={g.name}
-                        onClick={() => setSelectedGenre(g.name)}
-                        className={`relative px-5 py-2 rounded-lg border text-lg font-medium transition 
-                          ${selectedGenre === g.name
-                            ? "bg-blue-50 border-blue-500 text-blue-800"
-                            : "bg-white border-gray-300 text-gray-800 hover:bg-gray-100"}`}
-                      >
-                        {g.name}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <button
-                  type="submit"
-                  disabled={loading || status === "loading" || isLoading}
-                  className="inline-flex items-center px-5 py-2.5 mt-4 sm:mt-6 text-sm font-medium text-center text-white bg-blue-900 rounded-lg hover:bg-blue-800 disabled:opacity-70 disabled:cursor-not-allowed"
-                >
-                  {loading ? "Saving..." : bookId ? "Save changes" : "Save & create"}
-                </button>
-
-                <button
-                  type="button"
-                  disabled={!bookId}
-                  onClick={() => router.push(`/write/tool/step2/${bookId}`)}
-                  className="inline-flex items-center px-4 py-2 mt-4 sm:mt-6 text-sm font-medium text-blue-900 border border-blue-900 rounded-lg hover:bg-blue-50 disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  Continue to Design
-                </button>
-              </div>
-            </form>
-          </div>
-        </section>
-      </section>
-    </>
+    <div className="ui-workspace">
+      <AuthorSidebar currentStep="information" />
+      <main className="ui-shell">
+        <header className="ui-heading"><div><p className="ui-eyebrow">01 / Book essentials</p><h1>The brief</h1><p>A few details to give your book its identity. You can refine these before review.</p></div><span className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-500">{bookId ? 'Draft in progress' : 'New book'}</span></header>
+        {status === 'loading' && <p role="status" className="mb-4 text-sm text-slate-500">Checking your account…</p>}
+        {error && <p role="alert" className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{error.message}</p>}
+        {msg && <p role={msg.startsWith('✅') ? 'status' : 'alert'} className={`mb-4 rounded-lg border p-3 text-sm ${msg.startsWith('✅') ? 'border-green-200 bg-green-50 text-green-800' : 'border-red-200 bg-red-50 text-red-800'}`}>{msg}</p>}
+        <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_280px]">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <section className="ui-card">
+              <h2>Title & identity</h2><p className="ui-help">The name readers will see on your cover and in the bookshop.</p>
+              <div className="mt-5"><label htmlFor="title" className="ui-label">Book title <span className="text-red-600">*</span></label><input id="title" name="title" value={title} onChange={e=>setTitle(e.target.value)} className="ui-field" placeholder="Give your story a name" required /></div>
+              <div className="mt-4"><label htmlFor="subheading" className="ui-label">Subtitle <span className="font-normal text-slate-400">· optional</span></label><input id="subheading" name="subheading" value={subheading} onChange={e=>setSubheading(e.target.value)} className="ui-field" placeholder="A short line that adds context" /></div>
+            </section>
+            <section className="ui-card"><h2>People behind the book</h2><p className="ui-help">Use your name or the pen name you want printed on the cover.</p><div className="ui-form-columns mt-5">
+              <div><label htmlFor="authorName" className="ui-label">Author name <span className="text-red-600">*</span></label><input id="authorName" name="authorName" value={authorName} onChange={e=>setAuthorName(e.target.value)} className="ui-field" placeholder="Author or pen name" required /></div>
+              <div><label htmlFor="coAuthor" className="ui-label">Co-author <span className="font-normal text-slate-400">· optional</span></label><input id="coAuthor" name="coAuthor" value={coAuthor} onChange={e=>setCoAuthor(e.target.value)} className="ui-field" placeholder="Co-author name" /></div>
+            </div></section>
+            <section className="ui-card"><h2>Language & genre</h2><p className="ui-help">For a multilingual book, choose the language used most.</p>
+              <fieldset className="mt-5"><legend className="ui-label">Primary language</legend><div className="flex flex-wrap gap-2">{languages.map(lang=><button key={lang.name} type="button" className="ui-choice" aria-pressed={selectedLanguage===lang.name} onClick={()=>setSelectedLanguage(lang.name)}>{lang.name}</button>)}</div></fieldset>
+              <fieldset className="mt-5"><legend className="ui-label">Genre</legend><div className="flex flex-wrap gap-2">{genres.map(g=><button key={g.name} type="button" className="ui-choice" aria-pressed={selectedGenre===g.name} onClick={()=>setSelectedGenre(g.name)}>{g.name}</button>)}</div></fieldset>
+            </section>
+            <div className="ui-actions"><p className="ui-help">Your draft stays private until publication.</p><div className="flex flex-wrap gap-2"><button type="submit" disabled={loading || status==='loading' || isLoading} className="ui-button">{loading ? 'Saving…' : bookId ? 'Save details' : 'Create book'}</button><button type="button" disabled={!bookId} onClick={()=>router.push(`/write/tool/step2/${bookId}`)} className="ui-button ui-button-secondary">Book studio →</button></div></div>
+          </form>
+          <aside className="space-y-4 lg:sticky lg:top-6">
+            <section className="overflow-hidden rounded-xl border border-slate-200 bg-white"><div className="bg-[#19334c] px-5 py-6 text-white"><p className="text-[10px] uppercase tracking-widest text-slate-300">Your book at a glance</p><h2 className="mt-5 break-words text-xl font-semibold leading-snug">{title || 'Your book title'}</h2>{subheading && <p className="mt-2 break-words text-xs leading-5 text-slate-300">{subheading}</p>}<p className="mt-6 text-xs text-slate-300">{authorName || 'Your name'}</p></div><dl className="grid grid-cols-2 gap-4 p-5 text-xs"><div><dt className="text-slate-400">Language</dt><dd className="mt-1 font-medium text-slate-700">{selectedLanguage || 'Not chosen'}</dd></div><div><dt className="text-slate-400">Genre</dt><dd className="mt-1 font-medium text-slate-700">{selectedGenre || 'Not chosen'}</dd></div></dl></section>
+            <section className="ui-card"><h2>Up next</h2><p className="ui-help">Choose your print format, write your manuscript and add cover artwork in the book studio.</p><div className="mt-4 border-t border-slate-100 pt-4 text-xs leading-6 text-slate-500">Editorial review comes first. The one-time ₹199 publishing fee is due only after approval.</div></section>
+          </aside>
+        </div>
+      </main>
+    </div>
   );
 }
 

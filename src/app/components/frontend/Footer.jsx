@@ -11,7 +11,7 @@ const links = [
 export default function Footer() {
   return (
     <footer className="mt-12 border-t border-slate-200 bg-slate-950 text-slate-200">
-      <div className="mx-auto grid max-w-7xl gap-10 px-5 py-10 sm:px-8 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+      <div className="mx-auto grid max-w-[1200px] gap-10 px-5 py-10 sm:px-8 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
         <div>
           <Link href="/" className="inline-flex rounded-lg bg-white p-2">
             <Image src="/logo.png" width={104} height={52} alt="Nobel Books" className="h-10 w-auto" />

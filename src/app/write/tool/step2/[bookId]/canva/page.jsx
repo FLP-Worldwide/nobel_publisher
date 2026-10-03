@@ -1,19 +1,21 @@
 "use client";
 import BookEditGuard from "@/app/components/dashbaord/BookEditGuard";
 
-import { use, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Disclosure } from "@headlessui/react";
 import { ArrowLeft, BookOpen, ChevronDown, Menu, Plus, Trash2, X } from "lucide-react";
 import Toolbar from "@/app/components/editor/Toolbar";
 import EditorArea from "@/app/components/editor/EditorArea";
+import BookStylePicker from "@/app/components/editor/BookStylePicker";
+import { getBookStyle, getTrimSize } from "@/utils/bookLayout";
 
 const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
 const FRONT_MATTER_TITLES = ["Dedication", "Foreword"];
 const BACK_MATTER_TITLE = "Back Matter";
-const isFrontMatter = (chapter) => Boolean(chapter?.type && chapter.type !== "chapter");
+const isFrontMatter = (chapter) => ["intro", "preface"].includes(chapter?.type);
 const isBackMatter = (title = "") => title.trim().toLowerCase() === BACK_MATTER_TITLE.toLowerCase();
 const chapterNumber = (title = "") => {
   const match = String(title).match(/^\s*chapter\s+(\d+)\b/i);
@@ -50,8 +52,7 @@ function clearDraft(bookId, chapterId) {
   }
 }
 
-function EditorPage({ params }) {
-  const { bookId } = use(params);
+function EditorPage({ bookId }) {
   const { data: session, status } = useSession();
   const router = useRouter();
   const accessToken = session?.user?.accessToken;
@@ -68,7 +69,8 @@ function EditorPage({ params }) {
   const [deletingId, setDeletingId] = useState(null);
   const [message, setMessage] = useState("");
   const [saveState, setSaveState] = useState("saved");
-  const [isTwoColumn, setIsTwoColumn] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [styleSaving, setStyleSaving] = useState(false);
   const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false);
 
   const authHeaders = useCallback(
@@ -92,11 +94,7 @@ function EditorPage({ params }) {
       };
       return index(a) - index(b);
     });
-    chaptersOnly.sort(
-      (a, b) =>
-        (chapterNumber(a.title) ?? Number.MAX_SAFE_INTEGER) -
-        (chapterNumber(b.title) ?? Number.MAX_SAFE_INTEGER)
-    );
+    chaptersOnly.sort((a, b) => (a.position || 0) - (b.position || 0) || a.id - b.id);
     return [...front, ...chaptersOnly, ...back];
   }, []);
 
@@ -278,7 +276,9 @@ function EditorPage({ params }) {
       });
       const created = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(created?.message || "Could not create this section.");
-      setChapters((items) => orderChapters([...items, created]));
+      const refreshed = await fetch(`${API_BASE}/chapters/${bookId}`, { headers: authHeaders(), cache: "no-store" });
+      if (!refreshed.ok) throw new Error("Section created, but the contents list could not refresh. Reload to continue.");
+      setChapters(orderChapters(await refreshed.json()));
       selectChapter(created, false);
       setMessage(`${created.title || "Section"} created.`);
     } catch (error) {
@@ -297,7 +297,21 @@ function EditorPage({ params }) {
     );
     let number = 1;
     while (used.has(number)) number += 1;
-    return createSection({ title: `Chapter ${number}`, type: "chapter", content: "<p>Begin writing here…</p>" });
+    return createSection({ title: `Chapter ${number}`, type: "chapter", content: "", ...(bodyChapters.some(c => c.id === currentId) ? { afterChapterId: currentId } : {}) });
+  }
+
+  async function changeBookStyle(layoutStyle) {
+    setStyleSaving(true);
+    try {
+      const design = { size: 'FIVE_X_EIGHT', bindingType: 'PAPERBACK', interior: 'BLACK_WHITE', paperType: 'CREAM', coverLamination: 'MATTE', ...book?.design, layoutStyle };
+      const response = await fetch(`${API_BASE}/books/${bookId}/design`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(design) });
+      const saved = await response.json();
+      if (!response.ok) throw new Error(saved.message || 'Could not save the book style.');
+      setBook(current => ({ ...current, design: saved }));
+      setMessage('Book style saved. It applies to every section.');
+      return true;
+    } catch (error) { setMessage(error.message); return false; }
+    finally { setStyleSaving(false); }
   }
 
   async function deleteChapter(id) {
@@ -375,6 +389,10 @@ function EditorPage({ params }) {
     );
   }
 
+  const selectedSection = chapters.find(c => c.id === currentId);
+  const chapterIndex = bodyChapters.slice(0, bodyChapters.findIndex(c => c.id === currentId) + 1).filter(c => c.type === 'chapter').length;
+  const bookStyle = getBookStyle(book?.design?.layoutStyle, book?.language);
+  const trim = getTrimSize(book?.design?.size, book?.design);
   const bookTitle = book?.title || "Untitled book";
   const author = [book?.authorName, book?.coAuthor].filter(Boolean).join(" & ") || "Author";
   const saveLabel = {
@@ -393,7 +411,7 @@ function EditorPage({ params }) {
           className="min-w-0 flex-1 truncate px-3 py-2 text-left text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
           aria-current={chapter.id === currentId ? "page" : undefined}
         >
-          {chapter.title || "Untitled section"}
+          {chapter.type === "section" ? "↳ " : ""}{chapter.title || "Untitled section"}
         </button>
         {canDelete && (
           <button
@@ -411,12 +429,12 @@ function EditorPage({ params }) {
   );
 
   return (
-    <div className="min-h-screen bg-slate-100 lg:flex">
+    <div className="min-h-screen w-full bg-slate-100 lg:flex">
       {mobileNavigationOpen && (
         <button type="button" className="fixed inset-0 z-30 bg-slate-950/50 lg:hidden" aria-label="Close manuscript navigation" onClick={() => setMobileNavigationOpen(false)} />
       )}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-72 flex-col bg-slate-900 text-white shadow-xl transition-transform lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${mobileNavigationOpen ? "translate-x-0" : "-translate-x-full"}`}
+        className={`fixed inset-y-0 left-0 z-40 flex w-60 flex-col bg-[#142b40] text-white shadow-xl transition-transform lg:sticky lg:top-0 lg:h-screen lg:shrink-0 lg:translate-x-0 ${!sidebarOpen ? "lg:hidden" : ""} ${mobileNavigationOpen ? "translate-x-0" : "-translate-x-full"}`}
         aria-label="Manuscript sections"
       >
         <div className="border-b border-white/10 p-4">
@@ -450,6 +468,7 @@ function EditorPage({ params }) {
                 <Plus className="h-4 w-4" aria-hidden="true" />
               </button>
             </div>
+            <button type="button" disabled={saving || !bodyChapters.some(c => c.id === currentId)} onClick={() => createSection({ title: "New section", type: "section", content: "", afterChapterId: currentId })} className="mb-2 w-full rounded-md border border-white/15 px-3 py-2 text-left text-xs text-slate-300 hover:bg-white/10 disabled:opacity-30">＋ Add section after current</button>
             {bodyChapters.length ? <ul className="space-y-1">{bodyChapters.map((item) => chapterItem(item, true))}</ul> : <p className="px-2 text-xs leading-5 text-slate-400">Add a chapter to begin your manuscript.</p>}
           </section>
           <Disclosure defaultOpen>
@@ -477,33 +496,35 @@ function EditorPage({ params }) {
 
       <main className="min-w-0 flex-1">
         <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 px-3 py-3 shadow-sm backdrop-blur sm:px-6">
-          <div className="mx-auto flex max-w-5xl items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <button type="button" className="rounded-lg border border-slate-200 p-2 text-slate-700 hover:bg-slate-50 lg:hidden" onClick={() => setMobileNavigationOpen(true)} aria-label="Open manuscript navigation">
               <Menu className="h-5 w-5" aria-hidden="true" />
             </button>
+            <button type="button" className="hidden rounded-lg border border-slate-200 p-2 lg:block" onClick={() => setSidebarOpen(v => !v)} aria-label={sidebarOpen ? "Hide manuscript navigation" : "Show manuscript navigation"}><Menu size={18} /></button>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold text-slate-900">{title || "Untitled section"}</p>
               <p className={`text-xs ${saveState === "error" ? "text-red-600" : "text-slate-500"}`} role="status" aria-live="polite">{saveLabel}</p>
             </div>
+            <BookStylePicker language={book?.language} value={bookStyle} onChange={changeBookStyle} disabled={styleSaving} />
             <button type="button" onClick={() => saveChapter(currentId, title, content)} disabled={saving || !currentId || !isDirty} className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50">Save</button>
-            <button type="button" onClick={openPreview} disabled={saving} className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-50 sm:px-4">
+            <button type="button" onClick={openPreview} disabled={saving || styleSaving} className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-50 sm:px-4">
               <span className="hidden sm:inline">Review book</span><span className="sm:hidden">Review</span>
             </button>
           </div>
           {message && (
-            <p className={`mx-auto mt-2 max-w-5xl rounded-md px-3 py-2 text-sm ${saveState === "error" || /could not|failed/i.test(message) ? "bg-red-50 text-red-700" : "bg-blue-50 text-blue-700"}`} role="alert">{message}</p>
+            <p className={`mt-2 rounded-md px-3 py-2 text-sm ${saveState === "error" || /could not|failed/i.test(message) ? "bg-red-50 text-red-700" : "bg-blue-50 text-blue-700"}`} role="alert">{message}</p>
           )}
         </header>
 
-        <div className="mx-auto max-w-5xl px-3 py-5 sm:px-6 sm:py-8">
+        <div className="w-full">
           {currentId ? (
-            <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-              <Toolbar onFormat={formatText} onReset={clearEditor} onToggleColumns={() => setIsTwoColumn((value) => !value)} isTwoColumn={isTwoColumn} />
-              <div className="border-b border-slate-100 px-4 py-4 sm:px-10 sm:py-6">
-                <label htmlFor="chapter-title" className="sr-only">Section title</label>
-                <input id="chapter-title" type="text" value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Section title" className="w-full border-none bg-transparent text-center font-serif text-2xl font-semibold text-slate-900 outline-none placeholder:text-slate-300 sm:text-4xl" />
+            <section className="bg-white">
+              <Toolbar onFormat={formatText} onReset={clearEditor} />
+              <div className="flex items-center gap-3 border-b border-slate-100 px-4 py-2">
+                <label htmlFor="chapter-title" className="shrink-0 text-xs text-slate-500">Section title</label>
+                <input id="chapter-title" type="text" value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Section title" className="w-full rounded border border-slate-200 bg-transparent px-3 py-1.5 text-sm font-semibold text-slate-900 outline-none placeholder:text-slate-300" />
               </div>
-              <EditorArea editorRef={editorRef} content={content} setContent={setContent} isTwoColumn={isTwoColumn} ariaLabel={`Content for ${title || "this section"}`} />
+              <EditorArea key={currentId} editorRef={editorRef} content={content} setContent={setContent} section={{ title, type: selectedSection?.type, number: chapterIndex }} bookStyle={bookStyle} trim={trim} ariaLabel={`Content for ${title || "this section"}`} />
             </section>
           ) : (
             <section className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center">
@@ -520,5 +541,5 @@ function EditorPage({ params }) {
 
 export default function ProtectedBookPage() {
  const p = useParams(); const raw = p?.bookId ?? p?.id; const id = Array.isArray(raw) ? raw[0] : raw;
- return <BookEditGuard bookId={id}><EditorPage /></BookEditGuard>;
+ return <BookEditGuard bookId={id}><EditorPage bookId={id} /></BookEditGuard>;
 }

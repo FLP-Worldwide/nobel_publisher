@@ -11,21 +11,11 @@ import IndexPage from "../bookpages/5x8/design-1/IndexPage";
 import { paginateByHeight } from "@/utils/pagination";
 import { sanitizeManuscriptHtml } from "./sanitizeHtml";
 
-const TRIM_SIZES = {
-  FIVE_X_EIGHT: { label: "5 × 8 in", width: 5, height: 8 },
-  FIVE_HALF_X_EIGHT_HALF: { label: "5.5 × 8.5 in", width: 5.5, height: 8.5 },
-  SIX_X_NINE: { label: "6 × 9 in", width: 6, height: 9 },
-  EIGHT_HALF_X_EIGHT_HALF: { label: "8.5 × 8.5 in", width: 8.5, height: 8.5 },
-  EIGHT_HALF_X_ELEVEN: { label: "8.5 × 11 in", width: 8.5, height: 11 },
-};
+import { BOOK_DPI as DPI, BOOK_MARGIN as SAFE_MARGIN_INCHES, BOOK_BLEED as BLEED_INCHES, getTrimSize, getBookStyle, manuscriptStyle, measureHeading } from "@/utils/bookLayout";
+import ZoomControls from "./ZoomControls";
+export { getTrimSize } from "@/utils/bookLayout";
 
-const DPI = 120;
-const BLEED_INCHES = 0.125;
-const SAFE_MARGIN_INCHES = 0.5;
-
-export function getTrimSize(size) {
-  return TRIM_SIZES[size] || TRIM_SIZES.FIVE_X_EIGHT;
-}
+const pageWidthFor = trim => trim.width * DPI;
 
 function normalizeSections(book) {
   return [
@@ -44,12 +34,16 @@ export default function BookPreview({ book }) {
   const [viewMode, setViewMode] = useState("pages");
   const printArea = useRef(null);
   const [availableWidth, setAvailableWidth] = useState(900);
-  const [zoom, setZoom] = useState(60);
+  const [zoom, setZoom] = useState("fit");
+  const [contentsOpen, setContentsOpen] = useState(true);
   const [showGuides, setShowGuides] = useState(false);
   const [pageData, setPageData] = useState({ pages: [], navigation: [], indexEntries: [] });
   const [paginating, setPaginating] = useState(true);
 
-  const trim = getTrimSize(book?.trimSize || book?.design?.size || book?._raw?.design?.size);
+  const design = book?.design || book?._raw?.design || {};
+  const trim = getTrimSize(book?.trimSize || design.size, design);
+  const bookStyle = getBookStyle(design.layoutStyle, book?.language || book?._raw?.language);
+  const fitScale = Math.max(0.15, (availableWidth - 32) / ((pageWidthFor(trim) + 24) * 2 + 16));
   const sections = useMemo(() => normalizeSections(book || {}), [book]);
   const pageWidth = trim.width * DPI;
   const pageHeight = trim.height * DPI;
@@ -67,16 +61,17 @@ export default function BookPreview({ book }) {
     const timer = window.requestAnimationFrame(async () => {
       await document.fonts.ready;
       if (cancelled) return;
-      // Reserving heading space on every page is conservative, but guarantees
-      // that chapter text is never hidden behind a first-page heading.
-      const paginationHeight = Math.max(pageHeight - 130, 300);
       const groups = sections.map((section) => ({
         section,
-        fragments: paginateByHeight(section.content || "<p></p>", pageWidth, paginationHeight),
+        fragments: paginateByHeight(section.content || "<p></p>", pageWidth, pageHeight, {
+          margin: SAFE_MARGIN_INCHES * DPI,
+          typography: manuscriptStyle(bookStyle),
+          firstPageHeading: measureHeading(section, bookStyle, pageWidth - SAFE_MARGIN_INCHES * DPI * 2),
+        }),
       }));
 
       let printedPage = 1;
-      let physicalPage = 6;
+      let physicalPage = 5;
       const navigation = [{ label: "Title page", pageIndex: 0, sectionIndex: null }];
       const indexEntries = groups.map(({ section, fragments }, sectionIndex) => {
         navigation.push({
@@ -94,7 +89,6 @@ export default function BookPreview({ book }) {
       const pages = [
         { key: "title", kind: "title", label: "Title page" },
         { key: "copyright", kind: "copyright", label: "Copyright" },
-        { key: "blank-before-contents", kind: "blank", label: "Blank page" },
         { key: "contents", kind: "contents", label: "Contents" },
         { key: "blank-after-contents", kind: "blank", label: "Blank page" },
       ];
@@ -123,7 +117,7 @@ export default function BookPreview({ book }) {
       setPaginating(false);
     });
     return () => { cancelled = true; window.cancelAnimationFrame(timer); };
-  }, [pageHeight, pageWidth, sections]);
+  }, [pageHeight, pageWidth, sections, bookStyle]);
 
   const goTo = (item) => {
     const targetId =
@@ -142,6 +136,7 @@ export default function BookPreview({ book }) {
     bleedInches: BLEED_INCHES,
     safeMarginInches: SAFE_MARGIN_INCHES,
     showGuides,
+    bookStyle,
   };
 
   const renderPage = (page) => {
@@ -170,8 +165,8 @@ export default function BookPreview({ book }) {
   };
 
   return (
-    <div className="mx-auto flex w-full max-w-[1500px] items-start gap-6 px-3 py-5 sm:px-6">
-      <aside className="book-preview-controls sticky top-20 hidden w-64 shrink-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:block">
+    <div className="book-preview-workspace flex w-full items-start gap-4 px-3 py-4 sm:px-5">
+      {contentsOpen && <aside className="book-preview-controls sticky top-20 hidden w-56 shrink-0 rounded-xl border border-slate-200 bg-white p-4 lg:block">
         <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
           <BookOpenText className="h-4 w-4 text-blue-600" aria-hidden="true" />
           Book contents
@@ -194,6 +189,7 @@ export default function BookPreview({ book }) {
             <Settings2 className="h-4 w-4 text-blue-600" aria-hidden="true" />
             Preview settings
           </div>
+          <p className="mt-3 text-xs text-slate-600">{bookStyle.name} · {bookStyle.points} pt</p>
           <dl className="mt-3 space-y-2 text-xs text-slate-600">
             <div className="flex justify-between gap-2"><dt>Trim size</dt><dd className="font-semibold text-slate-800">{trim.label}</dd></div>
             <div className="flex justify-between gap-2"><dt>Bleed</dt><dd className="font-semibold text-slate-800">0.125 in</dd></div>
@@ -202,8 +198,6 @@ export default function BookPreview({ book }) {
           </dl>
           {viewMode === "pages" && (
             <>
-              <label className="mt-4 block text-xs font-medium text-slate-700" htmlFor="preview-zoom">Page zoom: {zoom}%</label>
-              <input id="preview-zoom" className="mt-2 w-full accent-blue-600" type="range" min="45" max="100" step="5" value={zoom} onChange={(event) => setZoom(Number(event.target.value))} />
               <label className="mt-3 flex items-center gap-2 text-xs text-slate-700">
                 <input type="checkbox" checked={showGuides} onChange={(event) => setShowGuides(event.target.checked)} className="accent-blue-600" />
                 Show trim safety guides
@@ -211,10 +205,13 @@ export default function BookPreview({ book }) {
             </>
           )}
         </div>
-      </aside>
+      </aside>}
 
+      <style>{`@media print { @page { size: ${trim.width + .25}in ${trim.height + .25}in; margin: 0; } }`}</style>
       <main className="min-w-0 flex-1">
         <div className="book-preview-controls mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-2 shadow-sm">
+          <button type="button" onClick={() => setContentsOpen(v => !v)} className="hidden rounded-lg px-3 py-2 text-xs font-semibold hover:bg-slate-100 lg:block" aria-pressed={contentsOpen}>{contentsOpen ? 'Hide contents' : 'Show contents'}</button>
+          <select aria-label="Jump to section" className="max-w-40 rounded-lg border border-slate-200 p-2 text-xs lg:hidden" onChange={e => goTo(pageData.navigation[Number(e.target.value)])}>{pageData.navigation.map((item,i)=><option key={i} value={i}>{item.label}</option>)}</select>
           <div className="inline-flex rounded-lg bg-slate-100 p-1" aria-label="Preview view">
             <button type="button" onClick={() => setViewMode("reading")} className={`rounded-md px-3 py-2 text-sm font-semibold ${viewMode === "reading" ? "bg-white text-blue-700 shadow-sm" : "text-slate-600"}`} aria-pressed={viewMode === "reading"}>
               Read all content
@@ -223,6 +220,7 @@ export default function BookPreview({ book }) {
               Print layout
             </button>
           </div>
+          {viewMode === "pages" && <ZoomControls zoom={zoom} setZoom={setZoom} fitScale={fitScale} label="Preview zoom" />}
           <div className="flex items-center gap-2 text-xs text-slate-500 lg:hidden">
             <Ruler className="h-4 w-4" aria-hidden="true" /> {trim.label} · {pageData.pages.length} pages
           </div>
@@ -242,7 +240,7 @@ export default function BookPreview({ book }) {
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-600">{section.group}</p>
                   <h2 className="mt-2 font-serif text-2xl font-bold text-slate-900 sm:text-3xl">{section.title}</h2>
                   {section.content ? (
-                    <div className="manuscript-prose mt-6 font-serif text-base leading-8 text-slate-800 sm:text-lg" dangerouslySetInnerHTML={{ __html: section.content }} />
+                    <div className="manuscript-prose book-typeset mt-6" style={manuscriptStyle(bookStyle)} dangerouslySetInnerHTML={{ __html: section.content }} />
                   ) : (
                     <p className="mt-5 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800">This section is currently empty.</p>
                   )}
@@ -255,21 +253,21 @@ export default function BookPreview({ book }) {
         ) : paginating ? (
           <div className="grid min-h-64 place-items-center rounded-2xl bg-white text-sm text-slate-500" role="status">Preparing every page…</div>
         ) : (
-          <div ref={printArea} className="book-print-pages rounded-2xl bg-stone-200 p-2 sm:p-4">
+          <div ref={printArea} className="book-print-pages overflow-x-auto rounded-xl bg-[#e2e7eb] p-2 sm:p-4">
             <p className="book-preview-controls mb-4 text-center text-xs text-stone-600">Facing pages · even pages on the left, odd pages on the right</p>
             {Array.from({ length: Math.ceil((pageData.pages.length + 1) / 2) }, (_, spread) => {
               const indices = [spread * 2 - 1, spread * 2];
-              const scale = Math.min(zoom / 100, Math.max(0.12, (availableWidth - 32) / ((pageWidth + 30) * 2 + 16)));
-              return <div key={spread} className="print-spread mb-6 flex justify-center gap-2">
+              const scale = zoom === "fit" ? fitScale : zoom / 100;
+              return <div key={spread} className="print-spread mx-auto mb-6 flex gap-2" style={{ width: (pageWidth + 24) * scale * 2 + 8 }}>
                 {indices.map(index => {
                   const page = pageData.pages[index];
-                  return <section id={page ? `preview-page-${index}` : undefined} key={index} className="print-leaf scroll-mt-28" style={{ width: (pageWidth + 30) * scale }} aria-label={page ? `Page ${index + 1}: ${page.label}` : 'Outside of book'}>
+                  return <section id={page ? `preview-page-${index}` : undefined} key={index} className="print-leaf shrink-0 scroll-mt-28" style={{ width: (pageWidth + 24) * scale }} aria-label={page ? `Page ${index + 1}: ${page.label}` : 'Outside of book'}>
                     {page ? <>
-                      <div style={{ height: (pageHeight + 30) * scale }}>
-                        <div className="book-preview-page-scale" style={{ transform: `scale(${scale})`, transformOrigin: 'top left', width: pageWidth + 30 }}>{renderPage(page)}</div>
+                      <div style={{ height: (pageHeight + 24) * scale }}>
+                        <div className="book-preview-page-scale" style={{ transform: `scale(${scale})`, transformOrigin: 'top left', width: pageWidth + 24 }}>{renderPage(page)}</div>
                       </div>
                       <p className="book-preview-controls mt-2 text-center text-xs text-stone-600">{index + 1} · {page.label}</p>
-                    </> : <div className="book-preview-controls" style={{ height: (pageHeight + 30) * scale }} />}
+                    </> : <div className="book-preview-controls" style={{ height: (pageHeight + 24) * scale }} />}
                   </section>;
                 })}
               </div>;

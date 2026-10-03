@@ -2,7 +2,6 @@
 import BookEditGuard from "@/app/components/dashbaord/BookEditGuard";
 
 import AuthorSidebar from "@/app/components/dashbaord/AuthorSidebar";
-import AuthorTopbar from "@/app/components/dashbaord/Topbar";
 import {
   ArrowLeft,
   BookOpen,
@@ -230,280 +229,38 @@ function Metadata() {
     }
   }
 
-  return (
-    <section className="min-h-screen bg-slate-50 ">
-      <AuthorTopbar />
-      <AuthorSidebar currentStep="metadata" />
-
-      <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
-        <div className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <Link
-              href={`/write/tool/step2/${bookId}`}
-              className="mb-3 inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-900"
-            >
-              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-              Back to book setup
-            </Link>
-            <p className="mb-2 text-sm font-bold uppercase tracking-[0.14em] text-blue-700">
-              Final details
-            </p>
-            <h1 className="text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
-              Prepare your book for review
-            </h1>
-            <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
-              Add the information readers will see, preview the complete book, then send one saved
-              version to our review team.
-            </p>
-          </div>
-          <Link
-            href={`/write/tool/step2/${bookId}/canva/preview`}
-            className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-blue-300 hover:text-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-100"
-          >
-            <Eye className="h-4 w-4" aria-hidden="true" />
-            Preview complete book
-          </Link>
-        </div>
-
-        {notice && (
-          <div
-            role={notice.type === "error" ? "alert" : "status"}
-            className={`mb-6 rounded-xl border px-4 py-3 text-sm font-medium ${
-              notice.type === "error"
-                ? "border-red-200 bg-red-50 text-red-800"
-                : "border-emerald-200 bg-emerald-50 text-emerald-800"
-            }`}
-          >
-            {notice.text}
-          </div>
-        )}
-
-        {loading ? (
-          <div className="flex min-h-72 items-center justify-center rounded-2xl border border-slate-200 bg-white">
-            <Loader2 className="mr-3 h-5 w-5 animate-spin text-blue-700" aria-hidden="true" />
-            <span className="text-sm font-medium text-slate-600">Loading your book details…</span>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {isLocked && (
-              <div className="flex gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-950">
-                <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
-                <div>
-                  <p className="font-semibold">This submitted version is locked</p>
-                  <p className="mt-1 text-sm leading-6 text-amber-900">
-                    Its status is {rawStatus.replaceAll("_", " ").toLowerCase()}. Open Review &amp;
-                    publish to see the latest decision or payment step.
-                  </p>
-                </div>
-              </div>
-            )}
-
-            <fieldset disabled={isLocked || saving || submitting} className="space-y-6 disabled:opacity-75">
-              <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
-                <div className="mb-5 flex items-start gap-3">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
-                    <BookOpen className="h-5 w-5" aria-hidden="true" />
-                  </span>
-                  <div>
-                    <h2 className="text-xl font-bold text-slate-950">Book description</h2>
-                    <p className="mt-1 text-sm leading-6 text-slate-600">
-                      Write a clear back-cover pitch that introduces the promise of your book without
-                      giving everything away.
-                    </p>
-                  </div>
-                </div>
-                <label htmlFor="book-description" className="sr-only">
-                  Book description
-                </label>
-                <textarea
-                  id="book-description"
-                  value={description}
-                  onChange={(event) => setDescription(event.target.value)}
-                  rows={7}
-                  maxLength={DESCRIPTION_LIMIT}
-                  placeholder="What is your book about, and why will readers want to keep reading?"
-                  className="block w-full resize-y rounded-xl border border-slate-300 bg-white px-4 py-3 text-base leading-7 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
-                />
-                <p className="mt-2 text-right text-xs font-medium text-slate-500">
-                  {description.length.toLocaleString("en-IN")} / {DESCRIPTION_LIMIT.toLocaleString("en-IN")}
-                </p>
-              </section>
-
-              <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
-                <h2 className="text-xl font-bold text-slate-950">About the author</h2>
-                <p className="mt-1 text-sm leading-6 text-slate-600">
-                  Share the experience, perspective, or background that helps readers connect with you.
-                </p>
-                <label htmlFor="author-biography" className="sr-only">
-                  Author biography
-                </label>
-                <textarea
-                  id="author-biography"
-                  value={authorBiography}
-                  onChange={(event) => setAuthorBiography(event.target.value)}
-                  rows={6}
-                  maxLength={BIOGRAPHY_LIMIT}
-                  placeholder="Introduce yourself to your readers…"
-                  className="mt-5 block w-full resize-y rounded-xl border border-slate-300 bg-white px-4 py-3 text-base leading-7 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
-                />
-                <p className="mt-2 text-right text-xs font-medium text-slate-500">
-                  {authorBiography.length.toLocaleString("en-IN")} / {BIOGRAPHY_LIMIT.toLocaleString("en-IN")}
-                </p>
-              </section>
-
-              <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-                  <div>
-                    <h2 className="text-xl font-bold text-slate-950">Categories</h2>
-                    <p className="mt-1 text-sm text-slate-600">
-                      Choose up to {MAX_CATEGORIES} categories that best describe your book.
-                    </p>
-                  </div>
-                  <p className="text-sm font-semibold text-slate-500">
-                    {categories.length} / {MAX_CATEGORIES} selected
-                  </p>
-                </div>
-                <div className="mt-5 flex flex-wrap gap-2" role="group" aria-label="Book categories">
-                  {CATEGORY_OPTIONS.map((category) => {
-                    const selected = categories.includes(category);
-                    const unavailable = !selected && categories.length >= MAX_CATEGORIES;
-                    return (
-                      <button
-                        key={category}
-                        type="button"
-                        onClick={() => toggleCategory(category)}
-                        disabled={unavailable}
-                        aria-pressed={selected}
-                        className={`inline-flex min-h-10 items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition focus:outline-none focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-40 ${
-                          selected
-                            ? "border-blue-700 bg-blue-700 text-white"
-                            : "border-slate-300 bg-white text-slate-700 hover:border-blue-400 hover:text-blue-800"
-                        }`}
-                      >
-                        {selected && <Check className="h-4 w-4" aria-hidden="true" />}
-                        {category}
-                      </button>
-                    );
-                  })}
-                </div>
-              </section>
-
-              <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-                  <div>
-                    <label htmlFor="keywords" className="text-xl font-bold text-slate-950">
-                      Search keywords
-                    </label>
-                    <p className="mt-1 text-sm leading-6 text-slate-600">
-                      Add up to {MAX_KEYWORDS} phrases, separated by commas. Think of what a reader
-                      would type while looking for your book.
-                    </p>
-                  </div>
-                  <p className={`text-sm font-semibold ${hasTooManyKeywords ? "text-red-700" : "text-slate-500"}`}>
-                    {keywords.length} / {MAX_KEYWORDS} keywords
-                  </p>
-                </div>
-                <input
-                  type="text"
-                  id="keywords"
-                  value={keywordsInput}
-                  onChange={(event) => setKeywordsInput(event.target.value)}
-                  placeholder="found family, Indian fantasy, coming of age"
-                  aria-describedby="keyword-help"
-                  aria-invalid={hasTooManyKeywords}
-                  className="mt-5 block min-h-12 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-base text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
-                />
-                <p id="keyword-help" className="mt-2 text-xs text-slate-500">
-                  Multi-word phrases count as one keyword when separated by commas.
-                </p>
-              </section>
-
-              <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
-                <h2 className="text-xl font-bold text-slate-950">Publishing declaration</h2>
-                <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-700">
-                  <li className="flex gap-3">
-                    <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" aria-hidden="true" />
-                    I own the rights needed to publish this work and it does not unlawfully copy another work.
-                  </li>
-                  <li className="flex gap-3">
-                    <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" aria-hidden="true" />
-                    The book does not contain unlawful, defamatory, or intentionally misleading material.
-                  </li>
-                  <li className="flex gap-3">
-                    <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" aria-hidden="true" />
-                    I understand this saved version will be locked while the review is in progress.
-                  </li>
-                </ul>
-                <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <input
-                    type="checkbox"
-                    checked={termsAccepted}
-                    onChange={(event) => setTermsAccepted(event.target.checked)}
-                    className="mt-0.5 h-5 w-5 rounded border-slate-300 text-blue-700 focus:ring-blue-600"
-                  />
-                  <span className="text-sm font-semibold leading-6 text-slate-800">
-                    I confirm the statements above and agree to submit this version for review.
-                  </span>
-                </label>
-              </section>
-
-              <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
-                <label htmlFor="author-message" className="text-xl font-bold text-slate-950">
-                  Note for the reviewer <span className="text-sm font-normal text-slate-500">(optional)</span>
-                </label>
-                <p className="mt-1 text-sm leading-6 text-slate-600">
-                  Mention anything the reviewer should know about this edition, formatting, or special content.
-                </p>
-                <textarea
-                  id="author-message"
-                  value={authorMessage}
-                  onChange={(event) => setAuthorMessage(event.target.value)}
-                  rows={3}
-                  maxLength={1000}
-                  placeholder="Add a short note…"
-                  className="mt-5 block w-full resize-y rounded-xl border border-slate-300 bg-white px-4 py-3 text-base leading-7 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
-                />
-              </section>
-            </fieldset>
-
-            <div className="sticky bottom-0 z-10 -mx-4 border-t border-slate-200 bg-white/95 px-4 py-4 shadow-[0_-10px_30px_rgba(15,23,42,0.08)] backdrop-blur sm:static sm:mx-0 sm:flex sm:items-center sm:justify-between sm:rounded-2xl sm:border sm:px-5 sm:shadow-sm">
-              <p className="mb-3 text-sm leading-6 text-slate-600 sm:mb-0 sm:max-w-md">
-                No payment is due now. After approval, you will pay the one-time ₹199 publishing fee.
-              </p>
-              <div className="flex flex-col-reverse gap-3 sm:flex-row">
-                <button
-                  type="button"
-                  onClick={handleSave}
-                  disabled={isLocked || saving || submitting}
-                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-bold text-slate-800 transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {saving ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Save className="h-4 w-4" aria-hidden="true" />}
-                  {saving ? "Saving…" : "Save draft"}
-                </button>
-                {isLocked ? (
-                  <Link
-                    href={`/write/tool/step2/${bookId}/pricing_info`}
-                    className="inline-flex min-h-11 items-center justify-center rounded-xl bg-blue-800 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-blue-900 focus:outline-none focus:ring-4 focus:ring-blue-200"
-                  >
-                    View review status
-                  </Link>
-                ) : (
-                  <button
-                    type="submit"
-                    disabled={saving || submitting}
-                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-blue-800 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-blue-900 focus:outline-none focus:ring-4 focus:ring-blue-200 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {submitting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Send className="h-4 w-4" aria-hidden="true" />}
-                    {submitting ? "Submitting…" : "Submit for review"}
-                  </button>
-                )}
-              </div>
+  const readiness = [
+    ['Book description', Boolean(description.trim())],
+    ['Author biography', Boolean(authorBiography.trim())],
+    ['Categories', categories.length > 0],
+    ['Search keywords', keywords.length > 0 && !hasTooManyKeywords],
+    ['Publishing declaration', termsAccepted],
+  ];
+  return <div className="ui-workspace">
+    <AuthorSidebar currentStep="metadata" />
+    <main className="ui-shell">
+      <header className="ui-heading"><div><p className="ui-eyebrow">03 / Prepare for readers</p><h1>Publication details</h1><p>A clear description, a little about you, and the details that help readers find your book.</p></div><Link href={`/write/tool/step2/${bookId}/canva/preview`} className="ui-button ui-button-secondary"><Eye size={15}/>Preview book</Link></header>
+      {notice && <div role={notice.type === 'error' ? 'alert' : 'status'} className={`mb-4 rounded-lg border p-3 text-sm ${notice.type==='error'?'border-red-200 bg-red-50 text-red-800':'border-green-200 bg-green-50 text-green-800'}`}>{notice.text}</div>}
+      {loading ? <div className="ui-card flex items-center gap-3 text-slate-500"><Loader2 size={16} className="animate-spin"/>Loading publication details…</div> : <form onSubmit={handleSubmit}>
+        <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_260px]">
+          <fieldset disabled={isLocked || saving || submitting} className="min-w-0 space-y-4 disabled:opacity-70">
+            <div className="ui-form-columns">
+              <section className="ui-card"><label htmlFor="book-description" className="ui-section-title">Book description</label><p className="ui-help mb-4">Give readers a reason to turn the first page.</p><textarea id="book-description" value={description} onChange={e=>setDescription(e.target.value)} rows={6} maxLength={DESCRIPTION_LIMIT} placeholder="Introduce your story, topic or promise…" className="ui-field resize-y"/><p className="mt-2 text-right text-[11px] text-slate-400">{description.length} / {DESCRIPTION_LIMIT}</p></section>
+              <section className="ui-card"><label htmlFor="author-biography" className="ui-section-title">About the author</label><p className="ui-help mb-4">Share the person and perspective behind the book.</p><textarea id="author-biography" value={authorBiography} onChange={e=>setAuthorBiography(e.target.value)} rows={6} maxLength={BIOGRAPHY_LIMIT} placeholder="A short introduction to you and your work…" className="ui-field resize-y"/><p className="mt-2 text-right text-[11px] text-slate-400">{authorBiography.length} / {BIOGRAPHY_LIMIT}</p></section>
             </div>
-          </form>
-        )}
-      </main>
-    </section>
-  );
+            <section className="ui-card"><div className="flex items-center justify-between gap-4"><h2>Help readers discover your book</h2><span className="text-[11px] text-slate-400">{categories.length} / {MAX_CATEGORIES} categories</span></div><p className="ui-help">Choose up to three categories that fit your work.</p><div className="mt-4 flex flex-wrap gap-2" role="group" aria-label="Book categories">{CATEGORY_OPTIONS.map(category=><button key={category} type="button" className="ui-choice" aria-pressed={categories.includes(category)} disabled={!categories.includes(category)&&categories.length>=MAX_CATEGORIES} onClick={()=>toggleCategory(category)}>{categories.includes(category)&&<Check size={13}/>} {category}</button>)}</div>
+              <div className="mt-5 border-t border-slate-100 pt-4"><div className="flex items-center justify-between"><label htmlFor="keywords" className="ui-label">Search keywords</label><span className={`text-[11px] ${hasTooManyKeywords?'text-red-700':'text-slate-400'}`}>{keywords.length} / {MAX_KEYWORDS}</span></div><input id="keywords" value={keywordsInput} onChange={e=>setKeywordsInput(e.target.value)} className="ui-field" placeholder="e.g. Indian fiction, family stories, coming of age" aria-describedby="keyword-help" aria-invalid={hasTooManyKeywords}/><p id="keyword-help" className="ui-help">Separate phrases with commas. Use up to seven.</p></div>
+            </section>
+            <section className="ui-card"><h2>Ready for editorial review?</h2><ul className="ui-checklist"><li><CheckCircle2/>I own the rights needed to publish this work; it does not unlawfully copy another work.</li><li><CheckCircle2/>The book does not contain unlawful, defamatory or intentionally misleading material.</li><li><CheckCircle2/>This saved version will be locked until the review team makes a decision.</li></ul><label className="mt-5 flex cursor-pointer items-start gap-3 rounded-lg border border-[#d1e0d9] bg-[#f0f5f2] p-3"><input type="checkbox" checked={termsAccepted} onChange={e=>setTermsAccepted(e.target.checked)} className="mt-0.5 h-4 w-4 shrink-0 accent-[#315e54]"/><span className="text-xs font-medium leading-5 text-[#315e54]">I confirm these statements and agree to submit this version for review.</span></label>
+              <details className="mt-4 border-t border-slate-100 pt-4"><summary className="cursor-pointer text-xs font-semibold text-slate-600">Add a note for the reviewer <span className="font-normal text-slate-400">· optional</span></summary><label htmlFor="author-message" className="sr-only">Note for the reviewer</label><textarea id="author-message" value={authorMessage} onChange={e=>setAuthorMessage(e.target.value)} rows={3} maxLength={1000} placeholder="Anything the reviewer should know about this edition?" className="ui-field mt-3"/></details>
+            </section>
+          </fieldset>
+          <aside className="space-y-4 lg:sticky lg:top-6"><section className="ui-card"><p className="ui-eyebrow">Submission checklist</p><h2 className="mt-3 break-words">{book?.title || 'Your book'}</h2><p className="ui-help">{readiness.filter(([,ready])=>ready).length} of {readiness.length} details complete</p><div className="mt-3 h-1 overflow-hidden rounded-full bg-slate-100"><div className="h-full bg-[#527e70] transition-all" style={{width:`${readiness.filter(([,ready])=>ready).length/readiness.length*100}%`}}/></div><ul className="ui-checklist">{readiness.map(([label,ready])=><li key={label}><CheckCircle2 className={ready?'opacity-100':'opacity-25'}/><span className={ready?'text-slate-700':'text-slate-400'}>{label}</span></li>)}</ul></section><section className="rounded-xl bg-[#19334c] p-5 text-white"><h2 className="text-sm font-semibold">Review first. Publish next.</h2><p className="mt-3 text-xs leading-6 text-slate-300">No payment is due now. The one-time ₹199 fee applies after approval. If you have already paid for this book, revisions carry no extra publishing fee.</p></section></aside>
+        </div>
+        <div className="ui-actions"><Link href={`/write/tool/step2/${bookId}`} className="inline-flex items-center gap-2 text-xs font-medium text-slate-500"><ArrowLeft size={14}/>Back to book studio</Link><div className="flex flex-wrap gap-2"><button type="button" onClick={handleSave} disabled={isLocked||saving||submitting} className="ui-button ui-button-secondary"><Save size={14}/>{saving?'Saving…':'Save draft'}</button><button type="submit" disabled={isLocked||saving||submitting} className="ui-button"><Send size={14}/>{submitting?'Submitting…':'Submit for review'}</button></div></div>
+      </form>}
+    </main>
+  </div>;
 }
 
 export default function ProtectedBookPage() {

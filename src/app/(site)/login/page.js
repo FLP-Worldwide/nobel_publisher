@@ -2,10 +2,9 @@
 
 import React, { Suspense, useState } from "react";
 import { getSession, signIn } from "next-auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 
 function LoginForm({ accountType = "author" }) {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -66,7 +65,8 @@ function LoginForm({ accountType = "author" }) {
       const callbackUrl = searchParams.get("callbackUrl");
       const safeCallback = callbackUrl?.startsWith("/") && !callbackUrl.startsWith("//") ? callbackUrl : null;
       const destination = loggedInSession?.user?.role === "buyer" ? "/account" : safeCallback || (loggedInSession?.user?.role === "admin" ? "/admin" : "/author-dashboard");
-      router.push(destination);
+      // Refresh the document so a prefetched unauthenticated redirect is not reused.
+      window.location.assign(destination);
     } else {
       setError(res?.error || "Invalid email or password.");
     }
@@ -75,11 +75,11 @@ function LoginForm({ accountType = "author" }) {
 
   
   return (
-    <div className="min-h-90 flex items-center justify-center py-4 bg-gray-50">
-      <div className="flex bg-white shadow-lg rounded-lg overflow-hidden max-w-4xl w-full">
+    <div className="min-h-[65vh] flex items-center justify-center px-4 py-10 bg-[#f1f4f6]">
+      <div className="flex bg-white border border-slate-200 shadow-sm rounded-xl overflow-hidden max-w-4xl w-full">
         {/* Left Image / Text Section */}
-        <div className="hidden md:flex w-1/2 bg-blue-400 flex-col justify-center items-center text-white p-8">
-          <h2 className="text-2xl font-bold mb-4 text-center">
+        <div className="hidden md:flex w-1/2 bg-[#19334c] flex-col justify-center items-center text-white p-8">
+          <h2 className="text-xl font-semibold mb-4 text-center">
             {accountType === "buyer" ? "Your reading journey" : "Your book starts here"}
           </h2>
           <p className="text-sm text-center text-blue-50">
@@ -89,7 +89,7 @@ function LoginForm({ accountType = "author" }) {
 
         {/* Right Form Section */}
         <div className="w-full md:w-1/2 p-8">
-          <h2 className="text-2xl font-bold text-blue-700 mb-6">{accountType === "buyer" ? "Reader sign in" : "Author sign in"}</h2>
+          <h2 className="text-xl font-semibold text-blue-700 mb-6">{accountType === "buyer" ? "Reader sign in" : "Author sign in"}</h2>
 
           {error && (
             <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
@@ -154,7 +154,7 @@ function LoginForm({ accountType = "author" }) {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-500 hover:bg-blue-600 disabled:opacity-70 disabled:cursor-not-allowed text-white font-medium rounded-lg text-sm px-5 py-2.5"
+              className="w-full bg-[#19334c] hover:bg-blue-600 disabled:opacity-70 disabled:cursor-not-allowed text-white font-medium rounded-lg text-sm px-5 py-2.5"
             >
               {loading ? "Logging in..." : "Login"}
             </button>

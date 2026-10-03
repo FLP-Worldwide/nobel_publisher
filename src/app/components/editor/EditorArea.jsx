@@ -1,44 +1,104 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { sanitizeManuscriptHtml } from "./sanitizeHtml";
+import { BOOK_DPI, BOOK_MARGIN, manuscriptStyle, sectionHeadingHtml } from "@/utils/bookLayout";
+import ZoomControls from "./ZoomControls";
 
-export default function EditorArea({
-  editorRef,
-  content,
-  setContent,
-  isTwoColumn,
-  ariaLabel = "Chapter content",
-}) {
-  useEffect(() => {
+export default function EditorArea({ editorRef, content, setContent, section, bookStyle, trim, ariaLabel = "Chapter content" }) {
+  const scrollRef = useRef(null);
+  const columnsRef = useRef(null);
+  const [width, setWidth] = useState(1000);
+  const [zoom, setZoom] = useState('fit');
+  const [pages, setPages] = useState(1);
+  const [visiblePage, setVisiblePage] = useState(1);
+  const pageWidth = trim.width * BOOK_DPI, pageHeight = trim.height * BOOK_DPI;
+  const margin = BOOK_MARGIN * BOOK_DPI, gap = 24;
+  const bodyWidth = pageWidth - margin * 2;
+  // Fit one comfortably sized writing page. Zoom is a view transform only.
+  const fitScale = Math.max(.25, Math.min(1.3, (width - 48) / pageWidth));
+  const scale = zoom === 'fit' ? fitScale : zoom / 100;
+  const stride = (pageWidth + gap) * scale;
+  const totalWidth = pages * (pageWidth + gap) - gap;
+
+  useLayoutEffect(() => {
     const editor = editorRef.current;
     if (!editor || document.activeElement === editor) return;
-    const safeContent = sanitizeManuscriptHtml(content);
-    if (editor.innerHTML !== safeContent) editor.innerHTML = safeContent;
+    const safe = sanitizeManuscriptHtml(content);
+    if (editor.innerHTML !== safe) editor.innerHTML = safe;
   }, [content, editorRef]);
 
-  const handleInput = (event) => {
-    let value = event.currentTarget.innerHTML;
-    if (value === "<br>" || !value.trim()) {
-      value = "";
-      event.currentTarget.innerHTML = "";
-    }
-    setContent(sanitizeManuscriptHtml(value));
-  };
+  useEffect(() => {
+    const observer = new ResizeObserver(([entry]) => setWidth(entry.contentRect.width));
+    observer.observe(scrollRef.current);
+    return () => observer.disconnect();
+  }, []);
 
-  return (
-    <div
-      ref={editorRef}
-      className={`placeholder-editor manuscript-editor w-full bg-white px-5 py-8 font-serif text-base leading-8 text-slate-800 outline-none sm:px-12 sm:py-10 sm:text-lg ${
-        isTwoColumn ? "editor-two-col" : ""
-      }`}
-      contentEditable
-      suppressContentEditableWarning
-      onInput={handleInput}
-      role="textbox"
-      aria-label={ariaLabel}
-      aria-multiline="true"
-      spellCheck="true"
-    />
-  );
+  useEffect(() => {
+    let cancelled = false;
+    const update = () => {
+      if (cancelled || !columnsRef.current) return;
+      const count = Math.max(1, Math.round((columnsRef.current.scrollWidth + margin * 2 + gap) / (pageWidth + gap)));
+      setPages(count);
+    };
+    const frame = requestAnimationFrame(update);
+    document.fonts.ready.then(update);
+    return () => { cancelled = true; cancelAnimationFrame(frame); };
+  }, [content, section.title, section.type, section.number, bookStyle, pageWidth, pageHeight, margin]);
+
+  const handleInput = event => setContent(sanitizeManuscriptHtml(event.currentTarget.innerHTML));
+
+  function onKeyDown(event) {
+    if (event.key !== 'Enter' || event.nativeEvent.isComposing) return;
+    // Native line-break editing retains the browser selection and undo history.
+    // A second Enter creates the blank line separating two paragraphs.
+    event.preventDefault();
+    if (event.ctrlKey || event.metaKey) {
+      document.execCommand('insertHTML', false, '<div data-page-break="true"></div><p><br></p>');
+    } else {
+      document.execCommand('insertLineBreak');
+    }
+    setContent(sanitizeManuscriptHtml(editorRef.current.innerHTML));
+  }
+
+  function onPaste(event) {
+    event.preventDefault();
+    const rich = event.clipboardData.getData('text/html');
+    const plain = event.clipboardData.getData('text/plain');
+    const safe = rich ? sanitizeManuscriptHtml(rich) : plain.replace(/[&<>]/g, c => ({'&':'&amp;', '<':'&lt;', '>':'&gt;'}[c])).replace(/\r\n?/g,'\n').replace(/\n{3,}/g,'\n\n').replace(/\n/g,'<br>');
+    document.execCommand('insertHTML', false, safe);
+    setContent(sanitizeManuscriptHtml(editorRef.current.innerHTML));
+  }
+
+  function goTo(page) {
+    const next = Math.max(1, Math.min(pages, page));
+    scrollRef.current.scrollTo({ left: (next - 1) * stride, behavior: 'smooth' });
+    setVisiblePage(next);
+  }
+
+  return <div className="bg-[#e2e7eb]">
+    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-2">
+      <div className="flex items-center gap-2 text-xs text-slate-600">
+        <button type="button" className="rounded border px-2 py-1 disabled:opacity-30" onClick={() => goTo(visiblePage - 1)} disabled={visiblePage <= 1} aria-label="Previous canvas page">←</button>
+        <span>Page {Math.min(visiblePage, pages)} of {pages}</span>
+        <button type="button" className="rounded border px-2 py-1 disabled:opacity-30" onClick={() => goTo(visiblePage + 1)} disabled={visiblePage >= pages} aria-label="Next canvas page">→</button>
+        <span className="ml-2 hidden sm:inline">{trim.label} · {bookStyle.points} pt</span>
+      </div>
+      <ZoomControls zoom={zoom} setZoom={setZoom} fitScale={fitScale} />
+    </div>
+    <p className="px-5 py-2 text-xs text-slate-600">Enter for a new line · Enter twice for a paragraph · Page break for a fresh page. Pages flow to the right.</p>
+    <div ref={scrollRef} className="book-canvas-scroll w-full p-5" onScroll={e => setVisiblePage(Math.min(pages, Math.floor(e.currentTarget.scrollLeft / stride) + 1))}>
+      <div style={{ width: totalWidth * scale, height: pageHeight * scale, marginInline: totalWidth * scale < width - 40 ? 'auto' : 0 }}>
+        <div style={{ width: totalWidth, height: pageHeight, transform: `scale(${scale})`, transformOrigin: 'top left', position: 'relative' }}>
+          {Array.from({length: pages}, (_,index) => <div key={index} className="pointer-events-none absolute top-0 border border-slate-200 bg-white shadow-md" style={{ left: index * (pageWidth + gap), width: pageWidth, height: pageHeight }} aria-hidden="true">
+            <span className="absolute bottom-4 right-6 text-[10px] text-slate-400">{index + 1}</span>
+          </div>)}
+          <div ref={columnsRef} className="book-canvas-columns book-typeset absolute" style={{ ...manuscriptStyle(bookStyle), top: margin, left: margin, width: bodyWidth, height: pageHeight - margin * 2, columnWidth: bodyWidth, columnGap: margin * 2 + gap }}>
+            <div dangerouslySetInnerHTML={{ __html: sectionHeadingHtml(section, bookStyle) }} />
+            <div ref={editorRef} className="book-canvas-content manuscript-prose book-typeset" contentEditable suppressContentEditableWarning onInput={handleInput} onKeyDown={onKeyDown} onPaste={onPaste} role="textbox" aria-label={ariaLabel} aria-multiline="true" spellCheck="true" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>;
 }

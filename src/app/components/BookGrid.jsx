@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import Link from "next/link";
 
 export default function BookGrid({ heading }) {
   const books = [
@@ -14,8 +15,8 @@ export default function BookGrid({ heading }) {
   ];
 
   return (
-    <div className="px-6 py-6">
-      <h4 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+    <div className="ui-shell">
+      <h4 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
         {heading}
       </h4>
 
@@ -25,13 +26,13 @@ export default function BookGrid({ heading }) {
             key={index}
             className="group rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow"
           >
-            <a href="/book/bookid">
+            <Link href="/bookstore">
             <img
               src={book}
               alt={`Book ${index + 1}`}
               className="w-full h-90 object-cover group-hover:scale-105 transition-transform"
             />
-            </a>
+            </Link>
           </div>
         ))}
       </div>
