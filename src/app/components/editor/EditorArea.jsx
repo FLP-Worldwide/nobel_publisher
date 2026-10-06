@@ -2,7 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { sanitizeManuscriptHtml } from "./sanitizeHtml";
-import { BOOK_DPI, BOOK_MARGIN, manuscriptStyle, sectionHeadingHtml } from "@/utils/bookLayout";
+import { BOOK_DPI, BOOK_MARGIN, manuscriptStyle, sectionHeadingHtml, ensureBookFonts } from "@/utils/bookLayout";
 import ZoomControls from "./ZoomControls";
 
 export default function EditorArea({ editorRef, content, setContent, section, bookStyle, trim, ariaLabel = "Chapter content" }) {
@@ -42,7 +42,7 @@ export default function EditorArea({ editorRef, content, setContent, section, bo
       setPages(count);
     };
     const frame = requestAnimationFrame(update);
-    document.fonts.ready.then(update);
+    ensureBookFonts(bookStyle).then(update);
     return () => { cancelled = true; cancelAnimationFrame(frame); };
   }, [content, section.title, section.type, section.number, bookStyle, pageWidth, pageHeight, margin]);
 
@@ -56,6 +56,25 @@ export default function EditorArea({ editorRef, content, setContent, section, bo
     if (event.ctrlKey || event.metaKey) {
       document.execCommand('insertHTML', false, '<div data-page-break="true"></div><p><br></p>');
     } else {
+      const selection = window.getSelection();
+      if (selection?.isCollapsed && selection.rangeCount) {
+        const preceding = selection.getRangeAt(0).cloneRange();
+        preceding.selectNodeContents(editorRef.current);
+        preceding.setEnd(selection.anchorNode, selection.anchorOffset);
+        const fragment = preceding.cloneContents();
+        const leaves = [];
+        const visit = node => {
+          if (node.nodeType === Node.TEXT_NODE || node.nodeName === 'BR') leaves.push(node);
+          else node.childNodes.forEach(visit);
+        };
+        visit(fragment);
+        let breaks = 0;
+        for (const node of leaves.reverse()) {
+          if (node.nodeName === 'BR') breaks++;
+          else if (node.textContent.trim()) break;
+        }
+        if (breaks >= 2) return;
+      }
       document.execCommand('insertLineBreak');
     }
     setContent(sanitizeManuscriptHtml(editorRef.current.innerHTML));

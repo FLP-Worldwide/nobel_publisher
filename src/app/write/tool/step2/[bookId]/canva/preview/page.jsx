@@ -26,7 +26,9 @@ function normalizeBook(response, design, fallbackAuthor) {
     if (!chapter?.id && !chapter?.title) return;
     const title = chapter.title?.trim() || "Untitled section";
     const common = { id: chapter.id, title, content: chapter.content || "" };
-    if (
+    if (chapter.type === "section") {
+      normalChapters.push({ ...common, type: "section" });
+    } else if (
       (["intro", "preface"].includes(chapter.type)) ||
       FRONT_MATTER_NAMES.test(title)
     ) {
@@ -153,7 +155,7 @@ export default function PreviewPage({ params }) {
             <p className="truncate text-sm font-semibold text-slate-900">{previewBook?.title || "Book review"}</p>
             <p className="truncate text-xs text-slate-500">Review every section before continuing</p>
           </div>
-          <button type="button" onClick={() => window.print()} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+          <button type="button" onClick={() => window.print()} aria-label="Print review" className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
             <Printer className="h-4 w-4" aria-hidden="true" />
             <span className="hidden sm:inline">Print review</span>
           </button>

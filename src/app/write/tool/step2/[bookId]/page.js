@@ -1,4 +1,5 @@
 "use client";
+import { getBookStyle } from "@/utils/bookLayout";
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
@@ -23,7 +24,7 @@ function Studio({id}) {
  const [notice,setNotice]=useState(''); const [saving,setSaving]=useState(false); const [cover,setCover]=useState(false);
  const {data:book,error,mutate}=useSWR(token?[`${API}/books/${id}`,token]:null,async([url,t])=>{const r=await fetch(url,{headers:{Authorization:`Bearer ${t}`}});const d=await r.json();if(!r.ok)throw new Error(d.message);return d;});
  useEffect(()=>{if(book?.design)setDesign(book.design);},[book]);
- async function save(e){e.preventDefault();setSaving(true);setNotice('');try{const r=await fetch(`${API}/books/${id}/design`,{method:'PUT',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify(design)});const d=await r.json();if(!r.ok)throw new Error(d.message);setNotice('Print settings saved.');await mutate();}catch(e){setNotice(e.message);}finally{setSaving(false);}}
+ async function save(e){e.preventDefault();setSaving(true);setNotice('');try{const r=await fetch(`${API}/books/${id}/design`,{method:'PUT',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify({...design,layoutStyle:getBookStyle(design.layoutStyle,book?.language).id})});const d=await r.json();if(!r.ok)throw new Error(d.message);setNotice('Print settings saved.');await mutate();}catch(e){setNotice(e.message);}finally{setSaving(false);}}
  return <div className="ui-workspace"><AuthorSidebar currentStep="content"/>
   <main className="ui-shell">
    <header className="ui-heading"><div><p className="ui-eyebrow">Nobel / Book studio</p><h1 className="">Book studio</h1><p className="mt-3 text-stone-500">{book?.title || 'Your book'} · Manuscript, paper and cover in one place.</p></div><Link href={`/write/tool/step2/${id}/metadata`} className="ui-button">Publication details →</Link></header>

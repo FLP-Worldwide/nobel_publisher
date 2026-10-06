@@ -434,7 +434,7 @@ function EditorPage({ bookId }) {
         <button type="button" className="fixed inset-0 z-30 bg-slate-950/50 lg:hidden" aria-label="Close manuscript navigation" onClick={() => setMobileNavigationOpen(false)} />
       )}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-60 flex-col bg-[#142b40] text-white shadow-xl transition-transform lg:sticky lg:top-0 lg:h-screen lg:shrink-0 lg:translate-x-0 ${!sidebarOpen ? "lg:hidden" : ""} ${mobileNavigationOpen ? "translate-x-0" : "-translate-x-full"}`}
+        className={`fixed inset-y-0 left-0 z-40 flex w-60 flex-col bg-[#142b40] text-white shadow-xl transition-transform lg:sticky lg:top-0 lg:h-screen lg:shrink-0 lg:translate-x-0 ${!sidebarOpen ? "lg:hidden" : ""} ${mobileNavigationOpen ? "translate-x-0" : "-translate-x-full invisible lg:visible"}`}
         aria-label="Manuscript sections"
       >
         <div className="border-b border-white/10 p-4">

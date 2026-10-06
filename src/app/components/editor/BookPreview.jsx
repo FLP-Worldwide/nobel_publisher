@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useRef } from "react";
-import { BookOpenText, FileText, Ruler, Settings2 } from "lucide-react";
+import { BookOpenText, Ruler, Settings2 } from "lucide-react";
 import TitlePage from "../bookpages/5x8/design-1/TitlePage";
 import CopyrightPage from "../bookpages/5x8/design-1/CopyrightPage";
 import ChapterPage from "../bookpages/5x8/design-1/ChapterPage";
@@ -11,7 +11,7 @@ import IndexPage from "../bookpages/5x8/design-1/IndexPage";
 import { paginateByHeight } from "@/utils/pagination";
 import { sanitizeManuscriptHtml } from "./sanitizeHtml";
 
-import { BOOK_DPI as DPI, BOOK_MARGIN as SAFE_MARGIN_INCHES, BOOK_BLEED as BLEED_INCHES, getTrimSize, getBookStyle, manuscriptStyle, measureHeading } from "@/utils/bookLayout";
+import { BOOK_DPI as DPI, BOOK_MARGIN as SAFE_MARGIN_INCHES, BOOK_BLEED as BLEED_INCHES, getTrimSize, getBookStyle, manuscriptStyle, measureHeading, ensureBookFonts } from "@/utils/bookLayout";
 import ZoomControls from "./ZoomControls";
 export { getTrimSize } from "@/utils/bookLayout";
 
@@ -59,7 +59,7 @@ export default function BookPreview({ book }) {
     setPaginating(true);
     let cancelled = false;
     const timer = window.requestAnimationFrame(async () => {
-      await document.fonts.ready;
+      await ensureBookFonts(bookStyle);
       if (cancelled) return;
       const groups = sections.map((section) => ({
         section,
@@ -209,7 +209,7 @@ export default function BookPreview({ book }) {
 
       <style>{`@media print { @page { size: ${trim.width + .25}in ${trim.height + .25}in; margin: 0; } }`}</style>
       <main className="min-w-0 flex-1">
-        <div className="book-preview-controls mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-2 shadow-sm">
+        <div className="book-preview-controls sticky top-[64px] z-20 mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-2 shadow-sm">
           <button type="button" onClick={() => setContentsOpen(v => !v)} className="hidden rounded-lg px-3 py-2 text-xs font-semibold hover:bg-slate-100 lg:block" aria-pressed={contentsOpen}>{contentsOpen ? 'Hide contents' : 'Show contents'}</button>
           <select aria-label="Jump to section" className="max-w-40 rounded-lg border border-slate-200 p-2 text-xs lg:hidden" onChange={e => goTo(pageData.navigation[Number(e.target.value)])}>{pageData.navigation.map((item,i)=><option key={i} value={i}>{item.label}</option>)}</select>
           <div className="inline-flex rounded-lg bg-slate-100 p-1" aria-label="Preview view">

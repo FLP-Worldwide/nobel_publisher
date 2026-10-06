@@ -16,8 +16,8 @@ export const BOOK_STYLES = [
   { id: 'english-classic', name: 'Classic', language: 'en', description: 'Serif text · centred chapter names', font: 'Georgia, "Times New Roman", serif', points: 11, leading: 1.55, heading: 'centred', numbering: 'label' },
   { id: 'english-modern', name: 'Modern', language: 'en', description: 'Clean sans serif · numbered headings', font: 'Arial, Helvetica, sans-serif', points: 11, leading: 1.55, heading: 'left', numbering: 'number' },
   { id: 'english-literary', name: 'Literary', language: 'en', description: 'Book serif · Roman chapter numbers', font: 'Palatino, "Palatino Linotype", "Book Antiqua", Georgia, serif', points: 11.5, leading: 1.55, heading: 'ornament', numbering: 'roman' },
-  { id: 'hindi-sahitya', name: 'साहित्य · Sahitya', language: 'hi', description: 'Traditional type · centred अध्याय', font: '"Kohinoor Devanagari", "Noto Serif Devanagari", Mangal, serif', points: 12, leading: 1.65, heading: 'ornament', numbering: 'label' },
-  { id: 'hindi-saral', name: 'सरल · Saral', language: 'hi', description: 'Clear type · simple numbered headings', font: '"Noto Sans Devanagari", "Kohinoor Devanagari", Mangal, sans-serif', points: 12, leading: 1.65, heading: 'left', numbering: 'number' },
+  { id: 'hindi-sahitya', name: 'साहित्य · Sahitya', language: 'hi', description: 'Traditional type · centred अध्याय', font: '"Nobel Hindi Serif", "Noto Serif Devanagari", Mangal, serif', points: 12, leading: 1.65, heading: 'ornament', numbering: 'label' },
+  { id: 'hindi-saral', name: 'सरल · Saral', language: 'hi', description: 'Clear type · simple numbered headings', font: '"Nobel Hindi Sans", "Noto Sans Devanagari", Mangal, sans-serif', points: 12, leading: 1.65, heading: 'left', numbering: 'number' },
 ];
 export function stylesForLanguage(language = '') {
   const lang = /hindi|हिंदी|हिन्दी/i.test(language) ? 'hi' : 'en';
@@ -58,4 +58,14 @@ export function measureHeading(section, style, width) {
   const height = box.getBoundingClientRect().height;
   box.remove();
   return height;
+}
+
+export async function ensureBookFonts(style) {
+  const sample = style.language === 'hi' ? 'एक नई शुरुआत Chapter 1' : 'Chapter 1';
+  try {
+    await Promise.all([400, 700].map(weight => document.fonts.load(`${weight} ${style.points}pt ${style.font}`, sample)));
+  } catch {
+    // A local font failure uses the same fallback for editing and measurement.
+  }
+  await document.fonts.ready;
 }

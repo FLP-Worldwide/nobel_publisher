@@ -101,6 +101,7 @@ export default function Toolbar({ onFormat, onReset }) {
       <button
         type="button"
         onClick={onReset}
+        aria-label="Clear section"
         className="ml-auto inline-flex items-center gap-1.5 rounded-md px-2 py-2 text-xs font-semibold text-slate-600 hover:bg-red-50 hover:text-red-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 sm:px-3"
       >
         <Eraser className="h-4 w-4" aria-hidden="true" />

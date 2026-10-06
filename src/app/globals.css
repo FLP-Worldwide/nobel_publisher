@@ -230,6 +230,9 @@ button:not(:disabled), select { cursor: pointer; }
   .ui-actions { flex-wrap: wrap; }
 }
 
+@font-face { font-family: 'Nobel Hindi Serif'; src: url('/fonts/NotoSerifDevanagari.ttf') format('truetype'); font-style: normal; font-weight: 100 900; font-display: swap; }
+@font-face { font-family: 'Nobel Hindi Sans'; src: url('/fonts/NotoSansDevanagari.ttf') format('truetype'); font-style: normal; font-weight: 100 900; font-display: swap; }
+
 /* The canvas, pagination measurer and printed proof share these exact metrics. */
 .book-typeset {
   font-family: var(--book-font, Georgia, serif);
@@ -258,7 +261,7 @@ button:not(:disabled), select { cursor: pointer; }
 .book-heading-left .book-chapter-number { font-size: 24pt; color: #5d6972; }
 .book-heading-ornament h2 { font-style: italic; font-weight: 500; }
 .book-heading-rule { padding-top: 9px; font-size: 9pt; color: #5d6972; }
-.book-canvas-scroll { overflow: auto; overscroll-behavior-inline: contain; scrollbar-gutter: stable; }
+.book-canvas-scroll { max-height: calc(100dvh - 252px); min-height: 280px; overflow: auto; overscroll-behavior-inline: contain; scrollbar-gutter: stable; }
 .book-canvas-columns { column-fill: auto; column-count: auto; overflow: visible; }
 .book-canvas-content { outline: none; min-height: 1em; }
 .book-canvas-content [data-page-break] { break-before: column; display: block; height: 0; margin: 0; padding: 0; border: 0; }

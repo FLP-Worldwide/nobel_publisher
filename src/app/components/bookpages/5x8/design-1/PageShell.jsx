@@ -1,7 +1,9 @@
 "use client";
+import { getBookStyle, manuscriptStyle } from "@/utils/bookLayout";
 
 export default function PageShell({
   children,
+  bookStyle = getBookStyle(),
   trimWidthIn = 5,
   trimHeightIn = 8,
   dpi = 96,
@@ -21,8 +23,8 @@ export default function PageShell({
 
   return (
     <div
-      className="book-page relative overflow-hidden bg-white font-serif shadow-xl"
-      style={{ width: fullWidth, height: fullHeight }}
+      className="book-page relative overflow-hidden bg-white shadow-xl"
+      style={{ ...manuscriptStyle(bookStyle), width: fullWidth, height: fullHeight }}
     >
       {showGuides && <div className="pointer-events-none absolute inset-0 z-20 border border-fuchsia-400" />}
       <div

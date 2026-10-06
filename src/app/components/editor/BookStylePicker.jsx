@@ -9,7 +9,7 @@ export default function BookStylePicker({ language, value, onChange, disabled })
     <button type="button" onClick={() => dialog.current.showModal()} disabled={disabled} className="ui-button ui-button-secondary">Book style · {value.name}</button>
     <dialog ref={dialog} className="m-auto w-[min(880px,94vw)] max-h-[90vh] overflow-auto rounded-2xl border border-slate-200 bg-slate-50 p-5 shadow-xl backdrop:bg-slate-950/50">
       <div className="mb-5 flex items-start justify-between gap-4"><div><h2 className="text-lg font-semibold">Choose your book style</h2><p className="mt-1 text-sm text-slate-600">One consistent design for your entire manuscript. Your words stay the same.</p></div><button type="button" aria-label="Close book styles" onClick={() => dialog.current.close()} className="rounded p-2 hover:bg-slate-200">✕</button></div>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className={`grid gap-4 sm:grid-cols-2 ${options.length === 3 ? "lg:grid-cols-3" : ""}`}>
         {options.map(style => <button type="button" key={style.id} disabled={pending} className="book-style-option disabled:opacity-50" aria-pressed={value.id === style.id} onClick={async () => { setPending(true); try { if (await onChange(style.id)) dialog.current.close(); } finally { setPending(false); } }}>
           <div className="book-typeset h-52 overflow-hidden border border-slate-200 bg-white p-5" style={{ ...manuscriptStyle(style), fontSize: '10px' }}>
             <div dangerouslySetInnerHTML={{ __html: sectionHeadingHtml({ title: style.language === 'hi' ? 'एक नई शुरुआत' : 'A new beginning', type: 'chapter', number: 1 }, style) }} />

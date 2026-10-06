@@ -9,19 +9,27 @@ export function paginateByHeight(html, pageWidth, pageHeight, options = {}) {
   const source = document.createElement('div');
   source.innerHTML = html;
   const explicit = node => node.nodeType === 1 && (node.hasAttribute('data-page-break') || /page|always|column|left|right/.test(node.style.breakBefore || node.style.pageBreakBefore || ''));
-  // Lift a break out of nested Word paragraphs without dropping surrounding text.
+  const explicitAfter = node => node.nodeType === 1 && /page|always|column|left|right/.test(node.style.breakAfter || node.style.pageBreakAfter || '');
+  // Lift nested breaks without discarding formatting, text, or later breaks.
   let marker;
-  while ((marker = [...source.querySelectorAll('*')].find(node => node.parentNode !== source && explicit(node)))) {
+  while ((marker = [...source.querySelectorAll('*')].find(node => node.parentNode !== source && (explicit(node) || explicitAfter(node))))) {
     let block = marker; while (block.parentNode !== source) block = block.parentNode;
-    const before = document.createRange(); before.selectNodeContents(block); before.setEndBefore(marker);
-    const after = document.createRange(); after.selectNodeContents(block); after.setStartAfter(marker);
+    const beforeBreak = explicit(marker);
+    const keepMarker = Boolean(marker.textContent);
+    marker.removeAttribute('data-page-break');
+    for (const key of beforeBreak ? ['break-before', 'page-break-before'] : ['break-after', 'page-break-after']) marker.style.removeProperty(key);
+    const before = document.createRange(); before.selectNodeContents(block);
+    const after = document.createRange(); after.selectNodeContents(block);
+    if (beforeBreak) {
+      before.setEndBefore(marker);
+      if (keepMarker) after.setStartBefore(marker); else after.setStartAfter(marker);
+    } else {
+      before.setEndAfter(marker); after.setStartAfter(marker);
+    }
     const a = block.cloneNode(false); a.append(before.cloneContents());
     const b = block.cloneNode(false); b.append(after.cloneContents());
     const pageBreak = document.createElement('div'); pageBreak.setAttribute('data-page-break', 'true');
-    // A break-before on a text-bearing block retains that block's content.
-    if (!marker.hasAttribute('data-page-break') && marker.textContent) b.prepend(marker.cloneNode(true));
-    b.querySelectorAll('[style]').forEach(n => { n.style.removeProperty('break-before'); n.style.removeProperty('page-break-before'); });
-    block.replaceWith(...(a.textContent || a.querySelector('br') ? [a] : []), pageBreak, b);
+    block.replaceWith(...(a.textContent || a.querySelector('br') ? [a] : []), pageBreak, ...(b.textContent || b.querySelector('br') ? [b] : []));
   }
   const pages = [];
   let current = [];
@@ -61,9 +69,10 @@ export function paginateByHeight(html, pageWidth, pageHeight, options = {}) {
   function append(element) {
     if (element.nodeType === Node.TEXT_NODE) { if (!element.textContent.trim()) return; const p = document.createElement('p'); p.textContent = element.textContent; element = p; }
     if (element.nodeType !== 1) return;
-    const breakAfter = /page|always|column|left|right/.test(element.style.breakAfter || element.style.pageBreakAfter || '');
+    const breakAfter = explicitAfter(element);
     if (explicit(element)) flush(true);
-    if (element.hasAttribute('data-page-break')) return;
+    if (element.hasAttribute('data-page-break') && !element.textContent) return;
+    element.removeAttribute('data-page-break');
     for (const key of ['break-before','page-break-before','break-after','page-break-after']) element.style.removeProperty(key);
     let remaining = element;
     while (remaining) {
