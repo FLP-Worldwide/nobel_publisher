@@ -1,6 +1,7 @@
 "use client";
 
 /* eslint-disable @next/next/no-img-element */
+import CoverArtwork from "@/app/components/cover/CoverArtwork";
 import {
   AlertCircle,
   ArrowRight,
@@ -129,8 +130,8 @@ export default function BookCard({ book, onDelete, API_BASE, accessToken }) {
   const contentDone =
     submitted ||
     (Boolean(book?.design) &&
-      Boolean(book?.frontCoverKey || book?.frontCoverUrl) &&
-      Boolean(book?.backCoverKey || book?.backCoverUrl) &&
+      Boolean(book?.coverDesign?.front || book?.frontCoverKey || book?.frontCoverUrl) &&
+      Boolean(book?.coverDesign?.back || book?.backCoverKey || book?.backCoverUrl) &&
       Array.isArray(book?.chapters) &&
       book.chapters.some(hasTextContent));
   const metadataDone =
@@ -173,7 +174,7 @@ export default function BookCard({ book, onDelete, API_BASE, accessToken }) {
       <div className="flex flex-col gap-5 p-5 sm:flex-row sm:p-6">
         <div className="flex min-w-0 flex-1 gap-4 sm:gap-5">
           <div className="flex aspect-[3/4] h-28 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-100 sm:h-32">
-            {coverSrc && !coverFailed ? (
+            {book?.coverDesign ? <CoverArtwork design={book.coverDesign} alt={`${book.title} cover`} className="h-full w-full"/> : coverSrc && !coverFailed ? (
               <img
                 src={coverSrc}
                 alt={book?.title ? `${book.title} cover` : "Book cover"}

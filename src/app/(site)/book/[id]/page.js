@@ -156,6 +156,7 @@ export default function PublishedBookPage() {
           <div className="mx-auto w-full max-w-[360px]">
             <div className="aspect-[5/8] overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-xl">
               <SignedS3Image
+                  coverDesign={book.coverDesign}
                 directUrl={book.frontCoverUrl}
                 alt={`${book.title} front cover`}
                 className="h-full w-full object-cover"

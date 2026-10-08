@@ -1,5 +1,6 @@
 "use client";
 
+import CoverArtwork from "@/app/components/cover/CoverArtwork";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ArrowRight, BookOpen } from "lucide-react";
@@ -75,7 +76,7 @@ export default function BookCarousel({ heading = "Published books", limit }) {
           {visibleBooks.map((book) => (
             <Link key={book.id} href={`/book/${book.id}`} className="group min-w-0">
               <div className="aspect-[5/8] overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-sm transition group-hover:-translate-y-1 group-hover:shadow-xl">
-                {book.frontCoverUrl ? (
+                {book.coverDesign ? <CoverArtwork design={book.coverDesign} alt={`${book.title} cover`} className="h-full w-full"/> : book.frontCoverUrl ? (
                   <img src={book.frontCoverUrl} alt={`${book.title} cover`} className="h-full w-full object-cover" loading="lazy" />
                 ) : (
                   <div className="flex h-full flex-col items-center justify-center p-5 text-center text-slate-400"><BookOpen className="h-9 w-9" /><span className="mt-3 text-sm font-semibold">Cover coming soon</span></div>

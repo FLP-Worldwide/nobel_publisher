@@ -1,7 +1,10 @@
 "use client";
+import CoverArtwork from "./cover/CoverArtwork";
 import { useEffect, useMemo, useState } from "react";
 
 export default function SignedS3Image({
+  coverDesign,
+  side = "front",
   s3Key,                 // e.g. book?.frontCoverKey or book?.backCoverKey
   directUrl,             // e.g. book?.frontCoverUrl / thumbnail if you already have it
   accessToken,           // optional; falls back to localStorage
@@ -15,6 +18,7 @@ export default function SignedS3Image({
   const base = useMemo(() => (apiBase || "").replace(/\/$/, ""), [apiBase]);
 
   useEffect(() => {
+    if (coverDesign?.[side]) return;
     let stop = false;
 
     async function resolve() {
@@ -56,8 +60,9 @@ export default function SignedS3Image({
       stop = true;
       clearInterval(id);
     };
-  }, [s3Key, directUrl, base, accessToken, refreshMs]);
+  }, [s3Key, directUrl, base, accessToken, refreshMs, coverDesign, side]);
 
+  if (coverDesign?.[side]) return <CoverArtwork design={coverDesign} side={side} alt={alt} className={className}/>;
   return (
     <img
       src={url || fallback}

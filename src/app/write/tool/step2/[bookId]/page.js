@@ -5,10 +5,9 @@ import { useParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import useSWR from 'swr';
-import { ArrowUpRight, BookOpen, ImagePlus, Check } from 'lucide-react';
+import { ArrowUpRight, BookOpen, Check } from 'lucide-react';
 import AuthorSidebar from '@/app/components/dashbaord/AuthorSidebar';
 import BookEditGuard from '@/app/components/dashbaord/BookEditGuard';
-import CoverUploadModal from '@/app/components/CoverUploadModal';
 import SignedS3Image from '@/app/components/SignedS3Image';
 const API = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/$/, '');
 const choices = [
@@ -21,7 +20,7 @@ const choices = [
 function Studio({id}) {
  const {data:session}=useSession(); const token=session?.user?.accessToken;
  const [design,setDesign]=useState({size:'FIVE_X_EIGHT',bindingType:'PAPERBACK',interior:'BLACK_WHITE',paperType:'CREAM',coverLamination:'MATTE'});
- const [notice,setNotice]=useState(''); const [saving,setSaving]=useState(false); const [cover,setCover]=useState(false);
+ const [notice,setNotice]=useState(''); const [saving,setSaving]=useState(false);
  const {data:book,error,mutate}=useSWR(token?[`${API}/books/${id}`,token]:null,async([url,t])=>{const r=await fetch(url,{headers:{Authorization:`Bearer ${t}`}});const d=await r.json();if(!r.ok)throw new Error(d.message);return d;});
  useEffect(()=>{if(book?.design)setDesign(book.design);},[book]);
  async function save(e){e.preventDefault();setSaving(true);setNotice('');try{const r=await fetch(`${API}/books/${id}/design`,{method:'PUT',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify({...design,layoutStyle:getBookStyle(design.layoutStyle,book?.language).id})});const d=await r.json();if(!r.ok)throw new Error(d.message);setNotice('Print settings saved.');await mutate();}catch(e){setNotice(e.message);}finally{setSaving(false);}}
@@ -34,10 +33,10 @@ function Studio({id}) {
      <form onSubmit={save} className="mt-5 space-y-5">{choices.map(([key,label,options])=><fieldset key={key}><legend className="mb-2 text-xs font-semibold">{label}</legend><div className="flex flex-wrap gap-2">{options.map(([value,text])=><label key={value} className={`ui-choice ${design[key]===value?'is-selected':'border-stone-200 text-stone-500'}`}><input className="sr-only" type="radio" name={key} value={value} checked={design[key]===value} onChange={()=>setDesign({...design,[key]:value})}/>{text}{design[key]===value && <Check size={13} className="ml-2 inline"/>}</label>)}</div></fieldset>)}<div className="flex flex-wrap items-center gap-4 border-t border-stone-100 pt-5"><button disabled={saving||!book} className="ui-button disabled:opacity-50">{saving?'Saving…':'Save print settings'}</button><p role="status" className="text-sm text-stone-600">{notice || (!book?.design?'Your first edition starts here.':'')}</p></div></form>
     </section>
     <aside className="space-y-5"><section className="rounded-xl bg-[#19334c] p-5 text-white"><p className="text-[10px] tracking-widest text-slate-300">02 / THE STORY</p><h2 className="mt-3 text-lg font-semibold">Your manuscript</h2><p className="mt-2 text-xs leading-6 text-slate-300">{book?.chapters?.length || 0} sections saved. Write, organise and refine your manuscript.</p><Link href={`/write/tool/step2/${id}/canva`} className="mt-5 flex items-center justify-between rounded-lg bg-white px-3 py-2.5 text-xs font-semibold text-[#19334c]">Open manuscript <ArrowUpRight size={18}/></Link><Link href={`/write/tool/step2/${id}/canva/preview`} className="mt-2 block py-2 text-center text-xs text-white/80">Read the facing-page proof →</Link></section>
-     <section className="ui-card"><p className="ui-eyebrow">03 / FIRST IMPRESSIONS</p><div className="mt-5 flex items-center gap-5"><SignedS3Image s3Key={book?.frontCoverKey} directUrl={book?.frontCoverUrl} accessToken={token} alt="Front cover" className="h-24 w-16 rounded object-cover shadow-md"/><div><h2 className="text-base font-semibold">The cover</h2><p className="ui-help">Upload your front and back artwork.</p></div></div><button onClick={()=>setCover(true)} className="ui-button ui-button-secondary mt-5"><ImagePlus size={16}/>Manage artwork</button></section>
+     <section className="ui-card"><p className="ui-eyebrow">03 / FIRST IMPRESSIONS</p><div className="mt-5 flex items-center gap-5"><SignedS3Image coverDesign={book?.coverDesign} s3Key={book?.frontCoverKey} directUrl={book?.frontCoverUrl} accessToken={token} alt="Front cover" className="h-24 w-16 rounded object-cover shadow-md"/><div><h2 className="text-base font-semibold">The cover</h2><p className="ui-help">Design front and back covers with text, images, colours and icons.</p></div></div><Link href={`/write/tool/step2/${id}/cover`} className="ui-button ui-button-secondary mt-5"><ArrowUpRight size={16}/>{book?.coverDesign ? "Edit cover design" : "Design your cover"}</Link></section>
     </aside>
    </div>
-  </main><CoverUploadModal open={cover} onClose={()=>{setCover(false);mutate();}} bookId={id} accessToken={token} API_BASE={API}/>
+  </main>
  </div>;
 }
 export default function DesignPage(){const params=useParams();const id=Array.isArray(params.bookId)?params.bookId[0]:params.bookId;return <BookEditGuard bookId={id}><Studio id={id}/></BookEditGuard>;}

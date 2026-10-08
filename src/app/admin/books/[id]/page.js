@@ -142,6 +142,7 @@ export default function ReviewBookPage() {
             <div className="grid gap-6 sm:grid-cols-[120px_minmax(0,1fr)]">
               <div className="aspect-[5/8] overflow-hidden rounded-lg bg-slate-100 shadow-sm">
                 <SignedS3Image
+                  coverDesign={book.coverDesign}
                   s3Key={book.frontCoverKey}
                   directUrl={book.frontCoverUrl}
                   accessToken={session?.user?.accessToken}
@@ -164,6 +165,7 @@ export default function ReviewBookPage() {
                 </dl>
               </div>
             </div>
+            {book.coverDesign && <div className="mt-6 grid grid-cols-2 gap-5" aria-label="Submitted cover designs">{["front","back"].map(side=><figure key={side}><SignedS3Image coverDesign={book.coverDesign} side={side} alt={`${side} cover in submitted revision`} className="max-h-96 w-full rounded border border-slate-200"/><figcaption className="mt-2 text-center text-xs text-slate-500">{side === "front" ? "Front cover" : "Back cover"}</figcaption></figure>)}</div>}
             {(book.bookDescription || book.description) && (
               <div className="mt-8 border-t border-slate-200 pt-6"><h2 className="font-bold">Book description</h2><p className="mt-2 whitespace-pre-wrap leading-7 text-slate-700">{book.bookDescription || book.description}</p></div>
             )}
