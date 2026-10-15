@@ -5,3 +5,11 @@ Run `node tests/build-pagination-check.mjs` from the frontend directory, start t
 Checks cover text retention, page capacity, bold/italic/underline retention, line breaks, nested manual breaks, and long Hindi tokens. Read `#results` for JSON results. Delete the generated `public/canvas-regression.html` before shipping; it contains synthetic text only.
 
 API workflow evidence and browser screenshots are stored in the workspace's `.audit/evidence` directory.
+
+# Authentication regression
+
+Run `npm run test:auth`. The checks compile the real middleware with Next's SWC
+compiler and use signed synthetic sessions, with no production accounts or API
+calls. They cover HTTPS session detection when `NEXTAUTH_URL` has no scheme,
+chunked cookies, login redirects, reader/admin route permissions, invalid
+sessions, HTTP development, and rejection of non-secure cookies on HTTPS.

@@ -23,6 +23,10 @@ export async function middleware(req) {
   const token = await getToken({
     req,
     secret: process.env.NEXTAUTH_SECRET,
+    // Match the HTTPS cookie issued by NextAuth even when NEXTAUTH_URL was
+    // configured as a hostname without a scheme. HTTP local development uses
+    // the unprefixed cookie; HTTPS must never fall back to that cookie.
+    secureCookie: req.nextUrl.protocol === "https:",
   });
 
   // 🔹 Case 1: Block logged-in users from login/signup
