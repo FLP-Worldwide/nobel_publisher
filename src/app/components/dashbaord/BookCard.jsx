@@ -31,12 +31,12 @@ const STATUS_CONFIG = {
     badge: "border-orange-200 bg-orange-50 text-orange-800",
   },
   APPROVED: {
-    label: "Approved · payment due",
-    detail: "Pay ₹199 to complete publishing",
+    label: "Approved · set your price",
+    detail: "Choose a selling price and publish",
     badge: "border-emerald-200 bg-emerald-50 text-emerald-800",
   },
   PAYMENT_PENDING: {
-    label: "Payment pending",
+    label: "Review fee due",
     detail: "Waiting for verified payment",
     badge: "border-blue-200 bg-blue-50 text-blue-800",
   },
@@ -153,7 +153,7 @@ export default function BookCard({ book, onDelete, API_BASE, accessToken }) {
       case "CHANGES_REQUESTED":
         return { label: "Review requested changes", href: `/write/tool/step2/${bookId}/pricing_info` };
       case "APPROVED":
-        return { label: "Pay ₹199 and publish", href: `/write/tool/step2/${bookId}/pricing_info` };
+        return { label: "Set price and publish", href: `/write/tool/step2/${bookId}/pricing_info` };
       case "PAYMENT_PENDING":
         return { label: "Check payment status", href: `/write/tool/step2/${bookId}/pricing_info` };
       case "PUBLISHED":
@@ -195,11 +195,13 @@ export default function BookCard({ book, onDelete, API_BASE, accessToken }) {
               <h3 className="line-clamp-2 text-lg font-bold leading-6 text-slate-950 sm:text-xl">
                 {book?.title || "Untitled book"}
               </h3>
+              {book.salesBadge && <span className="text-xs font-bold text-amber-700">{book.salesBadge}</span>}
               <span className={`shrink-0 rounded-full border px-2.5 py-1 text-xs font-bold ${status.badge}`}>{status.label}</span>
             </div>
             <p className="mt-1 text-sm text-slate-600">by {book?.authorName || "Author name not added"}</p>
             <p className="mt-3 text-sm font-semibold text-slate-700">{status.detail}</p>
             <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+              {book?.status === "PUBLISHED" && <span>{book.retailCopiesSold || 0} retail copies sold</span>}
               {book?.language && <span>{book.language}</span>}
               {book?.genre && <span>{book.genre}</span>}
               {book?.updatedAt && (

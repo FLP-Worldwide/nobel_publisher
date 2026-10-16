@@ -5,6 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, BookCheck, CheckCircle2, MessageSquareWarning } from "lucide-react";
+import { normalizeBook } from "@/utils/bookPreview";
+import BookPreview from "@/app/components/editor/BookPreview";
 import SignedS3Image from "@/app/components/SignedS3Image";
 
 const API = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
@@ -39,6 +41,9 @@ export default function ReviewBookPage() {
   const [book, setBook] = useState(null);
   const [review, setReview] = useState(null);
   const [revision, setRevision] = useState(null);
+  const [pageCount, setPageCount] = useState("");
+  const [printCost, setPrintCost] = useState("");
+  const [showProof, setShowProof] = useState(false);
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(true);
   const [action, setAction] = useState("");
@@ -63,6 +68,8 @@ export default function ReviewBookPage() {
           design: snapshot.design || data.book?.design || null,
           chapters: Array.isArray(snapshot.chapters) ? snapshot.chapters : [],
         });
+        setPageCount(data.book?.pageCount || "");
+        setPrintCost(data.book?.printCost || "");
         setReview(data.review || null);
         setRevision(data.revision || null);
         setNotes(data.review?.reviewerNotes || "");
@@ -75,6 +82,7 @@ export default function ReviewBookPage() {
     return () => controller.abort();
   }, [bookId, session?.user?.accessToken, status]);
 
+  const previewBook = useMemo(() => normalizeBook(book), [book]);
   const sections = useMemo(() => {
     const chapters = Array.isArray(book?.chapters) ? [...book.chapters] : [];
     return chapters.sort((a, b) => (a.position || 0) - (b.position || 0));
@@ -96,7 +104,7 @@ export default function ReviewBookPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${session.user.accessToken}`,
         },
-        body: JSON.stringify({ notes: notes.trim() || undefined }),
+        body: JSON.stringify({ notes: notes.trim() || undefined, pageCount: Number(pageCount), printCost }),
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data?.message || "The review decision could not be saved.");
@@ -171,6 +179,7 @@ export default function ReviewBookPage() {
             )}
           </section>
 
+          <section className="rounded-2xl border bg-white p-4"><button className="ui-button" onClick={() => setShowProof(value => !value)}>{showProof ? "Hide" : "Open"} submitted page proof</button>{showProof && <BookPreview book={previewBook}/>}</section>
           {sections.length === 0 ? (
             <section className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-slate-500">This submission has no manuscript sections.</section>
           ) : sections.map((section, index) => {
@@ -186,6 +195,7 @@ export default function ReviewBookPage() {
 
         <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-5 shadow-sm xl:sticky xl:top-4">
           <div className="mb-4 flex items-center gap-2"><BookCheck className="h-5 w-5 text-blue-800" /><h2 className="font-bold">{reviewIsOpen ? "Review decision" : "Decision recorded"}</h2></div>
+          {reviewIsOpen && <div className="mb-5 space-y-3"><label className="block text-sm">Approved page count, including cover<input type="number" min="1" max="10000" value={pageCount} onChange={e => setPageCount(e.target.value)} className="ui-field mt-2"/></label><label className="block text-sm">Printing cost per copy, including cover (₹)<input type="number" min="0.01" step="0.01" value={printCost} onChange={e => setPrintCost(e.target.value)} className="ui-field mt-2"/></label><p className="text-xs text-slate-500">Confirm these against the submitted proof before approving.</p></div>}
           <label htmlFor="review-notes" className="text-sm font-semibold text-slate-700">Notes for the author</label>
           <textarea
             id="review-notes"
@@ -206,7 +216,7 @@ export default function ReviewBookPage() {
                   disabled={Boolean(action)}
                   className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-green-700 px-4 py-3 text-sm font-bold text-white hover:bg-green-800 disabled:opacity-60"
                 >
-                  <CheckCircle2 className="h-4 w-4" /> {action === "approve" ? "Approving…" : "Approve for ₹199 payment"}
+                  <CheckCircle2 className="h-4 w-4" /> {action === "approve" ? "Approving…" : "Approve for pricing"}
                 </button>
                 <button
                   type="button"
@@ -217,7 +227,7 @@ export default function ReviewBookPage() {
                   <MessageSquareWarning className="h-4 w-4" /> {action === "request-changes" ? "Sending…" : "Request changes"}
                 </button>
               </div>
-              <p className="mt-4 text-xs leading-5 text-slate-500">Approval unlocks the author&apos;s fixed ₹199 publishing fee. It does not publish the book until payment is verified.</p>
+              <p className="mt-4 text-xs leading-5 text-slate-500">The ₹199 review fee is already paid. Approval lets the author choose a selling price and publish.</p>
             </>
           ) : (
             <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-700">

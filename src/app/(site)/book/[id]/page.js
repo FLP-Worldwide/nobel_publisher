@@ -166,6 +166,7 @@ export default function PublishedBookPage() {
 
           <article className="min-w-0">
             <p className="text-sm font-bold uppercase tracking-[0.16em] text-blue-800">Published book</p>
+            {book.salesBadge && <p className="text-sm font-semibold text-amber-700">{book.salesBadge} · {book.retailCopiesSold.toLocaleString("en-IN")} retail copies sold</p>}
             <h1 className="mt-3 text-[28px] font-semibold tracking-tight text-slate-950 sm:text-[32px]">{book.title}</h1>
             {book.subheading && <p className="mt-3 text-xl leading-8 text-slate-600">{book.subheading}</p>}
             <p className="mt-5 text-lg font-semibold text-slate-800">by {author || "Independent author"}</p>

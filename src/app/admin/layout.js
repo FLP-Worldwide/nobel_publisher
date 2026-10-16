@@ -15,6 +15,7 @@ export default function AdminLayout({ children }) {
             </Link>
             <p className="text-xs text-slate-500">Editorial review and publishing approval</p>
           </div>
+          <Link href="/admin/orders" className="text-sm font-semibold underline">Paid orders</Link>
           <Link
             href="/author-dashboard"
             className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"

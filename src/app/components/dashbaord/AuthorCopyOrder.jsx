@@ -2,6 +2,7 @@
 
 import { ChevronDown, ChevronUp, Loader2, PackageCheck, Truck } from "lucide-react";
 import Link from "next/link";
+import { checkoutKey } from "@/utils/checkout";
 import { useCallback, useEffect, useState } from "react";
 
 async function readJson(response) {
@@ -14,12 +15,12 @@ function money(value) {
   return new Intl.NumberFormat("en-IN", {
     style: "currency",
     currency: "INR",
-    maximumFractionDigits: 0,
+    maximumFractionDigits: 2,
   }).format(Number(value || 0));
 }
 
 export default function AuthorCopyOrder({ bookId, apiBase, authHeaders, user }) {
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState(5);
   const [shippingMethod, setShippingMethod] = useState("STANDARD");
   const [paymentMethod, setPaymentMethod] = useState("UPI");
   const [quote, setQuote] = useState(null);
@@ -50,7 +51,7 @@ export default function AuthorCopyOrder({ bookId, apiBase, authHeaders, user }) 
 
   const loadQuote = useCallback(async () => {
     const parsedQuantity = Number(quantity);
-    if (!Number.isInteger(parsedQuantity) || parsedQuantity < 1 || parsedQuantity > 100) {
+    if (!Number.isInteger(parsedQuantity) || parsedQuantity < 5 || parsedQuantity > 100) {
       setQuote(null);
       setQuoteLoading(false);
       return;
@@ -93,6 +94,7 @@ export default function AuthorCopyOrder({ bookId, apiBase, authHeaders, user }) 
         method: "POST",
         headers: authHeaders,
         body: JSON.stringify({
+          checkoutKey: checkoutKey(user?.id, "AUTHOR_COPY", { bookId, quantity: Number(quantity), shippingMethod, paymentMethod, delivery }),
           quantity: Number(quantity),
           shippingMethod,
           paymentMethod,
@@ -107,6 +109,7 @@ export default function AuthorCopyOrder({ bookId, apiBase, authHeaders, user }) 
         text: result.message || "Your author-copy order was created and is awaiting payment confirmation.",
       });
       setDetailsOpen(false);
+      window.location.assign(`/payment/callback?flow=order&orderId=${result.order.id}`);
     } catch (error) {
       setMessage({ type: "error", text: error.message || "Could not create the author-copy order." });
     } finally {
@@ -126,7 +129,7 @@ export default function AuthorCopyOrder({ bookId, apiBase, authHeaders, user }) 
               <p className="text-xs font-bold uppercase tracking-[0.14em] text-violet-700">For published books</p>
               <h2 id="author-copies-heading" className="mt-1 text-xl font-bold text-slate-950">Order author copies</h2>
               <p className="mt-1 max-w-xl text-sm leading-6 text-slate-600">
-                Choose a quantity and delivery speed. Printing and delivery prices are calculated by the server from your saved book format.
+                Order at least 5 copies at 30% below your selling price. Delivery is separate. Author copies do not earn royalties or count towards sales badges.
               </p>
             </div>
           </div>
@@ -139,13 +142,13 @@ export default function AuthorCopyOrder({ bookId, apiBase, authHeaders, user }) 
               id="copy-quantity"
               type="number"
               inputMode="numeric"
-              min="1"
+              min="5"
               max="100"
               value={quantity}
               onChange={(event) => setQuantity(event.target.value)}
               className="min-h-12 w-full rounded-xl border border-slate-300 px-4 py-3 text-base text-slate-900 outline-none transition focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
             />
-            <p className="mt-1.5 text-xs text-slate-500">1–100 copies per order</p>
+            <p className="mt-1.5 text-xs text-slate-500">5–100 copies per order</p>
           </div>
           <fieldset>
             <legend className="mb-2 block text-sm font-bold text-slate-800">Delivery speed</legend>
@@ -340,7 +343,7 @@ export default function AuthorCopyOrder({ bookId, apiBase, authHeaders, user }) 
             className="mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-violet-700 px-6 py-3 text-base font-bold text-white transition hover:bg-violet-800 focus:outline-none focus:ring-4 focus:ring-violet-200 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
           >
             {ordering && <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />}
-            {ordering ? "Creating order…" : `Create pending order · ${money(quote?.total)}`}
+            {ordering ? "Creating order…" : `Continue to payment · ${money(quote?.total)}`}
           </button>
         </form>
       )}
