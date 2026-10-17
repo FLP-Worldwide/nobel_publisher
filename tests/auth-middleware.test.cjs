@@ -8,7 +8,7 @@ const { encode } = require('next-auth/jwt');
 const { transform } = require('next/dist/build/swc');
 
 const secret = 'isolated-middleware-regression-secret';
-let middleware;
+let middleware, loginDestination;
 before(async () => {
   process.env.NEXTAUTH_SECRET = secret;
   // NextAuth normalizes this to HTTPS when it creates cookies, but getToken's
@@ -23,6 +23,13 @@ before(async () => {
   const loaded = { exports: {} };
   new Function('require', 'module', 'exports', code)(createRequire(filename), loaded, loaded.exports);
   middleware = loaded.exports.middleware;
+  const redirectFile = resolve(__dirname, '../src/utils/loginRedirect.js');
+  const redirectCode = await transform(readFileSync(redirectFile, 'utf8'), {
+    filename: redirectFile, jsc: { parser: { syntax: 'ecmascript' }, target: 'es2020' }, module: { type: 'commonjs' },
+  });
+  const redirectModule = { exports: {} };
+  new Function('module', 'exports', redirectCode.code)(redirectModule, redirectModule.exports);
+  loginDestination = redirectModule.exports.loginDestination;
 });
 
 async function request(path, { role = 'author', signedIn = true, protocol = 'https:', chunked = false, invalid = false } = {}) {
@@ -79,4 +86,18 @@ test('HTTPS does not accept an unprefixed session cookie', async () => {
   }));
   assert.equal(response.status, 307);
   assert.equal(new URL(response.headers.get('location')).pathname, '/login');
+});
+
+
+test('reader and author login return to checkout or payment verification', () => {
+  assert.equal(loginDestination('buyer', '/checkout'), '/checkout');
+  const callback = '/payment/callback?flow=order&orderId=42';
+  for (const role of ['buyer', 'author']) assert.equal(loginDestination(role, callback), callback);
+  assert.equal(loginDestination('admin', null), '/admin');
+});
+
+test('login rejects external, backslash and control-character redirects', () => {
+  for (const destination of ['https://example.test', '//example.test', '/\\example.test', '/\n/example.test', '/login', '/buyer/login?callbackUrl=/checkout']) {
+    assert.equal(loginDestination('buyer', destination), '/account', JSON.stringify(destination));
+  }
 });

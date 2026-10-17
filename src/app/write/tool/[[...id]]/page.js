@@ -266,7 +266,7 @@ function WriteTool() {
           </form>
           <aside className="space-y-4 lg:sticky lg:top-6">
             <section className="overflow-hidden rounded-xl border border-slate-200 bg-white"><div className="bg-[#19334c] px-5 py-6 text-white"><p className="text-[10px] uppercase tracking-widest text-slate-300">Your book at a glance</p><h2 className="mt-5 break-words text-xl font-semibold leading-snug">{title || 'Your book title'}</h2>{subheading && <p className="mt-2 break-words text-xs leading-5 text-slate-300">{subheading}</p>}<p className="mt-6 text-xs text-slate-300">{authorName || 'Your name'}</p></div><dl className="grid grid-cols-2 gap-4 p-5 text-xs"><div><dt className="text-slate-400">Language</dt><dd className="mt-1 font-medium text-slate-700">{selectedLanguage || 'Not chosen'}</dd></div><div><dt className="text-slate-400">Genre</dt><dd className="mt-1 font-medium text-slate-700">{selectedGenre || 'Not chosen'}</dd></div></dl></section>
-            <section className="ui-card"><h2>Up next</h2><p className="ui-help">Choose your print format, write your manuscript and add cover artwork in the book studio.</p><div className="mt-4 border-t border-slate-100 pt-4 text-xs leading-6 text-slate-500">Editorial review comes first. The one-time ₹199 publishing fee is due only after approval.</div></section>
+            <section className="ui-card"><h2>Up next</h2><p className="ui-help">Choose your print format, write your manuscript and add cover artwork in the book studio.</p><div className="mt-4 border-t border-slate-100 pt-4 text-xs leading-6 text-slate-500">Submit your complete book and pay the one-time ₹199 review fee. Once approved, choose your selling price and publish.</div></section>
           </aside>
         </div>
       </main>

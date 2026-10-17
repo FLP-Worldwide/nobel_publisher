@@ -12,6 +12,8 @@ function PaymentStatus() {
   const id = params.get(review ? "publishingBookId" : "orderId");
   const valid = /^\d+$/.test(id || "");
   const token = session?.user?.accessToken;
+  const returnPath = `/payment/callback?flow=${review ? "publishing" : "order"}&${review ? "publishingBookId" : "orderId"}=${id}`;
+  const signInQuery = `?callbackUrl=${encodeURIComponent(returnPath)}`;
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -41,7 +43,7 @@ function PaymentStatus() {
   }
   const paid = result?.payment?.status === "PAID";
   const refunded = result?.payment?.status === "REFUNDED";
-  return <main className="ui-shell max-w-xl"><section className="ui-card space-y-5"><p className="ui-eyebrow">Secure payment status</p><h1 className="text-2xl font-semibold">{refunded ? "Refund recorded" : paid ? "Payment verified" : "Check your payment"}</h1>{!valid ? <p role="alert">The payment reference is missing.</p> : status === "loading" ? <p>Loading…</p> : !token ? <><p>Sign in to verify this payment.</p><Link className="ui-button" href="/login">Sign in</Link></> : <>
+  return <main className="ui-shell max-w-xl"><section className="ui-card space-y-5"><p className="ui-eyebrow">Secure payment status</p><h1 className="text-2xl font-semibold">{refunded ? "Refund recorded" : paid ? "Payment verified" : "Check your payment"}</h1>{!valid ? <p role="alert">The payment reference is missing.</p> : status === "loading" ? <p>Loading…</p> : !token ? <><p>Sign in to verify this payment.</p><div className="flex flex-wrap gap-3">{!review && <Link className="ui-button" href={`/buyer/login${signInQuery}`}>Reader sign in</Link>}<Link className="ui-button ui-button-secondary" href={`/login${signInQuery}`}>Author sign in</Link></div></> : <>
     <p>{refunded ? "A refund has been recorded for this payment. Contact the publishing team for details." : paid ? review ? "Your ₹199 review fee is paid. Your submitted book is now with the editorial team." : "Your order is confirmed. We will print and dispatch your books." : result?.payment?.status === "FAILED" ? "The payment provider confirmed that this attempt failed. You can safely retry payment." : "Payment is not confirmed yet. Check its status before paying again."}</p>
     {result?.order && <p>Order #{result.order.id} · {result.order.status.replaceAll("_", " ")}</p>}
     {error && <p role="alert" className="text-red-700">{error}</p>}

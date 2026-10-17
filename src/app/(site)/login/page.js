@@ -3,6 +3,7 @@
 import React, { Suspense, useState } from "react";
 import { getSession, signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
+import { loginDestination } from "@/utils/loginRedirect";
 
 function LoginForm({ accountType = "author" }) {
   const searchParams = useSearchParams();
@@ -63,8 +64,7 @@ function LoginForm({ accountType = "author" }) {
       else localStorage.removeItem("rememberMe");
   
       const callbackUrl = searchParams.get("callbackUrl");
-      const safeCallback = callbackUrl?.startsWith("/") && !callbackUrl.startsWith("//") ? callbackUrl : null;
-      const destination = loggedInSession?.user?.role === "buyer" ? "/account" : safeCallback || (loggedInSession?.user?.role === "admin" ? "/admin" : "/author-dashboard");
+      const destination = loginDestination(loggedInSession?.user?.role, callbackUrl);
       // Refresh the document so a prefetched unauthenticated redirect is not reused.
       window.location.assign(destination);
     } else {
@@ -83,7 +83,7 @@ function LoginForm({ accountType = "author" }) {
             {accountType === "buyer" ? "Your reading journey" : "Your book starts here"}
           </h2>
           <p className="text-sm text-center text-blue-50">
-            {accountType === "buyer" ? "Browse independent books and track your orders in your reader account." : "Write privately, preview every page, receive an editorial decision, and pay ₹199 only after approval."}
+            {accountType === "buyer" ? "Browse independent books and track your orders in your reader account." : "Write privately, preview every page, and pay a one-time ₹199 fee for editorial review. Set your price and publish after approval."}
           </p>
         </div>
 
@@ -97,7 +97,7 @@ function LoginForm({ accountType = "author" }) {
             </div>
           )}
 
-          <p className="mb-5 text-sm text-stone-500">{accountType === "buyer" ? "Here to publish?" : "Here to buy books?"} <a className="font-semibold text-[#244d43] underline" href={accountType === "buyer" ? "/login" : "/buyer/login"}>{accountType === "buyer" ? "Author sign in" : "Reader sign in"}</a></p>
+          <p className="mb-5 text-sm text-stone-500">{accountType === "buyer" ? "Here to publish?" : "Here to buy books?"} <a className="font-semibold text-[#244d43] underline" href={`${accountType === "buyer" ? "/login" : "/buyer/login"}${searchParams.get("callbackUrl") ? `?callbackUrl=${encodeURIComponent(searchParams.get("callbackUrl"))}` : ""}`}>{accountType === "buyer" ? "Author sign in" : "Reader sign in"}</a></p>
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label htmlFor="email" className="block mb-2 text-sm font-medium text-gray-900">
