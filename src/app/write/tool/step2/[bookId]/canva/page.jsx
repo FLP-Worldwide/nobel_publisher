@@ -8,6 +8,7 @@ import Link from "next/link";
 import { Disclosure } from "@headlessui/react";
 import { ArrowLeft, BookOpen, ChevronDown, Menu, Plus, Trash2, X } from "lucide-react";
 import Toolbar from "@/app/components/editor/Toolbar";
+import ChapterCreationNotice from "@/app/components/editor/ChapterCreationNotice";
 import EditorArea from "@/app/components/editor/EditorArea";
 import BookStylePicker from "@/app/components/editor/BookStylePicker";
 import { getBookStyle } from "@/utils/bookLayout";
@@ -57,6 +58,9 @@ function EditorPage({ bookId }) {
   const router = useRouter();
   const accessToken = session?.user?.accessToken;
   const editorRef = useRef(null);
+  const creatingRef = useRef(false);
+  const creationAttemptRef = useRef(null);
+  const activeDraftRef = useRef(null);
 
   const [book, setBook] = useState(null);
   const [chapters, setChapters] = useState([]);
@@ -66,12 +70,15 @@ function EditorPage({ bookId }) {
   const [savedSnapshot, setSavedSnapshot] = useState({ id: null, title: "", content: "" });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [creationNotice, setCreationNotice] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const [message, setMessage] = useState("");
   const [saveState, setSaveState] = useState("saved");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [styleSaving, setStyleSaving] = useState(false);
   const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false);
+  activeDraftRef.current = { id: currentId, title, content };
 
   const authHeaders = useCallback(
     () => ({
@@ -258,6 +265,7 @@ function EditorPage({ bookId }) {
   }, [isDirty, saving]);
 
   async function loadChapter(id) {
+    if (creatingRef.current) return;
     if (id === currentId) return setMobileNavigationOpen(false);
     if (isDirty && !(await saveChapter(currentId, title, content, { quiet: true }))) return;
     const nextChapter = chapters.find((item) => item.id === id);
@@ -265,26 +273,70 @@ function EditorPage({ bookId }) {
   }
 
   async function createSection(section) {
-    if (isDirty && !(await saveChapter(currentId, title, content, { quiet: true }))) return;
-    setSaving(true);
-    setMessage("");
+    if (creatingRef.current) return;
+    creatingRef.current = true;
+    setCreating(true);
     try {
+      setCreationNotice(null);
+      const signature = JSON.stringify(section);
+      if (creationAttemptRef.current?.signature !== signature) {
+        creationAttemptRef.current = { signature, section, key: crypto.randomUUID() };
+      }
+      if (isDirty && !(await saveChapter(currentId, title, content, { quiet: true }))) {
+        setMessage("");
+        setCreationNotice({ title: "Let's save your current chapter first", detail: "Your draft is still open. Save it successfully before adding another chapter.", retry: true });
+        return;
+      }
+      setMessage("");
       const response = await fetch(`${API_BASE}/chapters/${bookId}`, {
         method: "POST",
-        headers: authHeaders(),
+        headers: { ...authHeaders(), "Idempotency-Key": creationAttemptRef.current.key },
         body: JSON.stringify(section),
       });
       const created = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(created?.message || "Could not create this section.");
-      const refreshed = await fetch(`${API_BASE}/chapters/${bookId}`, { headers: authHeaders(), cache: "no-store" });
-      if (!refreshed.ok) throw new Error("Section created, but the contents list could not refresh. Reload to continue.");
-      setChapters(orderChapters(await refreshed.json()));
+      if (!response.ok) throw Object.assign(new Error("Chapter creation was not confirmed"), { status: response.status, code: created.code });
+      if (!created?.id) throw new Error("Chapter creation was not confirmed");
+      // A second GET failing must not disguise a successful addition as an error.
+      setChapters(items => {
+        if (items.some(item => item.id === created.id)) return items;
+        const sorted = [...items].sort((a, b) => a.position - b.position || new Date(a.createdAt) - new Date(b.createdAt) || a.id - b.id);
+        const insertion = created.position;
+        return orderChapters([...sorted.map((item, index) => ({ ...item, position: index >= insertion ? index + 1 : index })), created]);
+      });
+      creationAttemptRef.current = null;
+      const latest = activeDraftRef.current;
+      if (latest.id === currentId && (latest.title !== title || latest.content !== content)) {
+        setCreationNotice({ kind: "success", title: "Your new chapter is ready", detail: "Your current edits are still open. Select the new chapter from the list when you're ready to move on." });
+        return;
+      }
       selectChapter(created, false);
-      setMessage(`${created.title || "Section"} created.`);
+      setCreationNotice({ kind: "success", title: `${created.title || "Your new section"} is ready`, detail: "You can start writing here. Your other chapters are still in the chapter list." });
     } catch (error) {
-      setMessage(error?.message || "Could not create this section.");
+      const locked = error.code === "BOOK_LOCKED";
+      const needsRefresh = !locked && (error.status === 409 || error.status === 400);
+      const needsSignIn = error.status === 401;
+      const forbidden = error.status === 403;
+      setCreationNotice({
+        title: locked ? "This book is currently locked for changes" : needsSignIn ? "Please sign in again to add a chapter" : forbidden ? "This book can't be changed from this account" : needsRefresh ? "Your chapter list needs an update" : "Your new chapter isn't ready yet",
+        detail: locked ? "Your current text is still open. Check the book's review status before starting another revision." : needsSignIn ? "Your current text is still open. Sign out and sign back in, then continue from your saved draft." : forbidden ? "Your current text is still open. Check that you're signed in with the author account for this book." : needsRefresh ? "Your current text is still open. Refresh the chapter list to check the book's latest status before continuing." : "Your current text is still open. We couldn't confirm the new chapter. Try again in a moment to check whether it was added and continue.",
+        retry: !locked && !needsRefresh && !needsSignIn && !forbidden,
+        refresh: needsRefresh,
+      });
     } finally {
-      setSaving(false);
+      creatingRef.current = false;
+      setCreating(false);
+    }
+  }
+
+  async function refreshChapterList() {
+    try {
+      const response = await fetch(`${API_BASE}/chapters/${bookId}`, { headers: authHeaders(), cache: "no-store" });
+      if (!response.ok) throw new Error("Chapter list unavailable");
+      setChapters(orderChapters(await response.json()));
+      creationAttemptRef.current = null;
+      setCreationNotice({ kind: "success", title: "Your chapter list is up to date", detail: "Your current text is still open. You can check your chapters in the list before continuing." });
+    } catch {
+      setCreationNotice({ title: "The chapter list couldn't refresh", detail: "Your current text is still open. Please try refreshing the list again in a moment.", refresh: true });
     }
   }
 
@@ -416,7 +468,7 @@ function EditorPage({ bookId }) {
           <button
             type="button"
             onClick={() => deleteChapter(chapter.id)}
-            disabled={Boolean(deletingId)}
+            disabled={Boolean(deletingId) || creating}
             className="mr-1 rounded p-2 text-slate-300 opacity-70 hover:bg-red-500/20 hover:text-red-200 group-hover:opacity-100 focus:opacity-100 disabled:opacity-40"
             aria-label={`Delete ${chapter.title}`}
           >
@@ -463,11 +515,11 @@ function EditorPage({ bookId }) {
           <section>
             <div className="flex items-center justify-between px-2 py-2">
               <h2 className="text-sm font-semibold">Chapters</h2>
-              <button type="button" onClick={createChapter} disabled={saving} className="rounded-md p-1.5 text-slate-300 hover:bg-white/10 hover:text-white disabled:opacity-40" aria-label="Add chapter">
+              <button type="button" onClick={createChapter} disabled={saving || creating} className="rounded-md p-1.5 text-slate-300 hover:bg-white/10 hover:text-white disabled:opacity-40" aria-label="Add chapter">
                 <Plus className="h-4 w-4" aria-hidden="true" />
               </button>
             </div>
-            <button type="button" disabled={saving || !bodyChapters.some(c => c.id === currentId)} onClick={() => createSection({ title: "New section", type: "section", content: "", afterChapterId: currentId })} className="mb-2 w-full rounded-md border border-white/15 px-3 py-2 text-left text-xs text-slate-300 hover:bg-white/10 disabled:opacity-30">＋ Add section after current</button>
+            <button type="button" disabled={saving || creating || !bodyChapters.some(c => c.id === currentId)} onClick={() => createSection({ title: "New section", type: "section", content: "", afterChapterId: currentId })} className="mb-2 w-full rounded-md border border-white/15 px-3 py-2 text-left text-xs text-slate-300 hover:bg-white/10 disabled:opacity-30">＋ Add section after current</button>
             {bodyChapters.length ? <ul className="space-y-1">{bodyChapters.map((item) => chapterItem(item, true))}</ul> : <p className="px-2 text-xs leading-5 text-slate-400">Add a chapter to begin your manuscript.</p>}
           </section>
           <Disclosure defaultOpen>
@@ -479,7 +531,7 @@ function EditorPage({ bookId }) {
                     <ChevronDown className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden="true" />
                   </Disclosure.Button>
                   {!backMatter.length && (
-                    <button type="button" onClick={() => createSection({ title: BACK_MATTER_TITLE, type: "chapter", content: "<p>Add acknowledgements, resources, or author notes here…</p>" })} disabled={saving} className="rounded-md p-1.5 text-slate-300 hover:bg-white/10 hover:text-white disabled:opacity-40" aria-label="Add back matter">
+                    <button type="button" onClick={() => createSection({ title: BACK_MATTER_TITLE, type: "chapter", content: "<p>Add acknowledgements, resources, or author notes here…</p>" })} disabled={saving || creating} className="rounded-md p-1.5 text-slate-300 hover:bg-white/10 hover:text-white disabled:opacity-40" aria-label="Add back matter">
                       <Plus className="h-4 w-4" aria-hidden="true" />
                     </button>
                   )}
@@ -502,14 +554,17 @@ function EditorPage({ bookId }) {
             <button type="button" className="hidden rounded-lg border border-slate-200 p-2 lg:block" onClick={() => setSidebarOpen(v => !v)} aria-label={sidebarOpen ? "Hide manuscript navigation" : "Show manuscript navigation"}><Menu size={18} /></button>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold text-slate-900">{title || "Untitled section"}</p>
-              <p className={`text-xs ${saveState === "error" ? "text-red-600" : "text-slate-500"}`} role="status" aria-live="polite">{saveLabel}</p>
+              <p className={`text-xs ${saveState === "error" ? "text-red-600" : "text-slate-500"}`} role="status" aria-live="polite">{creating ? "Adding your chapter…" : saveLabel}</p>
             </div>
             <BookStylePicker language={book?.language} value={bookStyle} onChange={changeBookStyle} disabled={styleSaving} />
-            <button type="button" onClick={() => saveChapter(currentId, title, content)} disabled={saving || !currentId || !isDirty} className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50">Save</button>
-            <button type="button" onClick={openPreview} disabled={saving || styleSaving} className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-50 sm:px-4">
+            <button type="button" onClick={() => saveChapter(currentId, title, content)} disabled={saving || creating || !currentId || !isDirty} className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50">Save</button>
+            <button type="button" onClick={openPreview} disabled={saving || creating || styleSaving} className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-50 sm:px-4">
               <span className="hidden sm:inline">Book Preview</span><span className="sm:hidden">Preview</span>
             </button>
           </div>
+          <ChapterCreationNotice notice={creationNotice} busy={creating}
+            onRetry={() => creationAttemptRef.current ? createSection(creationAttemptRef.current.section) : createChapter()}
+            onRefresh={refreshChapterList} onDismiss={() => setCreationNotice(null)} />
           {message && (
             <p className={`mt-2 rounded-md px-3 py-2 text-sm ${saveState === "error" || /could not|failed/i.test(message) ? "bg-red-50 text-red-700" : "bg-blue-50 text-blue-700"}`} role="alert">{message}</p>
           )}
