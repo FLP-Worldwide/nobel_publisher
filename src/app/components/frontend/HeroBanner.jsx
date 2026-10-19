@@ -1,9 +1,26 @@
 import Link from "next/link";
-import { ArrowUpRight, BookOpenText, CheckCircle2, ScanText, IndianRupee } from "lucide-react";
-const journey = [
-  {icon:BookOpenText,title:'Write your story',text:'A private workspace for every chapter.'},
-  {icon:ScanText,title:'See the complete book',text:'Check the manuscript in a facing-page proof.'},
-  {icon:CheckCircle2,title:'Submit for ₹199 review',text:'Pay once per book for an editorial decision and feedback.'},
-  {icon:IndianRupee,title:'Set your price and publish',text:'Publish after approval. Order discounted author copies.'},
-];
-export default function HeroBanner(){return <section className="ui-shell !pb-5"><div className="overflow-hidden rounded-2xl bg-[#142b40] text-white"><div className="grid gap-8 p-6 sm:p-9 lg:grid-cols-[1.1fr_1fr] lg:gap-16"><div className="self-center"><p className="text-[10px] font-semibold uppercase tracking-[.2em] text-[#9ebbb2]">Independent voices. Published with care.</p><h1 className="mt-4 max-w-md text-[30px] font-semibold leading-tight tracking-tight sm:text-[36px]">A home for your<br/>next chapter.</h1><p className="mt-4 max-w-md text-sm leading-7 text-slate-300">From your first words to a book readers can hold. Write, preview and publish in one thoughtful workspace.</p><div className="mt-6 flex flex-wrap gap-3"><Link href="/write/tool" className="ui-button !border-[#547b70] !bg-[#3b665c]">Start your book <ArrowUpRight size={15}/></Link><Link href="/bookstore" className="inline-flex items-center gap-2 px-2 py-2 text-xs font-medium text-slate-200">Explore the bookshop →</Link></div><p className="mt-5 text-[11px] text-slate-400">Private drafts. One ₹199 review fee per book. Free resubmissions.</p></div><ol className="divide-y divide-white/10" aria-label="How publishing works">{journey.map(({icon:Icon,title,text},i)=><li key={title} className="flex items-start gap-4 py-5 first:pt-1 last:pb-1"><div className="mt-1 rounded-lg bg-white/5 p-2.5 text-[#a0bfb4]"><Icon size={18}/></div><div className="flex-1"><h2 className="text-sm font-semibold">{title}</h2><p className="mt-1.5 text-xs leading-5 text-slate-400">{text}</p></div><span className="text-[11px] text-slate-500">0{i+1}</span></li>)}</ol></div></div></section>}
+import { ArrowUpRight, ArrowRight, BookOpen, Check, Feather, ShieldCheck } from "lucide-react";
+
+export default function HeroBanner() {
+  return <section className="relative overflow-hidden border-b border-[#e9e2d6] bg-[#f7f3eb]">
+    <div className="pointer-events-none absolute -right-24 -top-48 h-[650px] w-[650px] rounded-full border border-[#ddd5c6]" aria-hidden="true" />
+    <div className="ui-shell relative grid items-center gap-12 !py-14 sm:!py-20 lg:grid-cols-[1.1fr_1fr]">
+      <div>
+        <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[.2em] text-[#527568]"><span className="h-2 w-2 rounded-full bg-[#527568]" /> A place for independent voices</p>
+        <h1 className="mt-6 max-w-xl font-serif text-5xl leading-[1.08] tracking-tight text-[#183d36] sm:text-6xl lg:text-7xl">Your story deserves<br /><em className="font-normal text-[#a4673c]">a bookshelf.</em></h1>
+        <p className="mt-6 max-w-lg text-base leading-8 text-[#63695f]">Turn the idea you keep coming back to into a book someone keeps coming back to. Write, design, and publish with Nobel Books.</p>
+        <div className="mt-8 flex flex-wrap gap-3"><Link href="/write/tool" className="inline-flex items-center gap-3 rounded-xl bg-[#214d40] px-6 py-3.5 text-sm font-semibold text-white hover:bg-[#17392f]">Start writing <ArrowUpRight size={18} /></Link><Link href="/bookstore" className="inline-flex items-center gap-3 rounded-xl border border-[#ccc7b9] px-6 py-3.5 text-sm font-semibold text-[#214d40] hover:bg-white">Find your next read <ArrowRight size={16} /></Link></div>
+        <div className="mt-8 flex flex-wrap gap-x-5 gap-y-3 text-xs text-[#62695f]">{["Private drafts", "English & Hindi layouts", "Print on demand"].map(text => <span key={text} className="flex items-center gap-1.5"><Check size={14} className="text-[#527568]" />{text}</span>)}</div>
+      </div>
+      <div className="relative mx-auto w-full max-w-[440px]" aria-label="Illustration of a book progressing from manuscript to publication">
+        <div className="absolute inset-x-4 bottom-8 top-6 rounded-full bg-[#e2e8d9]" />
+        <div className="relative mx-auto flex h-[340px] w-[230px] rotate-[-8deg] flex-col justify-between rounded-r-xl border-l-[12px] border-[#a26942] bg-[#bb8053] p-7 text-[#fff6e7] shadow-[18px_25px_40px_-15px_#434c3d66] sm:h-[380px] sm:w-[255px]">
+          <Feather size={30} strokeWidth={1} /><div><p className="text-[10px] uppercase tracking-[.25em]">The story only you can tell</p><p className="mt-5 font-serif text-5xl leading-[1.1]">Your next<br />chapter.</p><div className="my-6 h-px w-10 bg-[#f3d6ac]" /><p className="text-xs tracking-[.12em]">WRITTEN BY YOU</p></div><p className="text-[9px] uppercase tracking-[.3em]">Nobel Books</p>
+        </div>
+        <div className="absolute -right-1 top-10 flex items-center gap-3 rounded-xl border border-[#e0e3d7] bg-white px-4 py-3 shadow-sm sm:-right-4"><span className="rounded-full bg-[#eaf2e8] p-2 text-[#426d51]"><ShieldCheck size={18} /></span><div><p className="text-xs font-bold text-[#263e34]">A thoughtful review</p><p className="mt-1 text-[10px] text-slate-500">Feedback before publication</p></div></div>
+        <div className="absolute -left-1 bottom-0 flex items-center gap-3 rounded-xl border border-[#e1dfd6] bg-white px-5 py-4 shadow-sm sm:-left-3"><BookOpen size={22} className="text-[#a4673c]" /><div><p className="text-xs font-bold text-[#263e34]">From draft to printed book</p><p className="mt-1 text-[10px] text-slate-500">One workspace. Your own pace.</p></div></div>
+      </div>
+    </div>
+    <div className="border-t border-[#e9e2d6] bg-[#eeeae0]"><div className="mx-auto flex max-w-[1200px] flex-wrap items-center justify-between gap-3 px-6 py-5 text-xs text-[#596153]"><span><strong className="text-[#244d40]">Write and preview at your pace.</strong> Pay ₹199 when you submit for review.</span><a href="#how-it-works" className="flex items-center gap-2 font-bold text-[#244d40]">See how publishing works <ArrowRight size={14} /></a></div></div>
+  </section>;
+}

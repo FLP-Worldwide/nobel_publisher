@@ -1,13 +1,23 @@
+import Link from "next/link";
+import { ArrowUpRight, BookOpenText, ScanText, ShieldCheck, Truck, ArrowRight } from "lucide-react";
 import HeroBanner from "../components/frontend/HeroBanner";
 import BookCarousel from "../components/frontend/BookCarousel";
-import CategoryList from "../components/frontend/CategoryList";
 
+const steps = [
+  [BookOpenText, "Make room for your words", "Start with a title. Build your chapters in a private writing studio, with layouts for English and Hindi."],
+  [ScanText, "Make it feel like a book", "Choose your print format, create a cover, and check every spread in the full-book preview."],
+  [ShieldCheck, "Get a second pair of eyes", "Submit your complete book and pay a one-time ₹199 review fee. Read the feedback and revise when needed."],
+  [Truck, "Open it up to readers", "After approval, set a selling price and publish. We print paid orders on demand and track dispatch."],
+];
 export default function Home() {
-  return (
-    <>
-      <HeroBanner />
-      <BookCarousel heading="Recently published" />
-      <CategoryList />
-    </>
-  );
+  return <main className="bg-[#fcfbf8] text-[#243b32]">
+    <HeroBanner />
+    <section id="how-it-works" className="ui-shell scroll-mt-6 !py-16">
+      <div className="mb-9 flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-[.18em] text-[#8b6b4c]">A little structure. A lot of possibility.</p><h2 className="mt-3 font-serif text-3xl sm:text-4xl">A clear path to your first edition.</h2></div><Link href="/login" className="flex items-center gap-2 text-sm font-semibold text-[#527568]">Already writing? Sign in <ArrowRight size={15} /></Link></div>
+      <ol className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">{steps.map(([Icon, title, text], index) => <li key={title} className="rounded-2xl border border-[#e5e5da] bg-white p-6"><div className="flex items-center justify-between"><span className="rounded-xl bg-[#f1f3e9] p-3 text-[#527568]"><Icon size={22} strokeWidth={1.5} /></span><span className="font-serif text-3xl text-[#d6cfbf]">0{index + 1}</span></div><h3 className="mt-6 text-base font-semibold">{title}</h3><p className="mt-3 text-sm leading-7 text-[#6b7169]">{text}</p></li>)}</ol>
+    </section>
+    <section className="border-y border-[#e6e6dc] bg-[#f0f3ea]"><div className="ui-shell grid gap-9 !py-12 lg:grid-cols-[1fr_1fr]"><div><p className="text-xs font-bold uppercase tracking-[.18em] text-[#527568]">Know what goes into your earnings</p><h2 className="mt-3 font-serif text-3xl">Your words. Clear numbers.</h2><p className="mt-4 max-w-md text-sm leading-7 text-[#66705f]">One review fee per book. No second review fee for later revisions of a paid book. Printing is deducted first; the platform commission is 25% of the amount left.</p><Link href="/write/tool" className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-[#244d40]">Bring your book to life <ArrowUpRight size={17} /></Link></div><div className="rounded-2xl border border-[#dde2d4] bg-white p-6 sm:p-8"><p className="mb-5 text-xs font-semibold uppercase tracking-wider text-[#7d8379]">Example · one retail copy</p><dl className="space-y-3 text-sm">{[["Selling price", "₹249.00"], ["Printing cost", "− ₹90.00"], ["Platform commission · 25% of ₹159", "− ₹39.75"]].map(([label, amount]) => <div key={label} className="flex justify-between gap-4"><dt className="text-[#6b7169]">{label}</dt><dd className="font-semibold tabular-nums">{amount}</dd></div>)}<div className="flex justify-between border-t border-[#e5e8dd] pt-4"><dt className="font-semibold">Author earnings</dt><dd className="text-2xl font-bold tabular-nums text-[#426d51]">₹119.25</dd></div></dl><p className="mt-4 text-xs leading-5 text-[#7d8379]">Illustrative printing cost, confirmed during review. Shipping is charged separately. Author-copy orders do not earn royalties.</p></div></div></section>
+    <div className="py-9"><BookCarousel heading="Fresh voices on the bookshelf" limit={4} /></div>
+    <section className="ui-shell !pb-16"><div className="grid gap-10 border-t border-[#e3e4d8] pt-12 lg:grid-cols-[.7fr_1fr]"><div><p className="text-xs font-bold uppercase tracking-[.18em] text-[#8b6b4c]">Before your first chapter</p><h2 className="mt-3 font-serif text-3xl">A few good questions.</h2></div><div className="divide-y divide-[#e3e4d8]">{[["When do I pay?", "Writing and previewing come first. Pay ₹199 when you submit your completed book for editorial review. Publication follows approval and your selling-price confirmation."], ["Can I change my book after submitting?", "Submitted versions are locked for review. When changes are requested, or when you start a later revision, you can edit and resubmit. Paid books do not need another review fee."], ["Can I order copies for myself?", "Yes. Published authors can order a minimum of 5 copies at 30% below the retail price, plus shipping. Printing costs must be covered."], ["How does ISBN assignment work?", "ISBNs come from the national ISBN agency. Your publisher must obtain the appropriate number for each format and edition. A new number cannot be generated by the writing tool."]].map(([question, answer]) => <details key={question} className="group py-5 first:pt-0"><summary className="cursor-pointer text-sm font-semibold">{question}</summary><p className="mt-3 max-w-xl text-sm leading-7 text-[#6b7169]">{answer}</p></details>)}</div></div></section>
+  </main>;
 }
