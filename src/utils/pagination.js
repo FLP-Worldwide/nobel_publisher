@@ -40,20 +40,35 @@ export function paginateByHeight(html, pageWidth, pageHeight, options = {}) {
     const limit = pageHeight - margin * 2 - (pages.length === 0 ? firstPageHeading : 0);
     return box.getBoundingClientRect().height <= limit + 0.5;
   };
-  function boundaries(element) {
-    const points = [];
+  function textRuns(element) {
+    const runs = [];
     const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT);
+    let text = '';
     let node;
     while ((node = walker.nextNode())) {
       if (node.nodeType === Node.TEXT_NODE) {
-        const matches = [...node.textContent.matchAll(/\s+/gu)];
-        matches.forEach(m => points.push([node, m.index + m[0].length]));
-        // End of each text node also permits breaks between formatted spans.
-        if (node.length && (!matches.length || points.at(-1)?.[1] !== node.length)) points.push([node, node.length]);
+        runs.push({ node, start: text.length, end: text.length + node.length });
+        text += node.textContent;
       } else if (node.tagName === 'BR') {
-        points.push([node.parentNode, [...node.parentNode.childNodes].indexOf(node) + 1]);
+        runs.push({ node, start: text.length, end: text.length + 1 });
+        text += '\n';
       }
     }
+    const ends = new Set([...new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(text)].map(part => part.index + part.segment.length));
+    return { runs, ends };
+  }
+  function boundaries(element, graphemesOnly = false) {
+    const points = [];
+    const { runs, ends } = textRuns(element);
+    for (const { node, start, end } of runs) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        const offsets = graphemesOnly ? [...ends].filter(offset => offset > start && offset <= end).map(offset => offset - start)
+          : [...node.textContent.matchAll(/\s+/gu)].map(match => match.index + match[0].length).concat(node.length);
+        for (const offset of offsets) if (offset > 0 && ends.has(start + offset)) points.push([node, offset]);
+      } else points.push([node.parentNode, [...node.parentNode.childNodes].indexOf(node) + 1]);
+    }
+    // Formatting can divide one Indic syllable across several DOM text nodes.
+    // Only split at grapheme boundaries in the complete run.
     return points;
   }
   function parts(element, point) {
@@ -91,11 +106,7 @@ export function paginateByHeight(html, pageWidth, pageHeight, options = {}) {
       if (best < 0 && current.length) { flush(); continue; }
       if (best < 0) {
         // Long unbroken words must wrap without splitting a Hindi grapheme.
-        points = [];
-        const walker = document.createTreeWalker(remaining, NodeFilter.SHOW_TEXT);
-        let n;
-        const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
-        while ((n = walker.nextNode())) for (const part of segmenter.segment(n.textContent)) points.push([n, part.index + part.segment.length]);
+        points = boundaries(remaining, true);
         findSplit();
       }
       if (best < 0) { current.push(remaining); break; }

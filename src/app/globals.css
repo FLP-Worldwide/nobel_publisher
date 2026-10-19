@@ -243,6 +243,9 @@ button:not(:disabled), select { cursor: pointer; }
   widows: 1;
   orphans: 1;
   text-align: left;
+  letter-spacing: normal;
+  word-break: normal;
+  font-variant-ligatures: normal;
 }
 .book-typeset p { margin: 0 0 .75em; }
 .book-typeset p:last-child { margin-bottom: 0; }

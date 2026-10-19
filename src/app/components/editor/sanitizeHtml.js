@@ -114,7 +114,13 @@ export function sanitizeManuscriptHtml(html = "") {
     if (element.tagName === "A") {
       element.setAttribute("rel", "noopener noreferrer");
     }
+    // Imported editors often wrap each Hindi glyph in a font/position span.
+    // Once those styles are removed, keep one shaping run rather than empty wrappers.
+    if (element.tagName === "SPAN" && !element.attributes.length) {
+      element.replaceWith(...element.childNodes);
+    }
   });
 
+  root.normalize();
   return root.innerHTML.replace(/(?:<br\s*\/?>(?:\s|&nbsp;)*){3,}/gi, "<br><br>");
 }

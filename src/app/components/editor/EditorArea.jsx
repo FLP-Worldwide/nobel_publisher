@@ -2,6 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { sanitizeManuscriptHtml } from "./sanitizeHtml";
+import { containsDevanagari, hasDetachedDevanagariMarks, prepareManuscriptPaste } from "./manuscriptPaste";
 import { BOOK_DPI, BOOK_MARGIN, manuscriptStyle, sectionHeadingHtml, ensureBookFonts } from "@/utils/bookLayout";
 import ZoomControls from "./ZoomControls";
 
@@ -12,6 +13,8 @@ export default function EditorArea({ editorRef, content, setContent, section, bo
   const [zoom, setZoom] = useState('fit');
   const [pages, setPages] = useState(1);
   const [visiblePage, setVisiblePage] = useState(1);
+  const [pasteMode, setPasteMode] = useState("auto");
+  const [pasteNotice, setPasteNotice] = useState("");
   const pageWidth = trim.width * BOOK_DPI, pageHeight = trim.height * BOOK_DPI;
   const margin = BOOK_MARGIN * BOOK_DPI, gap = 24;
   const bodyWidth = pageWidth - margin * 2;
@@ -84,7 +87,11 @@ export default function EditorArea({ editorRef, content, setContent, section, bo
     event.preventDefault();
     const rich = event.clipboardData.getData('text/html');
     const plain = event.clipboardData.getData('text/plain');
-    const safe = rich ? sanitizeManuscriptHtml(rich) : plain.replace(/[&<>]/g, c => ({'&':'&amp;', '<':'&lt;', '>':'&gt;'}[c])).replace(/\r\n?/g,'\n').replace(/\n{3,}/g,'\n\n').replace(/\n/g,'<br>');
+    const safe = prepareManuscriptPaste({ html: rich, text: plain, mode: pasteMode });
+    const pastedText = plain || new DOMParser().parseFromString(safe, "text/html").body.textContent;
+    setPasteNotice(hasDetachedDevanagariMarks(pastedText)
+      ? "This paste contains detached vowel marks or unreadable characters. Check the original text—copying from a PDF or an older Hindi font can change the characters. Undo and paste Unicode text from the original document if needed."
+      : "");
     document.execCommand('insertHTML', false, safe);
     setContent(sanitizeManuscriptHtml(editorRef.current.innerHTML));
   }
@@ -103,18 +110,19 @@ export default function EditorArea({ editorRef, content, setContent, section, bo
         <button type="button" className="rounded border px-2 py-1 disabled:opacity-30" onClick={() => goTo(visiblePage + 1)} disabled={visiblePage >= pages} aria-label="Next canvas page">→</button>
         <span className="ml-2 hidden sm:inline">{trim.label} · {bookStyle.points} pt</span>
       </div>
-      <ZoomControls zoom={zoom} setZoom={setZoom} fitScale={fitScale} />
+      <div className="flex flex-wrap items-center gap-3"><label className="flex items-center gap-2 text-xs text-slate-600">Paste mode<select value={pasteMode} onChange={event => setPasteMode(event.target.value)} className="max-w-56 rounded border border-slate-300 bg-white px-2 py-1.5"><option value="auto">Auto · Hindi as plain text</option><option value="rich">Keep bold & paragraph formatting</option><option value="plain">Plain text</option></select></label><ZoomControls zoom={zoom} setZoom={setZoom} fitScale={fitScale} /></div>
     </div>
     <p className="px-5 py-2 text-xs text-slate-600">Enter for a new line · Enter twice for a paragraph · Page break for a fresh page. Pages flow to the right.</p>
+    {pasteNotice && <p role="status" className="mx-5 mb-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs leading-6 text-amber-900">{pasteNotice}</p>}
     <div ref={scrollRef} className="book-canvas-scroll w-full p-5" onScroll={e => setVisiblePage(Math.min(pages, Math.floor(e.currentTarget.scrollLeft / stride) + 1))}>
       <div style={{ width: totalWidth * scale, height: pageHeight * scale, marginInline: totalWidth * scale < width - 40 ? 'auto' : 0 }}>
         <div style={{ width: totalWidth, height: pageHeight, transform: `scale(${scale})`, transformOrigin: 'top left', position: 'relative' }}>
           {Array.from({length: pages}, (_,index) => <div key={index} className="pointer-events-none absolute top-0 border border-slate-200 bg-white shadow-md" style={{ left: index * (pageWidth + gap), width: pageWidth, height: pageHeight }} aria-hidden="true">
             <span className="absolute bottom-4 right-6 text-[10px] text-slate-400">{index + 1}</span>
           </div>)}
-          <div ref={columnsRef} className="book-canvas-columns book-typeset absolute" style={{ ...manuscriptStyle(bookStyle), top: margin, left: margin, width: bodyWidth, height: pageHeight - margin * 2, columnWidth: bodyWidth, columnGap: margin * 2 + gap }}>
+          <div ref={columnsRef} lang={bookStyle.language} className="book-canvas-columns book-typeset absolute" style={{ ...manuscriptStyle(bookStyle), top: margin, left: margin, width: bodyWidth, height: pageHeight - margin * 2, columnWidth: bodyWidth, columnGap: margin * 2 + gap }}>
             <div dangerouslySetInnerHTML={{ __html: sectionHeadingHtml(section, bookStyle) }} />
-            <div ref={editorRef} className="book-canvas-content manuscript-prose book-typeset" contentEditable suppressContentEditableWarning onInput={handleInput} onKeyDown={onKeyDown} onPaste={onPaste} role="textbox" aria-label={ariaLabel} aria-multiline="true" spellCheck="true" />
+            <div ref={editorRef} lang={bookStyle.language === "hi" || containsDevanagari(content) ? "hi" : bookStyle.language} className="book-canvas-content manuscript-prose book-typeset" contentEditable suppressContentEditableWarning onInput={handleInput} onKeyDown={onKeyDown} onPaste={onPaste} role="textbox" aria-label={ariaLabel} aria-multiline="true" spellCheck="true" />
           </div>
         </div>
       </div>

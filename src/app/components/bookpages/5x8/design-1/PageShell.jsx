@@ -23,6 +23,7 @@ export default function PageShell({
 
   return (
     <div
+      lang={bookStyle.language}
       className="book-page relative overflow-hidden bg-white shadow-xl"
       style={{ ...manuscriptStyle(bookStyle), width: fullWidth, height: fullHeight }}
     >
