@@ -38,7 +38,7 @@ function LoginForm({ accountType = "author" }) {
         // ✅ load guest cart
         const guestCart = JSON.parse(localStorage.getItem("guest_cart") || "[]");
   
-        if (guestCart.length > 0 && accessToken) {
+        if (accountType !== "admin" && guestCart.length > 0 && accessToken) {
           for (const item of guestCart) {
             const { bookId, qty } = item;
   
@@ -80,16 +80,16 @@ function LoginForm({ accountType = "author" }) {
         {/* Left Image / Text Section */}
         <div className="hidden md:flex w-1/2 bg-[#19334c] flex-col justify-center items-center text-white p-8">
           <h2 className="text-xl font-semibold mb-4 text-center">
-            {accountType === "buyer" ? "Your reading journey" : "Your book starts here"}
+            {accountType === "admin" ? "Nobel Books administration" : accountType === "buyer" ? "Your reading journey" : "Your book starts here"}
           </h2>
           <p className="text-sm text-center text-blue-50">
-            {accountType === "buyer" ? "Browse independent books and track your orders in your reader account." : "Write privately, preview every page, and pay a one-time ₹199 fee for editorial review. Set your price and publish after approval."}
+            {accountType === "admin" ? "Review submissions, confirm print costs, manage dispatch and monitor payments from one dedicated workspace." : accountType === "buyer" ? "Browse independent books and track your orders in your reader account." : "Write privately, preview every page, and pay a one-time ₹199 fee for editorial review. Set your price and publish after approval."}
           </p>
         </div>
 
         {/* Right Form Section */}
         <div className="w-full md:w-1/2 p-8">
-          <h2 className="text-xl font-semibold text-blue-700 mb-6">{accountType === "buyer" ? "Reader sign in" : "Author sign in"}</h2>
+          <h2 className="text-xl font-semibold text-blue-700 mb-6">{accountType === "admin" ? "Admin sign in" : accountType === "buyer" ? "Reader sign in" : "Author sign in"}</h2>
 
           {error && (
             <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
@@ -97,7 +97,7 @@ function LoginForm({ accountType = "author" }) {
             </div>
           )}
 
-          <p className="mb-5 text-sm text-stone-500">{accountType === "buyer" ? "Here to publish?" : "Here to buy books?"} <a className="font-semibold text-[#244d43] underline" href={`${accountType === "buyer" ? "/login" : "/buyer/login"}${searchParams.get("callbackUrl") ? `?callbackUrl=${encodeURIComponent(searchParams.get("callbackUrl"))}` : ""}`}>{accountType === "buyer" ? "Author sign in" : "Reader sign in"}</a></p>
+          {accountType !== "admin" && <p className="mb-5 text-sm text-stone-500">{accountType === "buyer" ? "Here to publish?" : "Here to buy books?"} <a className="font-semibold text-[#244d43] underline" href={`${accountType === "buyer" ? "/login" : "/buyer/login"}${searchParams.get("callbackUrl") ? `?callbackUrl=${encodeURIComponent(searchParams.get("callbackUrl"))}` : ""}`}>{accountType === "buyer" ? "Author sign in" : "Reader sign in"}</a></p>}
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label htmlFor="email" className="block mb-2 text-sm font-medium text-gray-900">
@@ -159,12 +159,13 @@ function LoginForm({ accountType = "author" }) {
               {loading ? "Logging in..." : "Login"}
             </button>
 
-            <p className="text-sm text-gray-600 mt-4">
+            {accountType !== "admin" && <p className="text-sm text-gray-600 mt-4">
               Don’t have an account?{" "}
               <a href={accountType === "buyer" ? "/buyer/signup" : "/login/create"} className="text-blue-500 font-medium hover:underline">
                 Sign up here
               </a>
-            </p>
+            </p>}
+            {accountType === "admin" && <p className="text-sm text-slate-500">Access is limited to provisioned staff accounts. Contact your administrator if you need access.</p>}
           </form>
         </div>
       </div>

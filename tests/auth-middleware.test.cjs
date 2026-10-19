@@ -101,3 +101,28 @@ test('login rejects external, backslash and control-character redirects', () => 
     assert.equal(loginDestination('buyer', destination), '/account', JSON.stringify(destination));
   }
 });
+
+test('admin login opens publicly and private admin pages return to that login', async () => {
+  assert.equal((await request('/admin/login', { signedIn: false })).status, 200);
+  const response = await request('/admin/orders', { signedIn: false });
+  const target = new URL(response.headers.get('location'));
+  assert.equal(target.pathname, '/admin/login');
+  assert.equal(target.searchParams.get('callbackUrl'), '/admin/orders');
+});
+
+test('administrators cannot enter author dashboards or writing screens', async () => {
+  for (const path of ['/write/tool', '/write/tool/step2/1/cover', '/author-dashboard', '/author-dashboard/wallet']) {
+    const response = await request(path, { role: 'admin' });
+    assert.equal(new URL(response.headers.get('location')).pathname, '/admin');
+  }
+  for (const path of ['/admin/orders', '/admin/payments']) assert.equal((await request(path, { role: 'admin' })).status, 200);
+});
+
+test('admin login destinations stay within administration and readers avoid admin redirect loops', async () => {
+  assert.equal(loginDestination('admin', '/admin/orders'), '/admin/orders');
+  for (const path of ['/write/tool', '/author-dashboard', '/checkout', '/admin/login']) assert.equal(loginDestination('admin', path), '/admin');
+  assert.equal(loginDestination('author', '/admin/orders'), '/author-dashboard');
+  assert.equal(loginDestination('buyer', '/admin'), '/account');
+  const response = await request('/admin/payments', { role: 'buyer' });
+  assert.equal(new URL(response.headers.get('location')).pathname, '/account');
+});

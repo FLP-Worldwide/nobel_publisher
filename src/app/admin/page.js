@@ -17,6 +17,7 @@ function formatDate(value) {
 
 export default function ReviewQueuePage() {
   const { data: session, status } = useSession();
+  const [reviewStatus, setReviewStatus] = useState("SUBMITTED");
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -27,7 +28,7 @@ export default function ReviewQueuePage() {
     setLoading(true);
     setError("");
     try {
-      const response = await fetch(`${API}/reviews`, {
+      const response = await fetch(`${API}/reviews?status=${reviewStatus}`, {
         cache: "no-store",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -39,7 +40,7 @@ export default function ReviewQueuePage() {
     } finally {
       setLoading(false);
     }
-  }, [session?.user?.accessToken]);
+  }, [session?.user?.accessToken, reviewStatus]);
 
   useEffect(() => {
     if (status === "authenticated") loadQueue();
@@ -50,7 +51,7 @@ export default function ReviewQueuePage() {
       <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
           <p className="mb-2 text-sm font-semibold uppercase tracking-[0.16em] text-blue-700">Editorial queue</p>
-          <h1 className="text-3xl font-bold tracking-tight">Books awaiting review</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Book reviews</h1>
           <p className="mt-2 max-w-2xl text-slate-600">
             Open a submission to read the complete manuscript, check its publishing details, and leave one clear decision.
           </p>
@@ -66,6 +67,11 @@ export default function ReviewQueuePage() {
         </button>
       </div>
 
+      <label className="mb-6 block max-w-xs text-sm font-semibold">Submission status
+        <select className="ui-field mt-2" value={reviewStatus} onChange={event => setReviewStatus(event.target.value)}>
+          <option value="SUBMITTED">Awaiting review</option><option value="PAYMENT_PENDING">Awaiting review fee</option><option value="APPROVED">Approved</option><option value="CHANGES_REQUESTED">Changes requested</option><option value="REJECTED">Rejected</option>
+        </select>
+      </label>
       {error && (
         <div role="alert" className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
           {error}
@@ -79,8 +85,8 @@ export default function ReviewQueuePage() {
       ) : books.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
           <BookOpen className="mx-auto mb-4 h-10 w-10 text-slate-400" />
-          <h2 className="text-lg font-bold">The review queue is clear</h2>
-          <p className="mt-1 text-sm text-slate-500">New author submissions will appear here.</p>
+          <h2 className="text-lg font-bold">No submissions in this status</h2>
+          <p className="mt-1 text-sm text-slate-500">Matching author submissions will appear here.</p>
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -89,7 +95,7 @@ export default function ReviewQueuePage() {
             return (
             <article key={review.id} className="flex flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
               <div className="mb-4 flex items-start justify-between gap-3">
-                <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-800">In review</span>
+                <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-800">{review.status === "SUBMITTED" ? "In review" : review.status.toLowerCase().replaceAll("_", " ")}</span>
                 <span className="inline-flex items-center gap-1 text-xs text-slate-500">
                   <Clock3 className="h-3.5 w-3.5" /> {formatDate(review.submittedAt || book.updatedAt)}
                 </span>

@@ -11,23 +11,26 @@ const handler = NextAuth({
       },
       async authorize(credentials) {
         try {
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
+          const accountType = credentials?.accountType || "author";
+          if (!["admin", "author", "buyer"].includes(accountType)) return null;
+          const endpoint = accountType === "admin" ? "/auth/admin/login" : "/auth/login";
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               email: credentials?.email,
-              password: credentials?.password
+              password: credentials?.password,
+              accountType,
             })
           });
 
           const data = await res.json();
 
           if (!res.ok || !data?.user) {
-            return null; // login failed
+            throw new Error(data?.message || "Invalid email or password");
           }
 
-          if (credentials?.accountType === "buyer" && data.user.role !== "buyer") throw new Error("Use Author sign in for this account.");
-          if (credentials?.accountType !== "buyer" && data.user.role === "buyer") throw new Error("Use Reader sign in for this account.");
+          if (data.user.role !== accountType) throw new Error("Use the sign in page for your account type.");
           return {
             id: data.user.id,
             name: data.user.name,

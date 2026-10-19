@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 
 // Auth pages
-const authPages = ["/login", "/login/create", "/buyer/login", "/buyer/signup"];
+const authPages = ["/login", "/login/create", "/buyer/login", "/buyer/signup", "/admin/login"];
 const redirectAfterAuth = "/author-dashboard";
 
 // Protected pages (must be logged in)
@@ -37,21 +37,22 @@ export async function middleware(req) {
   }
 
   // 🔹 Case 2: Protect private routes
-  if (protectedRoutes.some((route) => pathname.startsWith(route)) && !token) {
+  if (protectedRoutes.some((route) => (pathname === route || pathname.startsWith(`${route}/`))) && pathname !== "/admin/login" && !token) {
     const url = req.nextUrl.clone();
-    url.pathname = pathname.startsWith("/account") || pathname.startsWith("/orders") ? "/buyer/login" : "/login";
+    url.pathname = pathname.startsWith("/admin") ? "/admin/login" : pathname.startsWith("/account") || pathname.startsWith("/orders") ? "/buyer/login" : "/login";
     url.searchParams.set("callbackUrl", pathname); // return after login
     return NextResponse.redirect(url);
   }
 
-  if (pathname.startsWith("/admin") && token?.role !== "admin") {
+  if (pathname.startsWith("/admin") && pathname !== "/admin/login" && token?.role !== "admin") {
     const url = req.nextUrl.clone();
-    url.pathname = "/author-dashboard";
+    url.pathname = token?.role === "buyer" ? "/account" : "/author-dashboard";
+    url.search = "";
     return NextResponse.redirect(url);
   }
 
-  if (token?.role === "buyer" && (pathname.startsWith("/write") || pathname.startsWith("/author-dashboard"))) {
-    const url = req.nextUrl.clone(); url.pathname = "/account"; url.search = ""; return NextResponse.redirect(url);
+  if (["buyer", "admin"].includes(token?.role) && (pathname.startsWith("/write") || pathname.startsWith("/author-dashboard"))) {
+    const url = req.nextUrl.clone(); url.pathname = token.role === "admin" ? "/admin" : "/account"; url.search = ""; return NextResponse.redirect(url);
   }
   // Default → allow
   return NextResponse.next();

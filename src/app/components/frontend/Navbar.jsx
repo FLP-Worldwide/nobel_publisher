@@ -18,10 +18,10 @@ export default function Navbar() {
               <Link href="/bookstore" className="hover:text-blue-700">Bookstore</Link>
             </li>
             <li>
-              <Link href={session?.user?.role === "buyer" ? "/account" : "/write/tool"} className="hover:text-blue-700">{session?.user?.role === "buyer" ? "My account" : "Write a book"}</Link>
+              <Link href={session?.user?.role === "admin" ? "/admin" : session?.user?.role === "buyer" ? "/account" : "/write/tool"} className="hover:text-blue-700">{session?.user?.role === "admin" ? "Administration" : session?.user?.role === "buyer" ? "My account" : "Write a book"}</Link>
             </li>
             <li>
-              <Link href={session?.user?.role === "buyer" ? "/account" : "/author-dashboard"} className="hover:text-blue-700">{session?.user?.role === "buyer" ? "My orders" : "My books"}</Link>
+              <Link href={session?.user?.role === "admin" ? "/admin/orders" : session?.user?.role === "buyer" ? "/account" : "/author-dashboard"} className="hover:text-blue-700">{session?.user?.role === "admin" ? "Orders & shipping" : session?.user?.role === "buyer" ? "My orders" : "My books"}</Link>
             </li>
           </ul>
         </div>

@@ -64,19 +64,19 @@ export default function UserDropdown() {
             {session.user?.role === "admin" && (
               <li>
                 <Link href="/admin" className="block rounded-md px-3 py-2 font-semibold text-blue-800 hover:bg-blue-50">
-                  Review desk
+                  Administration
                 </Link>
               </li>
             )}
             <li>
               <Link
-                href={session.user?.role === "buyer" ? "/account" : "/author-dashboard"}
+                href={session.user?.role === "admin" ? "/admin" : session.user?.role === "buyer" ? "/account" : "/author-dashboard"}
                 className="block px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600"
               >
                 Dashboard
               </Link>
             </li>
-            {session.user?.role !== "buyer" && <li>
+            {session.user?.role === "author" && <li>
               <Link
                 href="/author-dashboard/update"
                 className="block px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600"
@@ -86,16 +86,16 @@ export default function UserDropdown() {
             </li>}
             <li>
               <Link
-                href={session.user?.role === "buyer" ? "/account" : "/author-dashboard/order"}
+                href={session.user?.role === "admin" ? "/admin/orders" : session.user?.role === "buyer" ? "/account" : "/author-dashboard/order"}
                 className="block px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600"
               >
-                My Orders
+                {session.user?.role === "admin" ? "Orders & shipping" : "My Orders"}
               </Link>
             </li>
           </ul>
           <div className="p-2 border-t border-gray-100 dark:border-gray-600">
             <button
-              onClick={() => signOut()}
+              onClick={() => signOut({ callbackUrl: session.user?.role === "admin" ? "/admin/login" : "/login" })}
               className="w-full text-left px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-600 text-red-600 dark:text-red-400"
             >
               Sign Out
