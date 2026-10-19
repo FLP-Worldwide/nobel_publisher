@@ -17,7 +17,7 @@ export default function Footer() {
             <Image src="/logo.png" width={104} height={52} alt="Nobel Books" className="h-10 w-auto" />
           </Link>
           <p className="mt-4 max-w-xl text-sm leading-6 text-slate-400">
-            A guided self-publishing workspace for authors to write, preview, submit for editorial review, publish, and order author copies.
+            Affordable self-publishing for independent authors. Write, design and preview for free. Submit your book for a one-time ₹199 review fee, then publish after approval with print-on-demand fulfilment. Printing, delivery and retail commission are separate.
           </p>
         </div>
         <nav aria-label="Footer navigation" className="flex flex-wrap gap-x-5 gap-y-3 text-sm font-semibold">

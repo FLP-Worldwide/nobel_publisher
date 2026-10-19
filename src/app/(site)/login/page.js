@@ -80,10 +80,10 @@ function LoginForm({ accountType = "author" }) {
         {/* Left Image / Text Section */}
         <div className="hidden md:flex w-1/2 bg-[#19334c] flex-col justify-center items-center text-white p-8">
           <h2 className="text-xl font-semibold mb-4 text-center">
-            {accountType === "admin" ? "Nobel Books administration" : accountType === "buyer" ? "Your reading journey" : "Your book starts here"}
+            {accountType === "admin" ? "Nobel Books administration" : accountType === "buyer" ? "Your reading journey" : "Self-publishing on your budget"}
           </h2>
           <p className="text-sm text-center text-blue-50">
-            {accountType === "admin" ? "Review submissions, confirm print costs, manage dispatch and monitor payments from one dedicated workspace." : accountType === "buyer" ? "Browse independent books and track your orders in your reader account." : "Write privately, preview every page, and pay a one-time ₹199 fee for editorial review. Set your price and publish after approval."}
+            {accountType === "admin" ? "Review submissions, confirm print costs, manage dispatch and monitor payments from one dedicated workspace." : accountType === "buyer" ? "Browse independent books and track your orders in your reader account." : "Prepare your manuscript and cover for free. Pay a one-time ₹199 fee when you submit for review, then set your price and publish after approval. Printing, shipping and retail commission are separate."}
           </p>
         </div>
 

@@ -58,17 +58,17 @@ export default function CreateAccount({ accountType = "author" }) {
         {/* Left Section */}
         <div className="hidden md:flex w-1/2 bg-[#19334c] flex-col justify-center items-center text-white p-8">
           <h2 className="text-xl font-semibold mb-4 text-center">
-            {accountType === "buyer" ? "Your next great read" : "Start your author account"}
+            {accountType === "buyer" ? "Your next great read" : "Start self-publishing for free"}
           </h2>
           <p className="text-center text-sm leading-6">
-            {accountType === "buyer" ? "Discover independent authors and keep track of every order." : "Write your manuscript, review the complete preview, and publish after editorial approval."}
+            {accountType === "buyer" ? "Discover independent authors and keep track of every order." : "Write, design your cover and preview your book for free. Pay a one-time ₹199 fee when you submit for review. Printing, shipping and retail commission are separate."}
           </p>
         </div>
 
         {/* Right Form */}
         <div className="w-full md:w-1/2 p-8">
           <h3 className="text-xl font-semibold text-gray-900 mb-2">{accountType === "buyer" ? "Create a reader account" : "Create your author account"}</h3>
-          <p className="mb-6 text-sm leading-6 text-gray-600">{accountType === "buyer" ? "Buy books and follow your orders." : "Your account includes the complete writing and publishing workspace."}</p>
+          <p className="mb-6 text-sm leading-6 text-gray-600">{accountType === "buyer" ? "Buy books and follow your orders." : "Free writing, cover and preview tools. Your ₹199 review fee is due only when you submit your book."}</p>
 
           {error && (
             <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md p-2">

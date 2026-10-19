@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata = {
   title: "Nobel Books",
-  description: "Write, review and self-publish your book with Nobel Books.",
+  description: "Affordable self-publishing with free writing, cover and preview tools. One-time ₹199 book review fee; printing, shipping and retail commission are separate.",
 };
 
 export default function RootLayout({ children }) {

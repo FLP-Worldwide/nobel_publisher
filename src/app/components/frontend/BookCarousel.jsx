@@ -21,6 +21,7 @@ export default function BookCarousel({ heading = "Published books", limit }) {
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [retry, setRetry] = useState(0);
 
   useEffect(() => {
     if (!API) {
@@ -29,6 +30,8 @@ export default function BookCarousel({ heading = "Published books", limit }) {
       return;
     }
     const controller = new AbortController();
+    setLoading(true);
+    setError("");
     (async () => {
       try {
         const response = await fetch(`${API}/books/all`, { signal: controller.signal, cache: "no-store" });
@@ -36,13 +39,13 @@ export default function BookCarousel({ heading = "Published books", limit }) {
         if (!response.ok) throw new Error(data?.message || "Published books could not be loaded.");
         setBooks(Array.isArray(data) ? data : []);
       } catch (fetchError) {
-        if (fetchError.name !== "AbortError") setError(fetchError.message || "Published books could not be loaded.");
+        if (fetchError.name !== "AbortError") setError("Published titles are temporarily unavailable. Please try again.");
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     })();
     return () => controller.abort();
-  }, []);
+  }, [retry]);
 
   const visibleBooks = typeof limit === "number" ? books.slice(0, limit) : books;
 
@@ -57,12 +60,12 @@ export default function BookCarousel({ heading = "Published books", limit }) {
       </div>
 
       {loading && (
-        <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-5">
-          {Array.from({ length: 5 }).map((_, index) => <div key={index} className="aspect-[5/8] animate-pulse rounded-2xl bg-slate-100" />)}
+        <div className={`grid grid-cols-2 gap-5 sm:grid-cols-3 ${limit === 4 ? "lg:grid-cols-4" : "lg:grid-cols-5"}`}>
+          {Array.from({ length: limit || 5 }).map((_, index) => <div key={index} className="aspect-[5/8] animate-pulse rounded-2xl bg-slate-100" />)}
         </div>
       )}
 
-      {!loading && error && <p role="alert" className="rounded-2xl border border-red-200 bg-red-50 p-5 text-red-800">{error}</p>}
+      {!loading && error && <div role="alert" className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-600"><p>{error}</p><button onClick={() => setRetry(value => value + 1)} className="mt-3 font-semibold text-[#244d40] underline">Try again</button></div>}
 
       {!loading && !error && visibleBooks.length === 0 && (
         <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center">
@@ -72,7 +75,7 @@ export default function BookCarousel({ heading = "Published books", limit }) {
       )}
 
       {!loading && !error && visibleBooks.length > 0 && (
-        <div className="grid grid-cols-2 gap-x-5 gap-y-8 sm:grid-cols-3 lg:grid-cols-5">
+        <div className={`grid grid-cols-2 gap-x-5 gap-y-8 sm:grid-cols-3 ${limit === 4 ? "lg:grid-cols-4" : "lg:grid-cols-5"}`}>
           {visibleBooks.map((book) => (
             <Link key={book.id} href={`/book/${book.id}`} className="group min-w-0">
               <div className="aspect-[5/8] overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-sm transition group-hover:-translate-y-1 group-hover:shadow-xl">
