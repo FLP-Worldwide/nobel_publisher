@@ -264,14 +264,16 @@ button:not(:disabled), select { cursor: pointer; }
 .book-heading-left .book-chapter-number { font-size: 24pt; color: #5d6972; }
 .book-heading-ornament h2 { font-style: italic; font-weight: 500; }
 .book-heading-rule { padding-top: 9px; font-size: 9pt; color: #5d6972; }
-.book-canvas-scroll { max-height: calc(100dvh - 252px); min-height: 280px; overflow: auto; overscroll-behavior-inline: contain; scrollbar-gutter: stable; }
-.book-canvas-columns { column-fill: auto; column-count: auto; overflow: visible; }
-.book-canvas-content { outline: none; min-height: 1em; }
-.book-canvas-content [data-page-break] { break-before: column; display: block; height: 0; margin: 0; padding: 0; border: 0; }
-.book-canvas-content [data-page-break] br { display: none; }
-.book-canvas-content [data-page-break]::before { content: none; }
-.book-canvas-content:empty::before { content: 'Start writing…'; color: #94a3b8; }
-.book-canvas-content p:empty, .book-canvas-content div:empty:not([data-page-break]) { min-height: 1lh; }
+.chapter-writing-scroll { max-height: calc(100dvh - 290px); min-height: 320px; overflow-y: auto; overflow-x: hidden; scrollbar-gutter: stable; }
+.chapter-writing-sheet { min-height: 65vh; }
+.chapter-writing-editor { min-height: 45vh; outline: none; }
+.chapter-writing-editor:empty::before { content: 'Start writing…'; color: #94a3b8; }
+.chapter-writing-editor p:empty, .chapter-writing-editor div:empty:not([data-page-break]) { min-height: 1lh; }
+.chapter-writing-editor [data-page-break] { display: block; break-before: auto; height: auto; border: 0; border-top: 1px dashed #b8c4cc; margin: 1.5em 0; padding-top: .4em; }
+.chapter-writing-editor [data-page-break]::before { content: 'Print page break · Book Preview only'; font: 11px Arial, sans-serif; color: #798691; }
+.chapter-writing-editor [data-page-break] br { display: none; }
+@media (max-width: 640px) { .chapter-writing-scroll { max-height: calc(100dvh - 330px); } }
+
 .book-style-option { border: 1px solid #dbe3e9; border-radius: 10px; padding: 16px; background: white; text-align: left; }
 .book-style-option[aria-pressed=true] { border-color: #315e54; box-shadow: 0 0 0 1px #315e54; background: #f3f7f5; }
 @media print {

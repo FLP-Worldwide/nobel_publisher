@@ -1,0 +1,474 @@
+<!doctype html><html><meta charset="UTF-8"><title>Pagination checks</title><style>*{box-sizing:border-box}body{margin:20px}p,h2{margin:0}header{display:block}@font-face { font-family: 'Nobel Hindi Serif'; src: url('/fonts/NotoSerifDevanagari.ttf') format('truetype'); font-style: normal; font-weight: 100 900; font-display: swap; }
+@font-face { font-family: 'Nobel Hindi Sans'; src: url('/fonts/NotoSansDevanagari.ttf') format('truetype'); font-style: normal; font-weight: 100 900; font-display: swap; }
+
+/* The canvas, pagination measurer and printed proof share these exact metrics. */
+.book-typeset {
+  font-family: var(--book-font, Georgia, serif);
+  font-size: var(--book-size, 11pt);
+  line-height: var(--book-leading, 1.55);
+  color: #17202b;
+  overflow-wrap: anywhere;
+  widows: 1;
+  orphans: 1;
+  text-align: left;
+  letter-spacing: normal;
+  word-break: normal;
+  font-variant-ligatures: normal;
+}
+.book-typeset p { margin: 0 0 .75em; }
+.book-typeset p:last-child { margin-bottom: 0; }
+.book-typeset div { margin-block: 0; }
+.book-typeset b, .book-typeset strong { font-weight: 700; }
+.book-typeset em, .book-typeset i { font-style: italic; }
+.book-typeset ul, .book-typeset ol { margin: 0 0 .75em; padding-left: 1.5em; }
+.book-typeset ul { list-style: disc; }
+.book-typeset ol { list-style: decimal; }
+.book-typeset blockquote { margin: .75em 1em; font-style: italic; }
+.book-typeset h1, .book-typeset h2, .book-typeset h3 { break-after: avoid; }
+.book-section-heading { padding: 0 0 28px; text-align: center; break-inside: avoid; }
+.book-section-heading h2 { font-family: inherit; font-size: 21pt; line-height: 1.25; font-weight: 600; margin: 8px 0 0; overflow-wrap: anywhere; }
+.book-chapter-number { font-size: 13pt; font-weight: 600; line-height: 1.5; }
+.book-heading-left { text-align: left; }
+.book-heading-left .book-chapter-number { font-size: 24pt; color: #5d6972; }
+.book-heading-ornament h2 { font-style: italic; font-weight: 500; }
+.book-heading-rule { padding-top: 9px; font-size: 9pt; color: #5d6972; }
+.chapter-writing-scroll { max-height: calc(100dvh - 290px); min-height: 320px; overflow-y: auto; overflow-x: hidden; scrollbar-gutter: stable; }
+.chapter-writing-sheet { min-height: 65vh; }
+.chapter-writing-editor { min-height: 45vh; outline: none; }
+.chapter-writing-editor:empty::before { content: 'Start writing…'; color: #94a3b8; }
+.chapter-writing-editor p:empty, .chapter-writing-editor div:empty:not([data-page-break]) { min-height: 1lh; }
+.chapter-writing-editor [data-page-break] { display: block; break-before: auto; height: auto; border: 0; border-top: 1px dashed #b8c4cc; margin: 1.5em 0; padding-top: .4em; }
+.chapter-writing-editor [data-page-break]::before { content: 'Print page break · Book Preview only'; font: 11px Arial, sans-serif; color: #798691; }
+.chapter-writing-editor [data-page-break] br { display: none; }
+@media (max-width: 640px) { .chapter-writing-scroll { max-height: calc(100dvh - 330px); } }
+
+.book-style-option { border: 1px solid #dbe3e9; border-radius: 10px; padding: 16px; background: white; text-align: left; }
+.book-style-option[aria-pressed=true] { border-color: #315e54; box-shadow: 0 0 0 1px #315e54; background: #f3f7f5; }
+@media print {
+  .book-preview-workspace { display: block !important; padding: 0 !important; }
+  .book-print-pages { overflow: visible !important; }
+  .print-spread { width: auto !important; }
+  .print-leaf { margin: 0 !important; }
+  .print-leaf[aria-label='Outside of book'] { display: none !important; }
+}
+
+/* Cover studio: full-width workspace, with locally scrollable artwork. */
+.cover-workspace{min-height:100dvh;background:#eef2f3;color:#203448;font-size:13px}
+.cover-header{min-height:76px;background:#fff;border-bottom:1px solid #dbe2e7;display:flex;align-items:center;gap:16px;padding:12px 24px;flex-wrap:wrap}
+.cover-back{display:flex;align-items:center;gap:8px;font-size:12px;color:#5c6c77}.cover-title{flex:1;min-width:140px}.cover-title h1{font-size:17px;font-weight:650;margin:0}.cover-title p{font-size:12px;color:#647480;margin:4px 0 0}.cover-title p span{color:#7b898e}
+.cover-button{display:inline-flex;gap:7px;align-items:center;justify-content:center;border:1px solid #19334c;border-radius:7px;background:#19334c;color:white;font-weight:600;font-size:12px;padding:10px 13px;min-height:38px}.cover-button.secondary{background:white;color:#294255;border-color:#d4dde2}.cover-button.full{width:100%;margin-top:12px}.cover-workspace button:disabled{opacity:.45;cursor:not-allowed}.cover-workspace button:not(:disabled){cursor:pointer}.cover-workspace :focus-visible{outline:2px solid #397b6d;outline-offset:3px}
+.cover-history{display:flex;gap:3px}.cover-history button{padding:9px;border-radius:6px;border:1px solid #e2e7e9}.cover-layout{display:grid;grid-template-columns:220px minmax(0,1fr) 250px;min-height:calc(100dvh - 77px)}
+.cover-tools,.cover-inspector{background:#fff;padding:24px 18px;min-width:0}.cover-tools{border-right:1px solid #dbe2e7}.cover-inspector{border-left:1px solid #dbe2e7}.cover-eyebrow{color:#648276;font-size:10px;font-weight:600;letter-spacing:.14em;margin:0 0 7px}.cover-workspace h2{font-size:15px;font-weight:650;margin:0 0 20px}.cover-workspace h3{font-size:12px;font-weight:650;margin:24px 0 10px}.cover-add{display:grid;grid-template-columns:1fr 1fr;gap:8px}.cover-add button{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;min-height:72px;border:1px solid #dce4e7;border-radius:8px;background:#fafcfc;font-size:11px}.cover-add button:hover,.cover-icons button:hover{border-color:#8aab9f;background:#f0f5f2}.cover-circle{width:20px;height:20px;border:1.5px solid currentColor;border-radius:50%}.cover-icons{display:flex;gap:5px}.cover-icons button{padding:8px;border:1px solid #e1e7e8;border-radius:7px;flex:1}.cover-icons svg{width:18px;height:18px}.cover-palettes{display:flex;gap:7px}.cover-palettes button{flex:1;font-size:10px;text-align:center}.cover-palettes span{display:block;height:28px;border-radius:5px;margin-bottom:6px;border:1px solid #dce2e6}.cover-layer-heading{display:flex;align-items:baseline;justify-content:space-between}.cover-layer-heading h3{display:flex;align-items:center;gap:7px}.cover-layer-heading span{font-size:10px;color:#88969c}.cover-hint{font-size:11px;color:#75858e;margin:0 0 12px}.cover-layer-list{display:flex;flex-direction:column;gap:4px}.cover-layer-list button{display:flex;align-items:center;gap:8px;text-align:left;min-height:36px;border-radius:6px;padding:7px;border:1px solid transparent;color:#526675}.cover-layer-list button span:last-child{white-space:nowrap;text-overflow:ellipsis;overflow:hidden}.cover-layer-list button[aria-pressed=true]{background:#ecf3f0;border-color:#b8d0c6;color:#234c3e}
+.cover-center{min-width:0;display:flex;flex-direction:column}.cover-canvas-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 22px;border-bottom:1px solid #dbe2e7;background:#f7f9f9}.cover-tabs{display:flex;gap:3px;border:1px solid #dce3e5;border-radius:7px;padding:3px;background:white}.cover-tabs button{padding:7px 11px;border-radius:4px;font-size:12px}.cover-tabs button[aria-pressed=true]{background:#274e43;color:white}.cover-zoom{display:flex;align-items:center;gap:8px;font-size:11px;color:#637782}.cover-zoom select{padding:7px;background:white;border:1px solid #dce3e5;border-radius:5px;color:#294255}.cover-stage{flex:1;min-height:360px;max-height:calc(100dvh - 220px);overflow:auto;padding:28px;display:flex;align-items:flex-start}.cover-paper{flex-shrink:0;margin:auto;box-shadow:0 12px 30px #10263824;background:white}.cover-stage-footer{display:flex;justify-content:space-between;gap:12px;padding:12px 22px;font-size:10px;color:#6b7d87;border-top:1px solid #dae1e5}.cover-export-note{font-size:10px;line-height:1.7;color:#75858d;margin:0;padding:0 22px 15px}
+.cover-field{display:flex;flex-direction:column;gap:7px;font-size:11px;font-weight:600;color:#647884;margin-bottom:15px}.cover-field input:not([type=color]),.cover-field textarea,.cover-field select,.cover-text-style select{width:100%;min-width:0;border:1px solid #d8e1e6;border-radius:6px;padding:8px 9px;font-size:12px;color:#273e4e;background:#fff;font-weight:400}.cover-field textarea{resize:vertical;min-height:88px}.cover-field-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}.cover-color{display:flex;align-items:center;gap:10px;border:1px solid #d8e1e6;border-radius:6px;padding:7px;font-size:11px;font-weight:400}.cover-color input{width:30px;height:26px;border:0;background:none;padding:0;cursor:pointer}.cover-selected-label{font-size:11px;background:#f2f5f6;color:#6e7f88;padding:8px;border-radius:6px;margin:-8px 0 18px;overflow-wrap:anywhere}.cover-text-style{display:flex;gap:6px;margin:0 0 15px}.cover-text-style button{border:1px solid #d8e1e6;border-radius:5px;width:34px;flex-shrink:0}.cover-text-style button[aria-pressed=true]{background:#e4eee8;border-color:#8eafa0}.cover-order{display:flex;gap:5px;border-top:1px solid #e0e6e8;padding-top:14px}.cover-order button{border:1px solid #d8e1e6;font-size:10px;padding:8px 6px;flex:1;border-radius:5px}.cover-delete{display:flex;align-items:center;justify-content:center;gap:7px;color:#9d4545;font-size:11px;padding:12px;width:100%}.cover-deselect{display:block;font-size:11px;color:#527568;text-decoration:underline;margin:5px auto}.cover-tips{margin-top:30px;border-top:1px solid #e1e7e9;color:#778891;font-size:12px;line-height:1.8}.cover-tips h3{color:#344d5c}.cover-tips p{margin-bottom:15px}.cover-notice{padding:11px 24px;background:#e8f2ec;color:#294f41;font-size:12px;border-bottom:1px solid #c7dbce}.cover-warning{color:#95632a;background:#fff7e5;padding:9px;font-size:11px;line-height:1.6;margin:0 0 15px}
+@media(min-width:1500px){.cover-layout{grid-template-columns:250px minmax(0,1fr) 280px}.cover-tools,.cover-inspector{padding:28px 24px}}
+@media(max-width:1000px){.cover-layout{grid-template-columns:175px minmax(0,1fr) 215px}.cover-tools,.cover-inspector{padding:20px 12px}.cover-header{gap:9px;padding:12px}.cover-header .cover-back span{display:none}.cover-title p{max-width:170px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cover-icons{flex-wrap:wrap}.cover-icons button{flex:none}.cover-stage-footer{flex-direction:column;gap:5px}}
+@media(max-width:760px){.cover-layout{display:flex;flex-direction:column}.cover-center{order:0}.cover-tools{order:1;border:0;border-top:1px solid #dbe2e7}.cover-inspector{order:2;border:0;border-top:1px solid #dbe2e7}.cover-add{grid-template-columns:repeat(4,1fr)}.cover-layer-list{max-height:220px;overflow:auto}.cover-stage{max-height:70dvh;min-height:320px}.cover-stage-footer{flex-direction:row;flex-wrap:wrap}.cover-header .secondary span{display:none}.cover-history{margin-left:auto}.cover-header .cover-title{flex-basis:40%}.cover-header{gap:8px}.cover-button{padding:9px}.cover-tips{margin-top:20px}.cover-palettes{max-width:280px}.cover-canvas-toolbar{padding:12px}.cover-zoom{font-size:0}.cover-zoom select{font-size:12px}.cover-inspector .cover-field-grid{grid-template-columns:repeat(3,1fr)}}
+
+.cover-export-overlay{position:fixed;inset:0;background:#10283ed9;z-index:80;padding:22px;display:flex;align-items:center;justify-content:center}.cover-export-dialog{width:min(680px,100%);max-height:94dvh;background:#fff;border-radius:12px;overflow:auto;padding:18px}.cover-export-dialog header{display:flex;justify-content:space-between;gap:18px;align-items:flex-start}.cover-export-dialog h2{margin:0 0 5px}.cover-export-dialog p,.cover-export-dialog footer span{font-size:11px;color:#617381}.cover-export-dialog img{display:block;max-height:65dvh;max-width:100%;margin:20px auto;box-shadow:0 5px 20px #10263824}.cover-export-dialog footer{display:flex;justify-content:space-between;gap:12px;align-items:center}.cover-export-dialog header button{padding:6px 10px}
+</style><h1>Pagination regression</h1><pre id="results">Running…</pre><script type="module">// CSS pixels at 96 dpi keep points, inches and browser printing consistent.
+const BOOK_DPI = 96;
+const BOOK_MARGIN = 0.5;
+const BOOK_BLEED = 0.125;
+const TRIMS = {
+  FIVE_X_EIGHT: [5, 8], FIVE_HALF_X_EIGHT_HALF: [5.5, 8.5], SIX_X_NINE: [6, 9],
+  EIGHT_HALF_X_EIGHT_HALF: [8.5, 8.5], EIGHT_HALF_X_ELEVEN: [8.5, 11],
+};
+function getTrimSize(size, design = {}) {
+  const custom = [Number(design.customWidthIn), Number(design.customHeightIn)];
+  const [width, height] = size === 'CUSTOM' && custom.every(v => Number.isFinite(v) && v > 1 && v <= 24)
+    ? custom : TRIMS[size] || TRIMS.FIVE_X_EIGHT;
+  return { width, height, label: `${width} × ${height} in` };
+}
+const BOOK_STYLES = [
+  { id: 'english-classic', name: 'Classic', language: 'en', description: 'Serif text · centred chapter names', font: 'Georgia, "Times New Roman", "Nobel Hindi Serif", serif', points: 11, leading: 1.55, heading: 'centred', numbering: 'label' },
+  { id: 'english-modern', name: 'Modern', language: 'en', description: 'Clean sans serif · numbered headings', font: 'Arial, Helvetica, "Nobel Hindi Sans", sans-serif', points: 11, leading: 1.55, heading: 'left', numbering: 'number' },
+  { id: 'english-literary', name: 'Literary', language: 'en', description: 'Book serif · Roman chapter numbers', font: 'Palatino, "Palatino Linotype", "Book Antiqua", Georgia, "Nobel Hindi Serif", serif', points: 11.5, leading: 1.55, heading: 'ornament', numbering: 'roman' },
+  { id: 'hindi-sahitya', name: 'साहित्य · Sahitya', language: 'hi', description: 'Traditional type · centred अध्याय', font: '"Nobel Hindi Serif", "Noto Serif Devanagari", Mangal, serif', points: 12, leading: 1.65, heading: 'ornament', numbering: 'label' },
+  { id: 'hindi-saral', name: 'सरल · Saral', language: 'hi', description: 'Clear type · simple numbered headings', font: '"Nobel Hindi Sans", "Noto Sans Devanagari", Mangal, sans-serif', points: 12, leading: 1.65, heading: 'left', numbering: 'number' },
+];
+function stylesForLanguage(language = '') {
+  const lang = /hindi|हिंदी|हिन्दी|^hi(?:[-_]|$)/i.test(String(language).trim()) ? 'hi' : 'en';
+  return BOOK_STYLES.filter(style => style.language === lang);
+}
+function getBookStyle(id, language) {
+  const options = stylesForLanguage(language);
+  return options.find(style => style.id === id) || options[0];
+}
+function manuscriptStyle(style) {
+  return { fontFamily: style.font, fontSize: `${style.points}pt`, lineHeight: style.leading,
+    '--book-font': style.font, '--book-size': `${style.points}pt`, '--book-leading': style.leading };
+}
+function roman(number) {
+  let value = Number(number) || 1, result = '';
+  for (const [n, symbol] of [[1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']]) {
+    while (value >= n) { result += symbol; value -= n; }
+  }
+  return result;
+}
+const escapeHtml = text => String(text ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function sectionHeadingHtml(section, style) {
+  if (!section?.title) return '';
+  const chapter = section.type === 'chapter';
+  const number = section.number || 1;
+  const label = style.numbering === 'roman' ? roman(number)
+    : style.numbering === 'number' ? String(number).padStart(2, '0')
+    : `${style.language === 'hi' ? 'अध्याय' : 'Chapter'} ${number}`;
+  const defaultTitle = /^(chapter|अध्याय)\s*\d+$/i.test(section.title.trim());
+  return `<header class="book-section-heading book-heading-${style.heading}">${chapter ? `<div class="book-chapter-number">${escapeHtml(label)}</div>` : ''}${!chapter || !defaultTitle ? `<h2>${escapeHtml(section.title)}</h2>` : ''}${style.heading === 'ornament' ? '<div class="book-heading-rule" aria-hidden="true">◆</div>' : ''}</header>`;
+}
+function measureHeading(section, style, width) {
+  const box = document.createElement('div');
+  box.className = 'book-typeset';
+  Object.assign(box.style, manuscriptStyle(style), { position: 'fixed', visibility: 'hidden', left: '-10000px', width: `${width}px` });
+  box.innerHTML = sectionHeadingHtml(section, style);
+  document.body.append(box);
+  const height = box.getBoundingClientRect().height;
+  box.remove();
+  return height;
+}
+
+async function ensureBookFonts(style) {
+  // English presets also support Hindi passages: load their bundled fallback
+  // before measuring pages rather than repaginating after the first Hindi paste.
+  const sample = 'एक नई शुरुआत Chapter 1';
+  try {
+    await Promise.all([400, 700].map(weight => document.fonts.load(`${weight} ${style.points}pt ${style.font}`, sample)));
+  } catch {
+    // A local font failure uses the same fallback for editing and measurement.
+  }
+  await document.fonts.ready;
+}
+
+// Split at DOM boundaries, preserving rich text. Use the remaining space on a
+// page even when the next paragraph would also fit on an otherwise empty page.
+function paginateByHeight(html, pageWidth, pageHeight, options = {}) {
+  const { margin = 48, firstPageHeading = 0, typography = {} } = options;
+  const box = document.createElement('div');
+  box.className = 'manuscript-prose book-typeset';
+  Object.assign(box.style, typography, { position: 'fixed', visibility: 'hidden', left: '-10000px', top: '0', display: 'flow-root', width: `${pageWidth - margin * 2}px` });
+  document.body.appendChild(box);
+  const source = document.createElement('div');
+  source.innerHTML = html;
+  const explicit = node => node.nodeType === 1 && (node.hasAttribute('data-page-break') || /page|always|column|left|right/.test(node.style.breakBefore || node.style.pageBreakBefore || ''));
+  const explicitAfter = node => node.nodeType === 1 && /page|always|column|left|right/.test(node.style.breakAfter || node.style.pageBreakAfter || '');
+  // Lift nested breaks without discarding formatting, text, or later breaks.
+  let marker;
+  while ((marker = [...source.querySelectorAll('*')].find(node => node.parentNode !== source && (explicit(node) || explicitAfter(node))))) {
+    let block = marker; while (block.parentNode !== source) block = block.parentNode;
+    const beforeBreak = explicit(marker);
+    const keepMarker = Boolean(marker.textContent);
+    marker.removeAttribute('data-page-break');
+    for (const key of beforeBreak ? ['break-before', 'page-break-before'] : ['break-after', 'page-break-after']) marker.style.removeProperty(key);
+    const before = document.createRange(); before.selectNodeContents(block);
+    const after = document.createRange(); after.selectNodeContents(block);
+    if (beforeBreak) {
+      before.setEndBefore(marker);
+      if (keepMarker) after.setStartBefore(marker); else after.setStartAfter(marker);
+    } else {
+      before.setEndAfter(marker); after.setStartAfter(marker);
+    }
+    const a = block.cloneNode(false); a.append(before.cloneContents());
+    const b = block.cloneNode(false); b.append(after.cloneContents());
+    const pageBreak = document.createElement('div'); pageBreak.setAttribute('data-page-break', 'true');
+    block.replaceWith(...(a.textContent || a.querySelector('br') ? [a] : []), pageBreak, ...(b.textContent || b.querySelector('br') ? [b] : []));
+  }
+  const pages = [];
+  let current = [];
+  const output = nodes => { const root = document.createElement('div'); root.append(...nodes.map(n => n.cloneNode(true))); return root.innerHTML; };
+  const flush = (force = false) => { if (current.length || force) { pages.push(output(current)); current = []; } };
+  const fits = nodes => {
+    box.replaceChildren(...nodes.map(n => n.cloneNode(true)));
+    const limit = pageHeight - margin * 2 - (pages.length === 0 ? firstPageHeading : 0);
+    return box.getBoundingClientRect().height <= limit + 0.5;
+  };
+  function textRuns(element) {
+    const runs = [];
+    const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT);
+    let text = '';
+    let node;
+    while ((node = walker.nextNode())) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        runs.push({ node, start: text.length, end: text.length + node.length });
+        text += node.textContent;
+      } else if (node.tagName === 'BR') {
+        runs.push({ node, start: text.length, end: text.length + 1 });
+        text += '\n';
+      }
+    }
+    const ends = new Set([...new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(text)].map(part => part.index + part.segment.length));
+    return { runs, ends };
+  }
+  function boundaries(element, graphemesOnly = false) {
+    const points = [];
+    const { runs, ends } = textRuns(element);
+    for (const { node, start, end } of runs) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        const offsets = graphemesOnly ? [...ends].filter(offset => offset > start && offset <= end).map(offset => offset - start)
+          : [...node.textContent.matchAll(/\s+/gu)].map(match => match.index + match[0].length).concat(node.length);
+        for (const offset of offsets) if (offset > 0 && ends.has(start + offset)) points.push([node, offset]);
+      } else points.push([node.parentNode, [...node.parentNode.childNodes].indexOf(node) + 1]);
+    }
+    // Formatting can divide one Indic syllable across several DOM text nodes.
+    // Only split at grapheme boundaries in the complete run.
+    return points;
+  }
+  function parts(element, point) {
+    const before = document.createRange(); before.selectNodeContents(element); before.setEnd(...point);
+    const after = document.createRange(); after.selectNodeContents(element); after.setStart(...point);
+    const a = element.cloneNode(false); a.append(before.cloneContents());
+    const b = element.cloneNode(false); b.append(after.cloneContents());
+    // A paragraph split across pages has no extra paragraph gap at the split.
+    a.style.marginBottom = '0';
+    if (element.tagName === 'OL') b.start = (Number(element.start) || 1) + Math.max(0, a.children.length - 1);
+    return [a, b];
+  }
+  function append(element) {
+    if (element.nodeType === Node.TEXT_NODE) { if (!element.textContent.trim()) return; const p = document.createElement('p'); p.textContent = element.textContent; element = p; }
+    if (element.nodeType !== 1) return;
+    const breakAfter = explicitAfter(element);
+    if (explicit(element)) flush(true);
+    if (element.hasAttribute('data-page-break') && !element.textContent) return;
+    element.removeAttribute('data-page-break');
+    for (const key of ['break-before','page-break-before','break-after','page-break-after']) element.style.removeProperty(key);
+    let remaining = element;
+    while (remaining) {
+      if (fits([...current, remaining])) { current.push(remaining); break; }
+      let points = boundaries(remaining);
+      let best = -1;
+      const findSplit = () => {
+        let low = 0, high = points.length - 1;
+        while (low <= high) {
+          const mid = (low + high) >> 1;
+          if (fits([...current, parts(remaining, points[mid])[0]])) { best = mid; low = mid + 1; }
+          else high = mid - 1;
+        }
+      };
+      findSplit();
+      if (best < 0 && current.length) { flush(); continue; }
+      if (best < 0) {
+        // Long unbroken words must wrap without splitting a Hindi grapheme.
+        points = boundaries(remaining, true);
+        findSplit();
+      }
+      if (best < 0) { current.push(remaining); break; }
+      const [a, b] = parts(remaining, points[best]);
+      if (!b.textContent && !b.querySelector('br')) { current.push(remaining); break; }
+      current.push(a); flush(); remaining = b;
+    }
+    if (breakAfter) flush();
+  }
+  try { [...source.childNodes].forEach(append); flush(); return pages.length ? pages : ['']; }
+  finally { box.remove(); }
+}
+
+const ALLOWED_TAGS = new Set([
+  "A",
+  "B",
+  "BLOCKQUOTE",
+  "BR",
+  "DIV",
+  "EM",
+  "H1",
+  "H2",
+  "H3",
+  "H4",
+  "H5",
+  "H6",
+  "I",
+  "LI",
+  "OL",
+  "P",
+  "S",
+  "STRIKE",
+  "STRONG",
+  "SPAN",
+  "HR",
+  "U",
+  "UL",
+]);
+
+const DROP_WITH_CONTENT = new Set([
+  "EMBED",
+  "FORM",
+  "IFRAME",
+  "MATH",
+  "OBJECT",
+  "SCRIPT",
+  "STYLE",
+  "SVG",
+  "TEMPLATE",
+]);
+
+const SAFE_STYLE_PROPERTIES = new Set([
+  "font-style",
+  "font-weight",
+  "text-align",
+  "text-decoration",
+  "break-before",
+  "break-after",
+  "page-break-before",
+  "page-break-after",
+]);
+
+function safeHref(value) {
+  const href = value.trim();
+  return /^(https?:|mailto:|#|\/)/i.test(href) ? href : "";
+}
+
+function safeStyle(value) {
+  return value
+    .split(";")
+    .map((declaration) => declaration.trim())
+    .filter(Boolean)
+    .map((declaration) => {
+      const separator = declaration.indexOf(":");
+      if (separator < 0) return "";
+      const property = declaration.slice(0, separator).trim().toLowerCase();
+      const propertyValue = declaration.slice(separator + 1).trim();
+      if (!SAFE_STYLE_PROPERTIES.has(property) || /url\s*\(|expression\s*\(/i.test(propertyValue)) return "";
+      return `${property}: ${propertyValue}`;
+    })
+    .filter(Boolean)
+    .join("; ");
+}
+
+function sanitizeManuscriptHtml(html = "") {
+  if (typeof window === "undefined" || typeof window.DOMParser === "undefined") {
+    return String(html)
+      .replace(/<(script|style|iframe|object|embed|svg|math|form|template)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, "")
+      .replace(/\son\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "")
+      .replace(/javascript\s*:/gi, "");
+  }
+
+  const documentValue = new window.DOMParser().parseFromString(`<div>${html}</div>`, "text/html");
+  const root = documentValue.body.firstElementChild;
+  if (!root) return "";
+
+  [...root.querySelectorAll("*")].forEach((element) => {
+    if (DROP_WITH_CONTENT.has(element.tagName)) {
+      element.remove();
+      return;
+    }
+    if (!ALLOWED_TAGS.has(element.tagName)) {
+      element.replaceWith(...element.childNodes);
+      return;
+    }
+
+    if (element.classList.contains("page-break") || element.classList.contains("pagebreak")) element.setAttribute("data-page-break", "true");
+    [...element.attributes].forEach((attribute) => {
+      const name = attribute.name.toLowerCase();
+      if (element.tagName === "OL" && name === "start" && /^\d+$/.test(attribute.value)) return;
+      if (name === "data-page-break") { element.setAttribute(name, "true"); return; }
+      if (name === "style") {
+        const style = safeStyle(attribute.value);
+        if (style) element.setAttribute("style", style);
+        else element.removeAttribute(attribute.name);
+        return;
+      }
+      if (element.tagName === "A" && name === "href") {
+        const href = safeHref(attribute.value);
+        if (href) element.setAttribute("href", href);
+        else element.removeAttribute(attribute.name);
+        return;
+      }
+      element.removeAttribute(attribute.name);
+    });
+
+    if (element.tagName === "A") {
+      element.setAttribute("rel", "noopener noreferrer");
+    }
+    // Imported editors often wrap each Hindi glyph in a font/position span.
+    // Once those styles are removed, keep one shaping run rather than empty wrappers.
+    if (element.tagName === "SPAN" && !element.attributes.length) {
+      element.replaceWith(...element.childNodes);
+    }
+  });
+
+  root.normalize();
+  return root.innerHTML.replace(/(?:<br\s*\/?>(?:\s|&nbsp;)*){3,}/gi, "<br><br>");
+}
+
+
+const containsDevanagari = text => /[\u0900-\u097f\ua8e0-\ua8ff]/u.test(String(text || ""));
+
+function prepareManuscriptPaste({ html = "", text = "", mode = "auto" } = {}) {
+  // Plain clipboard text avoids PDF/Word spans interrupting an Indic syllable.
+  // Preserve the supplied Unicode, including deliberate ZWJ/ZWNJ characters.
+  const usePlain = text.length > 0 && (mode === "plain" || !html || (mode === "auto" && containsDevanagari(text)));
+  if (!usePlain) return sanitizeManuscriptHtml(html);
+  return String(text).replace(/\r\n?/g, "\n")
+    .replace(/[&<>]/g, value => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[value]))
+    .replace(/\n/g, "<br>");
+}
+
+function hasDetachedDevanagariMarks(text = "") {
+  // Report clear orphan marks; never try to infer the author's intended words.
+  return /(?:^|[\s\u25cc])[\u093a-\u094f\u0951-\u0957\u0962\u0963]/u.test(text) || text.includes("\ufffd");
+}
+
+
+const results = [];
+const assert = (ok, name, details) => { results.push({name,passed:!!ok,details}); if(!ok) throw new Error(name+' '+JSON.stringify(details)); };
+const text = html => { const el=document.createElement('div'); el.innerHTML=html; return el.textContent.replace(/\s+/g,' ').trim(); };
+const prose = 'Every book held a memory, every margin a note from a reader who had come before. We followed the path beyond the courtyard and into a new world. ';
+const hindi = 'हर कहानी एक नए सफ़र की शुरुआत होती है। शब्दों में छिपी यादें पाठक के मन में एक नई दुनिया रचती हैं। ';
+try {
+await document.fonts.ready;
+for(const style of BOOK_STYLES) {
+ await ensureBookFonts(style);
+ for(const size of ['FIVE_X_EIGHT','SIX_X_NINE']) {
+  const trim=getTrimSize(size), width=trim.width*96, height=trim.height*96;
+  const section={title:style.language==='hi'?'एक नई शुरुआत':'A new beginning',type:'chapter',number:1};
+  const heading=measureHeading(section,style,width-96);
+  const body=Array.from({length:9},(_,i)=>'<p>'+i+' <strong>'+ (style.language==='hi'?hindi:prose).repeat(4)+'</strong> <em>Ending.</em></p>').join('');
+  const pages=paginateByHeight(body,width,height,{firstPageHeading:heading,typography:manuscriptStyle(style)});
+  assert(text(pages.join(''))===text(body),'All words retained '+style.id+' '+size,{pages:pages.length});
+  const box=document.createElement('div'); box.className='manuscript-prose book-typeset'; Object.assign(box.style,manuscriptStyle(style),{width:(width-96)+'px',display:'flow-root'}); document.body.append(box);
+  const used=pages.map(html=>{box.innerHTML=html;return box.getBoundingClientRect().height;});box.remove();
+  assert(used.every((h,i)=>h<=(height-96-(i?0:heading))+.6),'No clipped text '+style.id+' '+size,used);
+  assert(used.slice(0,-1).every((h,i)=>(height-96-(i?0:heading))-h<60),'Pages fill remaining space '+style.id+' '+size,used);
+  assert(pages.every(html=>html.includes('<strong>')),'Bold survives splits '+style.id+' '+size);
+ }
+}
+for(const html of ['<p>First<br>Second<br><br>Third</p>','<p>First</p><div data-page-break="true"></div><p>Second</p>','<p>First<span data-page-break="true"></span>Second</p>','<p>First<br style="page-break-before:always">Second</p>']) {
+ const pages=paginateByHeight(html,480,768);
+ assert(text(pages.join(''))===text(html),'Line/break text preserved',{html,pages});
+ assert(pages.length===(html.includes('page-break')?2:1),'Only explicit breaks start pages',{html,pages});
+}
+const multi='<p><strong>First<br style="break-before:page">Second<br style="break-before:page">Third</strong></p>';
+const multiPages=paginateByHeight(multi,480,768);
+assert(multiPages.length===3 && text(multiPages.join(''))===text(multi),'Multiple nested manual breaks preserved',multiPages);
+const after='<p><strong style="break-after:page">First</strong>Second</p>';
+const afterPages=paginateByHeight(after,480,768);
+assert(afterPages.length===2 && text(afterPages.join(''))===text(after),'Nested break-after preserved',afterPages);
+const longWord='<p>' +('कहानी').repeat(900)+'</p>';
+assert(text(paginateByHeight(longWord,480,768).join(''))===text(longWord),'Long Hindi token preserved');
+const mixed='<p>'+Array.from({length:150},()=>'<strong>क</strong><em>ि</em><span>ता</span><u>ब</u><span>ें</span>').join('')+'</p>';
+const mixedPages=paginateByHeight(mixed,180,160,{margin:12,typography:manuscriptStyle(getBookStyle('hindi-saral','Hindi'))});
+const fullText=text(mixed);
+const validEnds=new Set([...new Intl.Segmenter('hi',{granularity:'grapheme'}).segment(fullText)].map(part=>part.index+part.segment.length));
+let consumed=0;
+assert(mixedPages.length>1,'Formatted Hindi fixture spans several pages');
+for(const fragment of mixedPages) { consumed+=text(fragment).length; assert(validEnds.has(consumed),'Page boundary keeps formatted Hindi syllable together',{consumed}); }
+assert(text(mixedPages.join(''))===fullText,'Formatted Hindi code points retained across pages');
+const original='उसका नाम रुद्र वर्मा था।\nएक टूटी कुर्सी, एक टेबल और किताबें। क्ष त्र ज्ञ श्र क्‍ष क्‌ष';
+const pasted=prepareManuscriptPaste({text:original,html:'<p><span style="font-family:Legacy Hindi">broken source markup</span></p>'});
+const pasteNode=document.createElement('div');pasteNode.innerHTML=pasted;pasteNode.querySelectorAll('br').forEach(node=>node.replaceWith('\n'));
+assert(pasteNode.textContent===original,'Hindi auto paste uses original Unicode plain text');
+assert(!pasted.includes('span')&&!pasted.includes('font-family'),'Hindi auto paste drops foreign font spans');
+assert(pasted.includes('क्‍ष')&&pasted.includes('क्‌ष'),'Intentional Hindi joiners survive paste');
+const richOnly=sanitizeManuscriptHtml('<p><span style="font-family:Legacy">क</span><span>ि</span><span>ताबें</span></p>');
+assert(richOnly==='<p>किताबें</p>','Unstyled source spans collapse into one Hindi shaping run',richOnly);
+assert(prepareManuscriptPaste({text:'किताबें',html:'<p><strong>किताबें</strong></p>',mode:'rich'}).includes('<strong>'),'Explicit rich Hindi paste preserves bold');
+assert(prepareManuscriptPaste({text:'English',html:'<p><strong>English</strong></p>'}).includes('<strong>'),'English auto paste preserves formatting');
+assert(!prepareManuscriptPaste({text:'<img onerror=alert(1)> हिंदी'}).includes('<img'),'Plain paste treats markup as text');
+assert(!hasDetachedDevanagariMarks(original),'Valid Hindi has no orphan-mark warning');
+assert(hasDetachedDevanagariMarks('एक िकताब')&&hasDetachedDevanagariMarks('क ◌ि')&&hasDetachedDevanagariMarks('�'),'Already-corrupt source gets a warning');
+for(const lang of ['Hindi','हिन्दी','हिंदी','hi','hi-IN','hi_IN']) assert(getBookStyle(null,lang).language==='hi','Hindi language recognised '+lang);
+for(const family of ['Nobel Hindi Serif','Nobel Hindi Sans']) assert(document.fonts.check('16px "'+family+'"','किताबें कुर्सी क्षत्रिय'),'Bundled Hindi font loads '+family);
+const formatted='<p><strong>Bold</strong> <em>Italic</em> <u>Underline</u> <s>Strike</s></p>';
+assert(paginateByHeight(formatted,480,768)[0]===formatted,'Inline formatting retained');
+} catch(error) { results.push({passed:false,error:error.message}); }
+document.getElementById('results').textContent=JSON.stringify({passed:results.every(x=>x.passed),checks:results},null,2);
+</script></html>

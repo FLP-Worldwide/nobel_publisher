@@ -37,7 +37,7 @@ function ToolButton({ label, onClick, active = false, children }) {
       type="button"
       onMouseDown={(event) => event.preventDefault()}
       onClick={onClick}
-      className={`toolbar-btn ${label === "Insert page break" ? "!w-auto px-2" : ""} ${active ? "toolbar-btn-active" : ""}`}
+      className={`toolbar-btn ${label === "Insert print page break" ? "!w-auto px-2" : ""} ${active ? "toolbar-btn-active" : ""}`}
       aria-label={label}
       aria-pressed={active || undefined}
       title={label}
@@ -89,7 +89,7 @@ export default function Toolbar({ onFormat, onReset }) {
       <span className="mx-1 h-6 w-px bg-slate-200" aria-hidden="true" />
 
       <div className="flex items-center gap-1" role="group" aria-label="Edit history">
-        <ToolButton label="Insert page break" onClick={() => onFormat("insertHTML", '<div data-page-break="true"></div><p><br></p>')}><span className="whitespace-nowrap text-xs">Page break</span></ToolButton>
+        <ToolButton label="Insert print page break" onClick={() => onFormat("insertHTML", '<div data-page-break="true"></div><p><br></p>')}><span className="whitespace-nowrap text-xs">Print break</span></ToolButton>
         <ToolButton label="Undo" onClick={() => onFormat("undo")}>
           <Undo2 className="h-4 w-4" aria-hidden="true" />
         </ToolButton>

@@ -19,7 +19,7 @@ export default function BookStylePicker({ language, value, onChange, disabled })
           <span className="mt-4 block text-sm font-semibold">{style.name} {value.id === style.id ? '✓' : ''}</span><span className="mt-1 block text-xs leading-5 text-slate-600">{style.description} · {style.points} pt</span>
         </button>)}
       </div>
-      <p className="mt-4 text-xs text-slate-500" role="status">{pending ? 'Saving the book style…' : 'The page size and margins come from Book studio. Zoom only changes your view.'}</p>
+      <p className="mt-4 text-xs text-slate-500" role="status">{pending ? 'Saving the book style…' : 'The print page size and margins come from Book studio. Open Book Preview to see your page layout.'}</p>
     </dialog>
   </>;
 }

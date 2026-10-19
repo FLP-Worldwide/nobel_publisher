@@ -10,7 +10,7 @@ import { ArrowLeft, BookOpen, ChevronDown, Menu, Plus, Trash2, X } from "lucide-
 import Toolbar from "@/app/components/editor/Toolbar";
 import EditorArea from "@/app/components/editor/EditorArea";
 import BookStylePicker from "@/app/components/editor/BookStylePicker";
-import { getBookStyle, getTrimSize } from "@/utils/bookLayout";
+import { getBookStyle } from "@/utils/bookLayout";
 
 const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
 const FRONT_MATTER_TITLES = ["Dedication", "Foreword"];
@@ -337,7 +337,7 @@ function EditorPage({ bookId }) {
 
   function formatText(command, value) {
     if (!editorRef.current) return;
-    editorRef.current.focus();
+    editorRef.current.focus({ preventScroll: true });
     document.execCommand(command, false, value);
     setContent(editorRef.current.innerHTML);
   }
@@ -392,7 +392,6 @@ function EditorPage({ bookId }) {
   const selectedSection = chapters.find(c => c.id === currentId);
   const chapterIndex = bodyChapters.slice(0, bodyChapters.findIndex(c => c.id === currentId) + 1).filter(c => c.type === 'chapter').length;
   const bookStyle = getBookStyle(book?.design?.layoutStyle, book?.language);
-  const trim = getTrimSize(book?.design?.size, book?.design);
   const bookTitle = book?.title || "Untitled book";
   const author = [book?.authorName, book?.coAuthor].filter(Boolean).join(" & ") || "Author";
   const saveLabel = {
@@ -508,7 +507,7 @@ function EditorPage({ bookId }) {
             <BookStylePicker language={book?.language} value={bookStyle} onChange={changeBookStyle} disabled={styleSaving} />
             <button type="button" onClick={() => saveChapter(currentId, title, content)} disabled={saving || !currentId || !isDirty} className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50">Save</button>
             <button type="button" onClick={openPreview} disabled={saving || styleSaving} className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-50 sm:px-4">
-              <span className="hidden sm:inline">Review book</span><span className="sm:hidden">Review</span>
+              <span className="hidden sm:inline">Book Preview</span><span className="sm:hidden">Preview</span>
             </button>
           </div>
           {message && (
@@ -524,7 +523,7 @@ function EditorPage({ bookId }) {
                 <label htmlFor="chapter-title" className="shrink-0 text-xs text-slate-500">Section title</label>
                 <input id="chapter-title" type="text" value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Section title" className="w-full rounded border border-slate-200 bg-transparent px-3 py-1.5 text-sm font-semibold text-slate-900 outline-none placeholder:text-slate-300" />
               </div>
-              <EditorArea key={currentId} editorRef={editorRef} content={content} setContent={setContent} section={{ title, type: selectedSection?.type, number: chapterIndex }} bookStyle={bookStyle} trim={trim} ariaLabel={`Content for ${title || "this section"}`} />
+              <EditorArea key={currentId} editorRef={editorRef} content={content} setContent={setContent} section={{ title, type: selectedSection?.type, number: chapterIndex }} bookStyle={bookStyle} ariaLabel={`Content for ${title || "this section"}`} />
             </section>
           ) : (
             <section className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center">
