@@ -1,4 +1,5 @@
 "use client";
+import useCanonicalBookUrl from "@/hooks/useCanonicalBookUrl";
 import { useState } from 'react';
 import { useSession } from 'next-auth/react';
 import useSWR from 'swr';
@@ -16,6 +17,7 @@ export default function BookEditGuard({ bookId, children }) {
     const response = await fetch(url, { headers: { Authorization: `Bearer ${access}` } });
     const result = await response.json(); if (!response.ok) throw new Error(result.message || 'Unable to open book'); return result;
   }, { refreshInterval: 10000 });
+  useCanonicalBookUrl(bookId,data?.publicId);
   if (!bookId) return children;
   if (loadError) return <div role="alert" className="p-10 text-red-800">{loadError.message}</div>;
   if (status === 'unauthenticated') return <Link href="/login" className="block p-10">Sign in to open your book</Link>;

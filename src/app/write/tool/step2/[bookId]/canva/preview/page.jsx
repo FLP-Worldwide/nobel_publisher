@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { ArrowLeft, BookOpen, Printer } from "lucide-react";
 import { normalizeBook } from "@/utils/bookPreview";
+import useCanonicalBookUrl from "@/hooks/useCanonicalBookUrl";
 import BookPreview from "@/app/components/editor/BookPreview";
 
 const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
@@ -18,6 +19,7 @@ export default function PreviewPage({ params }) {
   const { bookId } = use(params);
   const { data: session, status } = useSession();
   const [previewBook, setPreviewBook] = useState(null);
+  useCanonicalBookUrl(bookId,previewBook?._raw?.publicId);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const accessToken = session?.user?.accessToken;
@@ -128,7 +130,7 @@ export default function PreviewPage({ params }) {
           <Link href={`/write/tool/step2/${bookId}/canva`} className="mt-5 inline-flex rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white">Return to editor</Link>
         </main>
       ) : previewBook ? (
-        <BookPreview book={previewBook} />
+        <BookPreview book={previewBook} accessToken={accessToken} />
       ) : null}
     </div>
   );

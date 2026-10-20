@@ -1,5 +1,6 @@
 const ALLOWED_TAGS = new Set([
   "A",
+  "IMG", "TABLE", "THEAD", "TBODY", "TFOOT", "TR", "TH", "TD", "CAPTION", "SUP", "SUB",
   "B",
   "BLOCKQUOTE",
   "BR",
@@ -94,7 +95,13 @@ export function sanitizeManuscriptHtml(html = "") {
     if (element.classList.contains("page-break") || element.classList.contains("pagebreak")) element.setAttribute("data-page-break", "true");
     [...element.attributes].forEach((attribute) => {
       const name = attribute.name.toLowerCase();
+      if (name === "id" && /^[a-z][a-z0-9_.:-]{0,120}$/i.test(attribute.value)) return;
+      if (["TD", "TH"].includes(element.tagName) && ["colspan", "rowspan"].includes(name) && /^[1-9]\d?$/.test(attribute.value)) return;
+      if (element.tagName === "IMG" && name === "alt") return;
+      if (element.tagName === "IMG" && name === "src" && /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(attribute.value) && attribute.value.length <= 1500000) return;
+
       if (element.tagName === "OL" && name === "start" && /^\d+$/.test(attribute.value)) return;
+      if (name === "data-continuation") { element.setAttribute(name, "true"); return; }
       if (name === "data-page-break") { element.setAttribute(name, "true"); return; }
       if (name === "style") {
         const style = safeStyle(attribute.value);
@@ -111,6 +118,7 @@ export function sanitizeManuscriptHtml(html = "") {
       element.removeAttribute(attribute.name);
     });
 
+    if (element.tagName === "IMG" && !element.getAttribute("src")) { element.remove(); return; }
     if (element.tagName === "A") {
       element.setAttribute("rel", "noopener noreferrer");
     }

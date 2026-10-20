@@ -92,3 +92,31 @@ export async function downloadCover(design, side, trim, title) {
   }
   return {src:canvas.toDataURL('image/png'),width:canvas.width,height:canvas.height,filename:`${title.replace(/[^\p{L}\p{N} _-]/gu,'').slice(0,60)||'book'}-${side}-cover-300dpi.png`};
 }
+
+// Artwork for a printer review: full back/spine/front wrap at 300 ppi. The
+// confirmed spine is never inferred from the sample's 130-page specification.
+export async function downloadCoverWrap(design, trim, title) {
+  const { printWrapSize } = await import('./coverPrint.mjs');
+  if (!design.print?.confirmed || !Number.isFinite(design.print.spineWidthMm)) throw Error('Enter and confirm the spine width supplied by your printer.');
+  const size = printWrapSize(trim,design.print.spineWidthMm);
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(size.widthIn*300); canvas.height = Math.round(size.heightIn*300);
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = design.front.background; ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle = design.back.background; ctx.fillRect(0,0,size.spineX*300,canvas.height);
+  for (const side of ['back','front']) {
+    const artwork = await downloadCover(design,side,trim,title);
+    const img = new Image(); img.src=artwork.src; await img.decode();
+    // Extend the outermost artwork pixels into the printer's bleed allowance.
+    const x=(side==='back'?size.backX:size.frontX)*300, y=size.bleedIn*300;
+    const w=trim.width*300,h=trim.height*300,b=size.bleedIn*300;
+    ctx.drawImage(img,0,0,img.width,1,x,0,w,b);
+    ctx.drawImage(img,0,img.height-1,img.width,1,x,y+h,w,b);
+    const edge=side==='back'?0:img.width-1;
+    ctx.drawImage(img,edge,0,1,img.height,side==='back'?0:x+w,y,b,h);
+    ctx.drawImage(img,edge,0,1,1,side==='back'?0:x+w,0,b,b);
+    ctx.drawImage(img,edge,img.height-1,1,1,side==='back'?0:x+w,y+h,b,b);
+    ctx.drawImage(img,x,y,w,h);
+  }
+  return {src:canvas.toDataURL('image/png'),width:canvas.width,height:canvas.height,filename:`${title.replace(/[^\p{L}\p{N} _-]/gu,'').slice(0,60)||'book'}-full-cover-wrap-300ppi.png`,wrap:true};
+}

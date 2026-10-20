@@ -1,5 +1,6 @@
 "use client";
 
+import useCanonicalBookUrl from "@/hooks/useCanonicalBookUrl";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -32,6 +33,7 @@ export default function PublishedBookPage() {
   const { data: session } = useSession();
   const bookId = Array.isArray(params?.id) ? params.id[0] : params?.id;
   const [book, setBook] = useState(null);
+  useCanonicalBookUrl(bookId,book?.publicId);
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState("");

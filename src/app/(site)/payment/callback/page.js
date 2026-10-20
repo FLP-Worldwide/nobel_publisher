@@ -1,4 +1,6 @@
 "use client";
+import useCanonicalBookUrl from "@/hooks/useCanonicalBookUrl";
+import { isPublicBookReference } from "@/utils/bookReference.mjs";
 import Link from "next/link";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -10,11 +12,12 @@ function PaymentStatus() {
   const { data: session, status } = useSession();
   const review = params.get("flow") === "publishing";
   const id = params.get(review ? "publishingBookId" : "orderId");
-  const valid = /^\d+$/.test(id || "");
+  const valid = review ? isPublicBookReference(id) || /^\d+$/.test(id || "") : /^\d+$/.test(id || "");
   const token = session?.user?.accessToken;
   const returnPath = `/payment/callback?flow=${review ? "publishing" : "order"}&${review ? "publishingBookId" : "orderId"}=${id}`;
   const signInQuery = `?callbackUrl=${encodeURIComponent(returnPath)}`;
   const [result, setResult] = useState(null);
+  useCanonicalBookUrl(id,review ? result?.bookPublicId : null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const endpoint = review ? `${API}/books/${id}/publishing-payment` : `${API}/orders/${id}/payment`;

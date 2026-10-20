@@ -126,3 +126,12 @@ test('admin login destinations stay within administration and readers avoid admi
   const response = await request('/admin/payments', { role: 'buyer' });
   assert.equal(new URL(response.headers.get('location')).pathname, '/account');
 });
+
+test('opaque book URLs retain author authentication and role boundaries',async()=>{
+ const path='/write/tool/step2/581bd2c8-903f-4676-a72d-2bc7029d37fe/canva';
+ assert.equal((await request(path)).status,200);
+ const missing=await request(path,{signedIn:false});
+ const destination=new URL(missing.headers.get('location'));
+ assert.equal(destination.pathname,'/login');assert.equal(destination.searchParams.get('callbackUrl'),path);
+ for(const role of ['admin','buyer'])assert.equal(new URL((await request(path,{role})).headers.get('location')).pathname,role==='admin'?'/admin':'/account');
+});

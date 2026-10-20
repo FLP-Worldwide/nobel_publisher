@@ -87,7 +87,7 @@ function ProgressItem({ label, state }) {
 }
 
 export default function BookCard({ book, onDelete, API_BASE, accessToken }) {
-  const bookId = book?.id ?? book?._id;
+  const bookId = book?.publicId ?? book?.id ?? book?._id;
   const rawStatus = String(book?.status || "DRAFT").toUpperCase();
   const status = STATUS_CONFIG[rawStatus] || STATUS_CONFIG.DRAFT;
   const [signedCoverUrl, setSignedCoverUrl] = useState("");

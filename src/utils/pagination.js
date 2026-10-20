@@ -2,9 +2,10 @@
 // page even when the next paragraph would also fit on an otherwise empty page.
 export function paginateByHeight(html, pageWidth, pageHeight, options = {}) {
   const { margin = 48, firstPageHeading = 0, typography = {} } = options;
+  const m = typeof margin === "number" ? { top: margin, bottom: margin, left: margin, right: margin } : margin;
   const box = document.createElement('div');
   box.className = 'manuscript-prose book-typeset';
-  Object.assign(box.style, typography, { position: 'fixed', visibility: 'hidden', left: '-10000px', top: '0', display: 'flow-root', width: `${pageWidth - margin * 2}px` });
+  Object.assign(box.style, typography, { position: 'fixed', visibility: 'hidden', left: '-10000px', top: '0', display: 'flow-root', width: `${pageWidth - m.left - m.right}px` });
   document.body.appendChild(box);
   const source = document.createElement('div');
   source.innerHTML = html;
@@ -29,7 +30,7 @@ export function paginateByHeight(html, pageWidth, pageHeight, options = {}) {
     const a = block.cloneNode(false); a.append(before.cloneContents());
     const b = block.cloneNode(false); b.append(after.cloneContents());
     const pageBreak = document.createElement('div'); pageBreak.setAttribute('data-page-break', 'true');
-    block.replaceWith(...(a.textContent || a.querySelector('br') ? [a] : []), pageBreak, ...(b.textContent || b.querySelector('br') ? [b] : []));
+    block.replaceWith(...(a.textContent || a.querySelector('br,img') ? [a] : []), pageBreak, ...(b.textContent || b.querySelector('br,img') ? [b] : []));
   }
   const pages = [];
   let current = [];
@@ -37,7 +38,7 @@ export function paginateByHeight(html, pageWidth, pageHeight, options = {}) {
   const flush = (force = false) => { if (current.length || force) { pages.push(output(current)); current = []; } };
   const fits = nodes => {
     box.replaceChildren(...nodes.map(n => n.cloneNode(true)));
-    const limit = pageHeight - margin * 2 - (pages.length === 0 ? firstPageHeading : 0);
+    const limit = pageHeight - m.top - m.bottom - (pages.length === 0 ? firstPageHeading : 0);
     return box.getBoundingClientRect().height <= limit + 0.5;
   };
   function textRuns(element) {
@@ -49,7 +50,7 @@ export function paginateByHeight(html, pageWidth, pageHeight, options = {}) {
       if (node.nodeType === Node.TEXT_NODE) {
         runs.push({ node, start: text.length, end: text.length + node.length });
         text += node.textContent;
-      } else if (node.tagName === 'BR') {
+      } else if (node.tagName === 'BR' || node.tagName === 'IMG') {
         runs.push({ node, start: text.length, end: text.length + 1 });
         text += '\n';
       }
@@ -78,6 +79,7 @@ export function paginateByHeight(html, pageWidth, pageHeight, options = {}) {
     const b = element.cloneNode(false); b.append(after.cloneContents());
     // A paragraph split across pages has no extra paragraph gap at the split.
     a.style.marginBottom = '0';
+    b.setAttribute('data-continuation', 'true');
     if (element.tagName === 'OL') b.start = (Number(element.start) || 1) + Math.max(0, a.children.length - 1);
     return [a, b];
   }
@@ -109,9 +111,10 @@ export function paginateByHeight(html, pageWidth, pageHeight, options = {}) {
         points = boundaries(remaining, true);
         findSplit();
       }
+      if (best < 0 && pages.length === 0 && firstPageHeading > 0 && !current.length) { flush(true); continue; }
       if (best < 0) { current.push(remaining); break; }
       const [a, b] = parts(remaining, points[best]);
-      if (!b.textContent && !b.querySelector('br')) { current.push(remaining); break; }
+      if (!b.textContent && !b.querySelector('br,img')) { current.push(remaining); break; }
       current.push(a); flush(); remaining = b;
     }
     if (breakAfter) flush();

@@ -179,7 +179,7 @@ export default function ReviewBookPage() {
             )}
           </section>
 
-          <section className="rounded-2xl border bg-white p-4"><button className="ui-button" onClick={() => setShowProof(value => !value)}>{showProof ? "Hide" : "Open"} submitted page proof</button>{showProof && <BookPreview book={previewBook}/>}</section>
+          <section className="rounded-2xl border bg-white p-4"><button className="ui-button" onClick={() => setShowProof(value => !value)}>{showProof ? "Hide" : "Open"} submitted page proof</button>{showProof && <BookPreview book={previewBook} accessToken={session?.user?.accessToken}/>}</section>
           {sections.length === 0 ? (
             <section className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-slate-500">This submission has no manuscript sections.</section>
           ) : sections.map((section, index) => {

@@ -16,8 +16,8 @@ import { getBookStyle } from "@/utils/bookLayout";
 const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
 const FRONT_MATTER_TITLES = ["Dedication", "Foreword"];
 const BACK_MATTER_TITLE = "Back Matter";
-const isFrontMatter = (chapter) => ["intro", "preface"].includes(chapter?.type);
-const isBackMatter = (title = "") => title.trim().toLowerCase() === BACK_MATTER_TITLE.toLowerCase();
+const isFrontMatter = (chapter) => ["intro", "preface"].includes(chapter?.type) || /^(copyright|कॉपीराइट|dedication|foreword|preface|acknowledg(e)?ments|prologue(?:\s*\/\s*introduction)?|introduction|प्राक्कथन|समर्पण|भूमिका|आभार|प्रस्तावना)$/i.test(chapter?.title?.trim() || "");
+const isBackMatter = (title = "") => /^(back matter|about the author|appendix|resources|epilogue|glossary|references|index|notes|endnotes|उपसंहार|परिशिष्ट)$/i.test(title.trim());
 const chapterNumber = (title = "") => {
   const match = String(title).match(/^\s*chapter\s+(\d+)\b/i);
   return match ? Number.parseInt(match[1], 10) : null;
@@ -128,28 +128,8 @@ function EditorPage({ bookId }) {
     [bookId]
   );
 
-  const ensureFrontMatter = useCallback(
-    async (existing) => {
-      const items = [...existing];
-      const required = [
-        { title: "Dedication", type: "intro", content: "<p>Write your dedication here…</p>" },
-        { title: "Foreword", type: "preface", content: "<p>Write the foreword here…</p>" },
-      ];
-      for (const section of required) {
-        if (items.some((item) => (item.title || "").toLowerCase() === section.title.toLowerCase())) continue;
-        const response = await fetch(`${API_BASE}/chapters/${bookId}`, {
-          method: "POST",
-          headers: authHeaders(),
-          body: JSON.stringify(section),
-        });
-        const created = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(created?.message || `Could not create ${section.title}.`);
-        items.push(created);
-      }
-      return items;
-    },
-    [authHeaders, bookId]
-  );
+  // Front matter is optional; opening a manuscript must never add placeholder text.
+  const ensureFrontMatter = useCallback(async existing => existing, []);
 
   useEffect(() => {
     if (status === "loading") return;
@@ -182,6 +162,12 @@ function EditorPage({ bookId }) {
         if (!chapterResponse.ok) throw new Error("Could not load the manuscript.");
         if (!bookResponse.ok) throw new Error("Could not load the book details.");
         const [chapterData, bookData] = await Promise.all([chapterResponse.json(), bookResponse.json()]);
+        // Keep device drafts recoverable when a legacy numeric URL moves to its
+        // public reference. Internal database IDs never need to enter the URL.
+        const internalId = (bookData?.book || bookData)?.id;
+        if (internalId && String(internalId) !== String(bookId) && Array.isArray(chapterData)) {
+          chapterData.forEach(chapter => { const legacy=readDraft(internalId,chapter.id); if(legacy) { try{if(!readDraft(bookId,chapter.id))localStorage.setItem(draftKey(bookId,chapter.id),JSON.stringify(legacy));localStorage.removeItem(draftKey(internalId,chapter.id));}catch{} } });
+        }
         setBook(bookData?.book || bookData);
         const completeList = await ensureFrontMatter(Array.isArray(chapterData) ? chapterData : []);
         const ordered = orderChapters(completeList);
@@ -455,7 +441,7 @@ function EditorPage({ bookId }) {
 
   const chapterItem = (chapter, canDelete = false) => (
     <li key={chapter.id}>
-      <div className={`group flex items-center rounded-lg ${chapter.id === currentId ? "bg-blue-600 text-white" : "text-slate-200 hover:bg-slate-700 hover:text-white"}`}>
+      <div className={`group flex items-center rounded-lg ${chapter.id === currentId ? "bg-[#4a6a52] text-white" : "text-slate-200 hover:bg-slate-700 hover:text-white"}`}>
         <button
           type="button"
           onClick={() => loadChapter(chapter.id)}
@@ -485,7 +471,7 @@ function EditorPage({ bookId }) {
         <button type="button" className="fixed inset-0 z-30 bg-slate-950/50 lg:hidden" aria-label="Close manuscript navigation" onClick={() => setMobileNavigationOpen(false)} />
       )}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-60 flex-col bg-[#142b40] text-white shadow-xl transition-transform lg:sticky lg:top-0 lg:h-screen lg:shrink-0 lg:translate-x-0 ${!sidebarOpen ? "lg:hidden" : ""} ${mobileNavigationOpen ? "translate-x-0" : "-translate-x-full invisible lg:visible"}`}
+        className={`fixed inset-y-0 left-0 z-40 flex w-60 flex-col bg-[#28342d] text-white shadow-xl transition-transform lg:sticky lg:top-0 lg:h-screen lg:shrink-0 lg:translate-x-0 ${!sidebarOpen ? "lg:hidden" : ""} ${mobileNavigationOpen ? "translate-x-0" : "-translate-x-full invisible lg:visible"}`}
         aria-label="Manuscript sections"
       >
         <div className="border-b border-white/10 p-4">
@@ -500,7 +486,7 @@ function EditorPage({ bookId }) {
           <h1 className="mt-4 line-clamp-2 text-lg font-semibold">{bookTitle}</h1>
           <p className="mt-1 truncate text-xs text-slate-400">by {author}</p>
         </div>
-        <nav className="flex-1 space-y-5 overflow-y-auto p-4">
+        <nav className="flex-1 space-y-5 overflow-y-auto p-3">
           <Disclosure defaultOpen>
             {({ open }) => (
               <section>
@@ -508,7 +494,7 @@ function EditorPage({ bookId }) {
                   Front matter
                   <ChevronDown className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden="true" />
                 </Disclosure.Button>
-                <Disclosure.Panel><ul className="mt-1 space-y-1">{frontMatter.map((item) => chapterItem(item))}</ul></Disclosure.Panel>
+                <Disclosure.Panel><ul className="mt-1 space-y-1">{frontMatter.map((item) => chapterItem(item))}</ul><details className="writer-front-add"><summary>＋ Add front matter</summary><div>{[['Dedication','समर्पण'],['Foreword','प्राक्कथन'],['Preface','भूमिका'],['Acknowledgments','आभार'],['Introduction','प्रस्तावना']].map(([english,hindi])=><button key={english} type="button" disabled={creating||saving} onClick={()=>createSection({title:bookStyle.language==='hi'?hindi:english,type:'intro',content:''})}>{bookStyle.language==='hi'?hindi:english}</button>)}</div></details></Disclosure.Panel>
               </section>
             )}
           </Disclosure>
@@ -542,23 +528,23 @@ function EditorPage({ bookId }) {
               </section>
             )}
           </Disclosure>
-        </nav>
+        </nav><footer className="border-t border-white/10 px-5 py-4 text-[11px] text-white/40">{content.replace(/<\/(p|div|h[1-6]|li)>/gi,' ').replace(/<[^>]+>/g,'').trim().split(/\s+/).filter(Boolean).length.toLocaleString('en-IN')} words in this section</footer>
       </aside>
 
-      <main className="min-w-0 flex-1">
-        <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 px-3 py-3 shadow-sm backdrop-blur sm:px-6">
+      <main className="writer-main min-w-0 flex-1">
+        <header className="writer-topbar sticky top-0 z-20">
           <div className="flex flex-wrap items-center gap-3">
             <button type="button" className="rounded-lg border border-slate-200 p-2 text-slate-700 hover:bg-slate-50 lg:hidden" onClick={() => setMobileNavigationOpen(true)} aria-label="Open manuscript navigation">
               <Menu className="h-5 w-5" aria-hidden="true" />
             </button>
-            <button type="button" className="hidden rounded-lg border border-slate-200 p-2 lg:block" onClick={() => setSidebarOpen(v => !v)} aria-label={sidebarOpen ? "Hide manuscript navigation" : "Show manuscript navigation"}><Menu size={18} /></button>
+            <button type="button" className="hidden rounded-lg p-2 text-slate-500 hover:bg-slate-100 lg:block" onClick={() => setSidebarOpen(v => !v)} aria-label={sidebarOpen ? "Hide manuscript navigation" : "Show manuscript navigation"}><Menu size={18} /></button>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-slate-900">{title || "Untitled section"}</p>
+              <p className="truncate text-xs font-medium text-slate-500">{bookTitle}</p>
               <p className={`text-xs ${saveState === "error" ? "text-red-600" : "text-slate-500"}`} role="status" aria-live="polite">{creating ? "Adding your chapter…" : saveLabel}</p>
             </div>
             <BookStylePicker language={book?.language} value={bookStyle} onChange={changeBookStyle} disabled={styleSaving} />
-            <button type="button" onClick={() => saveChapter(currentId, title, content)} disabled={saving || creating || !currentId || !isDirty} className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50">Save</button>
-            <button type="button" onClick={openPreview} disabled={saving || creating || styleSaving} className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-50 sm:px-4">
+            <button type="button" onClick={() => saveChapter(currentId, title, content)} disabled={saving || creating || !currentId || !isDirty} className="writer-save-button">Save</button>
+            <button type="button" onClick={openPreview} disabled={saving || creating || styleSaving} className="writer-preview-button">
               <span className="hidden sm:inline">Book Preview</span><span className="sm:hidden">Preview</span>
             </button>
           </div>
@@ -572,13 +558,8 @@ function EditorPage({ bookId }) {
 
         <div className="w-full">
           {currentId ? (
-            <section className="bg-white">
-              <Toolbar onFormat={formatText} onReset={clearEditor} />
-              <div className="flex items-center gap-3 border-b border-slate-100 px-4 py-2">
-                <label htmlFor="chapter-title" className="shrink-0 text-xs text-slate-500">Section title</label>
-                <input id="chapter-title" type="text" value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Section title" className="w-full rounded border border-slate-200 bg-transparent px-3 py-1.5 text-sm font-semibold text-slate-900 outline-none placeholder:text-slate-300" />
-              </div>
-              <EditorArea key={currentId} editorRef={editorRef} content={content} setContent={setContent} section={{ title, type: selectedSection?.type, number: chapterIndex }} bookStyle={bookStyle} ariaLabel={`Content for ${title || "this section"}`} />
+            <section>
+              <EditorArea key={currentId} editorRef={editorRef} content={content} setContent={setContent} section={{ title, type: selectedSection?.type, number: chapterIndex }} onTitleChange={setTitle} toolbar={<Toolbar onFormat={formatText} onReset={clearEditor}/>} bookStyle={bookStyle} ariaLabel={`Content for ${title || "this section"}`}/>
             </section>
           ) : (
             <section className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center">

@@ -11,15 +11,18 @@ import IndexPage from "../bookpages/5x8/design-1/IndexPage";
 import { paginateByHeight } from "@/utils/pagination";
 import { sanitizeManuscriptHtml } from "./sanitizeHtml";
 
-import { BOOK_DPI as DPI, BOOK_MARGIN as SAFE_MARGIN_INCHES, BOOK_BLEED as BLEED_INCHES, getTrimSize, getBookStyle, manuscriptStyle, measureHeading, ensureBookFonts } from "@/utils/bookLayout";
+import { BOOK_DPI as DPI, BOOK_BLEED as BLEED_INCHES, getTrimSize, getBookStyle, manuscriptStyle, measureHeading, ensureBookFonts, measureContentsChunks, ensureManuscriptImages } from "@/utils/bookLayout";
 import ZoomControls from "./ZoomControls";
+import BookCoverPreview from "./BookCoverPreview";
+import { copyrightHtml } from "@/utils/copyright.mjs";
+import { interiorMargins, interiorContentSize, assemblePrintPages, frontMatterOrder } from "@/utils/printLayout.mjs";
 export { getTrimSize } from "@/utils/bookLayout";
 
 const pageWidthFor = trim => trim.width * DPI;
 
 function normalizeSections(book) {
   return [
-    ...(book.frontmatter || []).map((section) => ({ ...section, group: "Front matter" })),
+    ...[...(book.frontmatter || [])].sort((a,b)=>frontMatterOrder(a.title)-frontMatterOrder(b.title)).map((section) => ({ ...section, group: "Front matter" })),
     ...(book.chapters || []).map((section) => ({ ...section, group: "Chapters" })),
     ...(book.backmatter || []).map((section) => ({ ...section, group: "Back matter" })),
   ].map((section, index) => ({
@@ -30,7 +33,7 @@ function normalizeSections(book) {
   }));
 }
 
-export default function BookPreview({ book }) {
+export default function BookPreview({ book, accessToken }) {
   const [viewMode, setViewMode] = useState("pages");
   const printArea = useRef(null);
   const [availableWidth, setAvailableWidth] = useState(900);
@@ -43,7 +46,7 @@ export default function BookPreview({ book }) {
   const design = book?.design || book?._raw?.design || {};
   const trim = getTrimSize(book?.trimSize || design.size, design);
   const bookStyle = getBookStyle(design.layoutStyle, book?.language || book?._raw?.language);
-  const fitScale = Math.max(0.15, (availableWidth - 32) / ((pageWidthFor(trim) + 24) * 2 + 16));
+  const fitScale = Math.max(0.15, (availableWidth - 32) / (pageWidthFor(trim) * 2 + 16));
   const sections = useMemo(() => normalizeSections(book || {}), [book]);
   const pageWidth = trim.width * DPI;
   const pageHeight = trim.height * DPI;
@@ -60,66 +63,28 @@ export default function BookPreview({ book }) {
     let cancelled = false;
     const timer = window.requestAnimationFrame(async () => {
       await ensureBookFonts(bookStyle);
+      await ensureManuscriptImages(sections);
       if (cancelled) return;
       const groups = sections.map((section) => ({
         section,
         fragments: paginateByHeight(section.content || "<p></p>", pageWidth, pageHeight, {
-          margin: SAFE_MARGIN_INCHES * DPI,
-          typography: manuscriptStyle(bookStyle),
-          firstPageHeading: measureHeading(section, bookStyle, pageWidth - SAFE_MARGIN_INCHES * DPI * 2),
+          margin: interiorMargins(1, DPI),
+          typography: { ...manuscriptStyle(bookStyle), "--book-content-height": `${interiorContentSize(trim.width, trim.height, DPI).height - 24}px` },
+          firstPageHeading: measureHeading(section, bookStyle, interiorContentSize(trim.width, trim.height, DPI).width),
         }),
       }));
 
-      let printedPage = 1;
-      let physicalPage = 5;
-      const navigation = [{ label: "Title page", pageIndex: 0, sectionIndex: null }];
-      const indexEntries = groups.map(({ section, fragments }, sectionIndex) => {
-        navigation.push({
-          label: section.title,
-          group: section.group,
-          pageIndex: physicalPage - 1,
-          sectionIndex,
-        });
-        const entry = { title: section.title, page: printedPage };
-        printedPage += Math.max(fragments.length, 1);
-        physicalPage += Math.max(fragments.length, 1);
-        return entry;
-      });
-
-      const pages = [
-        { key: "title", kind: "title", label: "Title page" },
-        { key: "copyright", kind: "copyright", label: "Copyright" },
-        { key: "contents", kind: "contents", label: "Contents" },
-        { key: "blank-after-contents", kind: "blank", label: "Blank page" },
-      ];
-
-      let pageNumber = 1;
-      groups.forEach(({ section, fragments }, sectionIndex) => {
-        (fragments.length ? fragments : [""]).forEach((fragment, fragmentIndex) => {
-          pages.push({
-            key: `${section.id}-${fragmentIndex}`,
-            kind: section.group === "Back matter" ? "backmatter" : "section",
-            label: fragmentIndex === 0 ? section.title : `${section.title}, continued`,
-            section,
-            sectionIndex,
-            fragment,
-            fragmentIndex,
-            pageNumber,
-          });
-          pageNumber += 1;
-        });
-      });
-
-      if (pages.length % 2 !== 0) {
-        pages.push({ key: "blank-end", kind: "blank", label: "Blank page" });
-      }
-      setPageData({ pages, navigation, indexEntries });
+      const contentHeight = interiorContentSize(trim.width, trim.height, DPI).height;
+      const copyright = sanitizeManuscriptHtml(book.importedCopyright || copyrightHtml(book));
+      const copyrightFragments = paginateByHeight(copyright, pageWidth, pageHeight, { margin: interiorMargins(2, DPI), typography: { ...manuscriptStyle(bookStyle), fontSize: "9pt", lineHeight: 1.5 } });
+      setPageData(assemblePrintPages(groups, measureContentsChunks(sections, bookStyle, interiorContentSize(trim.width, trim.height, DPI).width, contentHeight), copyrightFragments));
       setPaginating(false);
     });
     return () => { cancelled = true; window.cancelAnimationFrame(timer); };
-  }, [pageHeight, pageWidth, sections, bookStyle]);
+  }, [pageHeight, pageWidth, sections, bookStyle, book, trim.height, trim.width]);
 
   const goTo = (item) => {
+    if (item.coverSide) { document.getElementById(`preview-${item.coverSide}-cover`)?.scrollIntoView({ behavior: "smooth", block: "start" }); return; }
     const targetId =
       viewMode === "reading"
         ? item.sectionIndex === null
@@ -134,23 +99,23 @@ export default function BookPreview({ book }) {
     trimHeightIn: trim.height,
     dpi: DPI,
     bleedInches: BLEED_INCHES,
-    safeMarginInches: SAFE_MARGIN_INCHES,
-    showGuides,
+        showGuides,
     bookStyle,
   };
 
-  const renderPage = (page) => {
+  const renderPage = (page, index) => {
+    const pageProps = { ...commonPageProps, physicalPageNumber: index + 1 };
     if (page.kind === "title") {
-      return <TitlePage {...commonPageProps} title={book.title} subtitle={book.subtitle} author={book.author} />;
+      return <TitlePage {...pageProps} title={book.title} subtitle={book.subtitle} author={book.author} />;
     }
     if (page.kind === "copyright") {
-      return <CopyrightPage {...commonPageProps} copyright={book.copyright} />;
+      return <CopyrightPage {...pageProps} book={book} fragment={page.fragment} />;
     }
     if (page.kind === "contents") {
-      return <IndexPage {...commonPageProps} chapters={pageData.indexEntries} />;
+      return <IndexPage {...pageProps} chapters={page.entries} pageNumber={page.showPageNumber ? page.pageNumber : null} />;
     }
     if (page.kind === "blank") {
-      return <BlankPage {...commonPageProps} />;
+      return <BlankPage {...pageProps} />;
     }
     const section = {
       ...page.section,
@@ -158,10 +123,12 @@ export default function BookPreview({ book }) {
       title: page.fragmentIndex === 0 ? page.section.title : null,
       content: page.fragment,
     };
+    const runningHeader = page.fragmentIndex > 0 ? (page.section.group === "Chapters" ? ((index + 1) % 2 === 0 ? book.title : book.author) : page.section.title) : null;
+    const folio = page.showPageNumber ? page.pageNumber : null;
     if (page.kind === "backmatter") {
-      return <BackMatterPage {...commonPageProps} section={section} pageNumber={page.pageNumber} />;
+      return <BackMatterPage {...pageProps} bookStyle={bookStyle} section={section} pageNumber={folio} runningHeader={runningHeader} />;
     }
-    return <ChapterPage {...commonPageProps} section={section} pageNumber={page.pageNumber} />;
+    return <ChapterPage {...pageProps} bookStyle={bookStyle} section={section} pageNumber={folio} runningHeader={runningHeader} />;
   };
 
   return (
@@ -172,7 +139,7 @@ export default function BookPreview({ book }) {
           Book contents
         </div>
         <nav className="mt-3 max-h-[42vh] space-y-1 overflow-y-auto pr-1" aria-label="Book contents">
-          {pageData.navigation.map((item, index) => (
+          {[{ label: "Front cover", coverSide: "front" }, ...pageData.navigation, { label: "Back cover", coverSide: "back" }].map((item, index) => (
             <button
               type="button"
               key={`${item.label}-${index}`}
@@ -192,22 +159,22 @@ export default function BookPreview({ book }) {
           <p className="mt-3 text-xs text-slate-600">{bookStyle.name} · {bookStyle.points} pt</p>
           <dl className="mt-3 space-y-2 text-xs text-slate-600">
             <div className="flex justify-between gap-2"><dt>Trim size</dt><dd className="font-semibold text-slate-800">{trim.label}</dd></div>
-            <div className="flex justify-between gap-2"><dt>Bleed</dt><dd className="font-semibold text-slate-800">0.125 in</dd></div>
-            <div className="flex justify-between gap-2"><dt>Safe margin</dt><dd className="font-semibold text-slate-800">0.5 in</dd></div>
+            <div className="flex justify-between gap-2"><dt>Bleed</dt><dd className="font-semibold text-slate-800">None · text interior</dd></div>
+            <div className="flex justify-between gap-2"><dt>Inside / outside</dt><dd className="font-semibold text-slate-800">2.29 / 1.52 cm</dd></div>
             <div className="flex justify-between gap-2"><dt>Pages</dt><dd className="font-semibold text-slate-800">{pageData.pages.length}</dd></div>
           </dl>
           {viewMode === "pages" && (
             <>
               <label className="mt-3 flex items-center gap-2 text-xs text-slate-700">
                 <input type="checkbox" checked={showGuides} onChange={(event) => setShowGuides(event.target.checked)} className="accent-blue-600" />
-                Show trim safety guides
+                Show margins and trim
               </label>
             </>
           )}
         </div>
       </aside>}
 
-      <style>{`@media print { @page { size: ${trim.width + .25}in ${trim.height + .25}in; margin: 0; } }`}</style>
+      <style>{`@media print { @page { size: ${trim.width}in ${trim.height}in; margin: 0; } }`}</style>
       <main className="min-w-0 flex-1">
         <div className="book-preview-controls sticky top-[64px] z-20 mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-2 shadow-sm">
           <button type="button" onClick={() => setContentsOpen(v => !v)} className="hidden rounded-lg px-3 py-2 text-xs font-semibold hover:bg-slate-100 lg:block" aria-pressed={contentsOpen}>{contentsOpen ? 'Hide contents' : 'Show contents'}</button>
@@ -226,6 +193,7 @@ export default function BookPreview({ book }) {
           </div>
         </div>
 
+        <BookCoverPreview book={book} side="front" accessToken={accessToken} width={Math.min(360, pageWidth)}/>
         {viewMode === "reading" ? (
           <article className="book-reading-view overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
             <header id="preview-book-title" className="scroll-mt-28 border-b border-slate-200 bg-slate-50 px-5 py-12 text-center sm:px-12 sm:py-16">
@@ -258,22 +226,24 @@ export default function BookPreview({ book }) {
             {Array.from({ length: Math.ceil((pageData.pages.length + 1) / 2) }, (_, spread) => {
               const indices = [spread * 2 - 1, spread * 2];
               const scale = zoom === "fit" ? fitScale : zoom / 100;
-              return <div key={spread} className="print-spread mx-auto mb-6 flex gap-2" style={{ width: (pageWidth + 24) * scale * 2 + 8 }}>
+              return <div key={spread} className="print-spread mx-auto mb-6 flex gap-2" style={{ width: pageWidth * scale * 2 + 8 }}>
                 {indices.map(index => {
                   const page = pageData.pages[index];
-                  return <section id={page ? `preview-page-${index}` : undefined} key={index} className="print-leaf shrink-0 scroll-mt-28" style={{ width: (pageWidth + 24) * scale }} aria-label={page ? `Page ${index + 1}: ${page.label}` : 'Outside of book'}>
+                  return <section id={page ? `preview-page-${index}` : undefined} key={index} className="print-leaf shrink-0 scroll-mt-28" style={{ width: pageWidth * scale }} aria-label={page ? `Page ${index + 1}: ${page.label}` : 'Outside of book'}>
                     {page ? <>
-                      <div style={{ height: (pageHeight + 24) * scale }}>
-                        <div className="book-preview-page-scale" style={{ transform: `scale(${scale})`, transformOrigin: 'top left', width: pageWidth + 24 }}>{renderPage(page)}</div>
+                      <div style={{ height: pageHeight * scale }}>
+                        <div className="book-preview-page-scale" style={{ transform: `scale(${scale})`, transformOrigin: 'top left', width: pageWidth }}>{renderPage(page, index)}</div>
                       </div>
                       <p className="book-preview-controls mt-2 text-center text-xs text-stone-600">{index + 1} · {page.label}</p>
-                    </> : <div className="book-preview-controls" style={{ height: (pageHeight + 24) * scale }} />}
+                    </> : <div className="book-preview-controls" style={{ height: pageHeight * scale }} />}
                   </section>;
                 })}
               </div>;
             })}
           </div>
         )}
+        <BookCoverPreview book={book} side="back" accessToken={accessToken} width={Math.min(360, pageWidth)}/>
+        <p className="book-preview-controls py-4 text-center text-xs text-slate-500">Covers are separate from the numbered interior. The printer confirms the spine and final cover wrap.</p>
       </main>
     </div>
   );

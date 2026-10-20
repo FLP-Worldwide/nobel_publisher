@@ -1,5 +1,6 @@
 "use client";
 
+import useCanonicalBookUrl from "@/hooks/useCanonicalBookUrl";
 import AuthorSidebar from "@/app/components/dashbaord/AuthorSidebar";
 import AuthorCopyOrder from "@/app/components/dashbaord/AuthorCopyOrder";
 import { ArrowRight, Check, Eye, Loader2, RefreshCw } from "lucide-react";
@@ -32,6 +33,7 @@ export default function PricingInfo() {
   const { data: session, status: sessionStatus } = useSession();
   const token = session?.user?.accessToken;
   const [data, setData] = useState(null);
+  useCanonicalBookUrl(bookId,data?.bookPublicId);
   const [pricingData, setPricingData] = useState(null);
   const [price, setPrice] = useState("");
   const [loading, setLoading] = useState(true);

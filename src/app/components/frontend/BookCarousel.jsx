@@ -77,7 +77,7 @@ export default function BookCarousel({ heading = "Published books", limit }) {
       {!loading && !error && visibleBooks.length > 0 && (
         <div className={`grid grid-cols-2 gap-x-5 gap-y-8 sm:grid-cols-3 ${limit === 4 ? "lg:grid-cols-4" : "lg:grid-cols-5"}`}>
           {visibleBooks.map((book) => (
-            <Link key={book.id} href={`/book/${book.id}`} className="group min-w-0">
+            <Link key={book.id} href={`/book/${book.publicId || book.id}`} className="group min-w-0">
               <div className="aspect-[5/8] overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-sm transition group-hover:-translate-y-1 group-hover:shadow-xl">
                 {book.coverDesign ? <CoverArtwork design={book.coverDesign} alt={`${book.title} cover`} className="h-full w-full"/> : book.frontCoverUrl ? (
                   <img src={book.frontCoverUrl} alt={`${book.title} cover`} className="h-full w-full object-cover" loading="lazy" />

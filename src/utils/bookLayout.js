@@ -1,7 +1,7 @@
 // CSS pixels at 96 dpi keep points, inches and browser printing consistent.
 export const BOOK_DPI = 96;
 export const BOOK_MARGIN = 0.5;
-export const BOOK_BLEED = 0.125;
+export const BOOK_BLEED = 0;
 const TRIMS = {
   FIVE_X_EIGHT: [5, 8], FIVE_HALF_X_EIGHT_HALF: [5.5, 8.5], SIX_X_NINE: [6, 9],
   EIGHT_HALF_X_EIGHT_HALF: [8.5, 8.5], EIGHT_HALF_X_ELEVEN: [8.5, 11],
@@ -70,4 +70,37 @@ export async function ensureBookFonts(style) {
     // A local font failure uses the same fallback for editing and measurement.
   }
   await document.fonts.ready;
+}
+
+// Count real wrapped contents rows instead of assuming every title is one line.
+export function measureContentsChunks(sections, style, width, height) {
+  const box = document.createElement('div');
+  Object.assign(box.style, manuscriptStyle(style), { position: 'fixed', visibility: 'hidden', left: '-10000px', width: `${width}px` });
+  document.body.append(box);
+  const counts = []; let count = 0, used = 0;
+  try {
+    for (const section of sections) {
+      const row = document.createElement('div');
+      Object.assign(row.style, { display: 'flex', alignItems: 'flex-end', gap: '8px', fontSize: '14px', lineHeight: '1.625' });
+      const title = document.createElement('span'); title.textContent = section.title;
+      Object.assign(title.style,{ minWidth: '0', overflowWrap: 'anywhere' });
+      const dots = document.createElement('span'); Object.assign(dots.style,{ minWidth: '20px', flex: '1' });
+      const number = document.createElement('span'); number.textContent = '8888';
+      row.append(title,dots,number); box.replaceChildren(row);
+      const rowHeight = row.getBoundingClientRect().height;
+      const gap = count ? 12 : 0;
+      if (count && used + gap + rowHeight > height - 72) { counts.push(count); count = 0; used = 0; }
+      used += (count ? 12 : 0) + rowHeight; count++;
+    }
+    counts.push(count); return counts;
+  } finally { box.remove(); }
+}
+
+export async function ensureManuscriptImages(sections) {
+  const sources = new Set();
+  for (const section of sections) {
+    const doc = new DOMParser().parseFromString(section.content || '', 'text/html');
+    doc.querySelectorAll('img[src]').forEach(image => sources.add(image.getAttribute('src')));
+  }
+  await Promise.all([...sources].map(async src => { const image = new Image(); image.src = src; try { await image.decode(); } catch { /* Broken images remain visible for the author's proof check. */ } }));
 }

@@ -1,6 +1,7 @@
 "use client";
 import BookEditGuard from "@/app/components/dashbaord/BookEditGuard";
 
+import { BOOK_LANGUAGES, bookLanguage, nativeTitleIssue } from "@/utils/bookLanguage.mjs";
 import React, { useEffect, useMemo, useState } from "react";
 import useSWR from "swr";
 import { useSession } from "next-auth/react";
@@ -24,7 +25,7 @@ function WriteTool() {
   // --- get id from query (?id=) or from route segment (/write/tool/[id]) ---
   const idFromUrl = search?.get("id") || segmentId || null;
 
-  console.log("WriteTool: idFromUrl =", idFromUrl, "; segmentId =", segmentId);
+
   const [bookId, setBookId] = useState(idFromUrl || "");
 
   useEffect(() => {
@@ -50,6 +51,8 @@ function WriteTool() {
   // Form state
   const [title, setTitle] = useState("");
   const [subheading, setSubheading] = useState("");
+  const [titleRoman, setTitleRoman] = useState("");
+  const [authorNameRoman, setAuthorNameRoman] = useState("");
   const [authorName, setAuthorName] = useState("");
   const [coAuthor, setCoAuthor] = useState("");
   const [selectedLanguage, setSelectedLanguage] = useState("English");
@@ -59,19 +62,8 @@ function WriteTool() {
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState("");
 
-  const languages = useMemo(
-    () => [
-      { name: "English" },
-      { name: "हिंदी" },
-      { name: "தமிழ்" },
-      { name: "മലയാളം" },
-      { name: "বাংলা" },
-      { name: "मराठी" },
-      { name: "ಕನ್ನಡ" },
-      { name: "ગુજરાતી" },
-    ],
-    []
-  );
+  const language = bookLanguage(selectedLanguage);
+  const regional = language.code !== "en";
 
   const genres = useMemo(
     () => [
@@ -94,6 +86,8 @@ function WriteTool() {
       if (raw) {
         const d = JSON.parse(raw);
         setTitle(d.title ?? "");
+        setTitleRoman(d.titleRoman ?? "");
+        setAuthorNameRoman(d.authorNameRoman ?? "");
         setSubheading(d.subheading ?? "");
         setAuthorName(d.authorName ?? "");
         setCoAuthor(d.coAuthor ?? "");
@@ -110,7 +104,7 @@ function WriteTool() {
         localStorage.setItem(
           DRAFT_KEY,
           JSON.stringify({
-            title,
+            title, titleRoman, authorNameRoman,
             subheading,
             authorName,
             coAuthor,
@@ -121,12 +115,12 @@ function WriteTool() {
       } catch {}
     }, 250);
     return () => clearTimeout(t);
-  }, [bookId, title, subheading, authorName, coAuthor, selectedLanguage, selectedGenre]);
+  }, [bookId, title, titleRoman, authorNameRoman, subheading, authorName, coAuthor, selectedLanguage, selectedGenre]);
 
   // -------- SWR (active after we have a bookId) --------
   const canFetch = useMemo(
     () => Boolean(API_BASE && bookId && status !== "loading"),
-    [API_BASE, bookId, status]
+    [bookId, status]
   );
 
   const swrKey = canFetch ? [`${API_BASE}/books/${bookId}`, accessToken] : null;
@@ -154,6 +148,8 @@ function WriteTool() {
   useEffect(() => {
     if (!data) return;
     setTitle(data?.title ?? "");
+    setTitleRoman(data?.titleRoman ?? "");
+    setAuthorNameRoman(data?.authorNameRoman ?? "");
     setSubheading(data?.subheading ?? "");
     setAuthorName(data?.authorName ?? "");
     setCoAuthor(data?.coAuthor ?? "");
@@ -169,7 +165,9 @@ function WriteTool() {
     if (!title.trim()) return setMsg("❌ Book title is required.");
     if (!authorName.trim()) return setMsg("❌ Author name is required.");
     if (!selectedLanguage) return setMsg("❌ Please select a language.");
-    if (!selectedGenre) return setMsg("❌ Please select a genre.");
+    if (!selectedGenre) return setMsg("Please select a genre.");
+    const titleIssue = nativeTitleIssue(selectedLanguage,title);
+    if (titleIssue) return setMsg(titleIssue);
 
     if (status === "loading") return setMsg("Checking your session…");
     if (!accessToken) return setMsg("❌ You must be logged in as an author.");
@@ -178,7 +176,7 @@ function WriteTool() {
     setLoading(true);
     try {
       const payload = {
-        title,
+        title: title.trim(), titleRoman: regional ? titleRoman.trim() || null : null, authorNameRoman: regional ? authorNameRoman.trim() || null : null,
         language: selectedLanguage,
         authorName,
         subheading,
@@ -199,7 +197,7 @@ function WriteTool() {
         const json = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(json?.message || `Failed to create (${res.status})`);
 
-        const newId = json?.id || json?._id;
+        const newId = json?.publicId || json?.id || json?._id;
         setBookId(newId);
 
         // persist id so refresh works
@@ -248,24 +246,25 @@ function WriteTool() {
         {error && <p role="alert" className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{error.message}</p>}
         {msg && <p role={msg.startsWith('✅') ? 'status' : 'alert'} className={`mb-4 rounded-lg border p-3 text-sm ${msg.startsWith('✅') ? 'border-green-200 bg-green-50 text-green-800' : 'border-red-200 bg-red-50 text-red-800'}`}>{msg}</p>}
         <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_280px]">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <section className="ui-card">
-              <h2>Title & identity</h2><p className="ui-help">The name readers will see on your cover and in the bookshop.</p>
-              <div className="mt-5"><label htmlFor="title" className="ui-label">Book title <span className="text-red-600">*</span></label><input id="title" name="title" value={title} onChange={e=>setTitle(e.target.value)} className="ui-field" placeholder="Give your story a name" required /></div>
-              <div className="mt-4"><label htmlFor="subheading" className="ui-label">Subtitle <span className="font-normal text-slate-400">· optional</span></label><input id="subheading" name="subheading" value={subheading} onChange={e=>setSubheading(e.target.value)} className="ui-field" placeholder="A short line that adds context" /></div>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <section className="ui-card"><p className="ui-eyebrow">Start with your language</p><h2 className="mt-2">What language is your book written in?</h2><p className="ui-help">For a bilingual or multilingual book, choose the language used most. Your title and author name below are the ones printed on your book.</p>
+              <fieldset className="mt-5"><legend className="sr-only">Book language</legend><div className="grid grid-cols-2 gap-2 sm:grid-cols-4">{BOOK_LANGUAGES.map(lang=><button key={lang.code} type="button" className="language-choice" aria-pressed={language.code===lang.code} onClick={()=>setSelectedLanguage(lang.value)}><span lang={lang.code}>{lang.native}</span>{lang.code!=='en'&&<small>{lang.name}</small>}</button>)}</div></fieldset>
             </section>
-            <section className="ui-card"><h2>People behind the book</h2><p className="ui-help">Use your name or the pen name you want printed on the cover.</p><div className="ui-form-columns mt-5">
-              <div><label htmlFor="authorName" className="ui-label">Author name <span className="text-red-600">*</span></label><input id="authorName" name="authorName" value={authorName} onChange={e=>setAuthorName(e.target.value)} className="ui-field" placeholder="Author or pen name" required /></div>
-              <div><label htmlFor="coAuthor" className="ui-label">Co-author <span className="font-normal text-slate-400">· optional</span></label><input id="coAuthor" name="coAuthor" value={coAuthor} onChange={e=>setCoAuthor(e.target.value)} className="ui-field" placeholder="Co-author name" /></div>
+            <section className="ui-card"><h2>Your title, in {language.name}</h2><p className="ui-help">Choose the title readers will see on the cover. You can change it before submitting for review.</p>
+              <div className="mt-5"><label htmlFor="title" className="ui-label">Book title ({language.name}) <span className="text-red-600">*</span></label><input id="title" name="title" lang={language.code} value={title} onChange={e=>setTitle(e.target.value)} className={`ui-field mt-2 ${language.code==='hi'||language.code==='mr'?'native-devanagari':''}`} maxLength={200} placeholder={language.titleExample} required/><p className="ui-help">Enter your title in {language.name}{regional?` (${language.native})`:''}. Changing language keeps the text you’ve already entered.</p></div>
+              {regional&&<div className="mt-5"><label htmlFor="title-roman" className="ui-label">Book title in Roman letters <span className="font-normal text-slate-400">· optional</span></label><input id="title-roman" value={titleRoman} onChange={e=>setTitleRoman(e.target.value)} maxLength={200} className="ui-field mt-2" placeholder={language.code==='hi'?'Tum hi se — tum tak':'The same title, written in Roman letters'}/><p className="ui-help">Write the pronunciation in Roman letters, rather than translating the meaning.{language.code==='hi'?' Example: सपना → Sapna.':''}</p></div>}
+              <div className="mt-5"><label htmlFor="subheading" className="ui-label">Subtitle ({language.name}) <span className="font-normal text-slate-400">· optional</span></label><input id="subheading" lang={language.code} value={subheading} onChange={e=>setSubheading(e.target.value)} maxLength={300} className="ui-field mt-2" placeholder="A short line that adds context to your title"/></div>
+            </section>
+            <section className="ui-card"><h2>The people behind the book</h2><p className="ui-help">Use the author name or pen name you want printed on your cover.</p><div className="mt-5 space-y-5">
+              <div><label htmlFor="authorName" className="ui-label">Author name ({language.name}) <span className="text-red-600">*</span></label><input id="authorName" lang={language.code} value={authorName} onChange={e=>setAuthorName(e.target.value)} maxLength={160} className={`ui-field mt-2 ${language.code==='hi'||language.code==='mr'?'native-devanagari':''}`} placeholder={language.authorExample} required/></div>
+              {regional&&<div><label htmlFor="author-roman" className="ui-label">Author name in Roman letters <span className="font-normal text-slate-400">· optional</span></label><input id="author-roman" value={authorNameRoman} onChange={e=>setAuthorNameRoman(e.target.value)} maxLength={160} className="ui-field mt-2" placeholder="The same name, in Roman letters"/></div>}
+              <div><label htmlFor="coAuthor" className="ui-label">Co-author ({language.name}) <span className="font-normal text-slate-400">· optional</span></label><input id="coAuthor" lang={language.code} value={coAuthor} onChange={e=>setCoAuthor(e.target.value)} maxLength={160} className="ui-field mt-2" placeholder="Co-author name"/></div>
             </div></section>
-            <section className="ui-card"><h2>Language & genre</h2><p className="ui-help">For a multilingual book, choose the language used most.</p>
-              <fieldset className="mt-5"><legend className="ui-label">Primary language</legend><div className="flex flex-wrap gap-2">{languages.map(lang=><button key={lang.name} type="button" className="ui-choice" aria-pressed={selectedLanguage===lang.name} onClick={()=>setSelectedLanguage(lang.name)}>{lang.name}</button>)}</div></fieldset>
-              <fieldset className="mt-5"><legend className="ui-label">Genre</legend><div className="flex flex-wrap gap-2">{genres.map(g=><button key={g.name} type="button" className="ui-choice" aria-pressed={selectedGenre===g.name} onClick={()=>setSelectedGenre(g.name)}>{g.name}</button>)}</div></fieldset>
-            </section>
+            <section className="ui-card"><h2>Where does your book belong?</h2><p className="ui-help">Choose the main genre. You can add more discovery categories in publication details.</p><fieldset className="mt-5"><legend className="sr-only">Genre</legend><div className="flex flex-wrap gap-2">{genres.map(g=><button key={g.name} type="button" className="ui-choice" aria-pressed={selectedGenre===g.name} onClick={()=>setSelectedGenre(g.name)}>{g.name}</button>)}</div></fieldset></section>
             <div className="ui-actions"><p className="ui-help">Your draft stays private until publication.</p><div className="flex flex-wrap gap-2"><button type="submit" disabled={loading || status==='loading' || isLoading} className="ui-button">{loading ? 'Saving…' : bookId ? 'Save details' : 'Create book'}</button><button type="button" disabled={!bookId} onClick={()=>router.push(`/write/tool/step2/${bookId}`)} className="ui-button ui-button-secondary">Book studio →</button></div></div>
           </form>
           <aside className="space-y-4 lg:sticky lg:top-6">
-            <section className="overflow-hidden rounded-xl border border-slate-200 bg-white"><div className="bg-[#19334c] px-5 py-6 text-white"><p className="text-[10px] uppercase tracking-widest text-slate-300">Your book at a glance</p><h2 className="mt-5 break-words text-xl font-semibold leading-snug">{title || 'Your book title'}</h2>{subheading && <p className="mt-2 break-words text-xs leading-5 text-slate-300">{subheading}</p>}<p className="mt-6 text-xs text-slate-300">{authorName || 'Your name'}</p></div><dl className="grid grid-cols-2 gap-4 p-5 text-xs"><div><dt className="text-slate-400">Language</dt><dd className="mt-1 font-medium text-slate-700">{selectedLanguage || 'Not chosen'}</dd></div><div><dt className="text-slate-400">Genre</dt><dd className="mt-1 font-medium text-slate-700">{selectedGenre || 'Not chosen'}</dd></div></dl></section>
+            <section className="overflow-hidden rounded-xl border border-slate-200 bg-white"><div className="bg-[#19334c] px-5 py-6 text-white"><p className="text-[10px] uppercase tracking-widest text-slate-300">Your book at a glance</p><h2 className="mt-5 break-words text-xl font-semibold leading-snug">{title || 'Your book title'}</h2>{subheading && <p className="mt-2 break-words text-xs leading-5 text-slate-300">{subheading}</p>}<p className="mt-6 text-xs text-slate-300">{authorName || 'Your name'}</p></div><dl className="grid grid-cols-2 gap-4 p-5 text-xs"><div><dt className="text-slate-400">Language</dt><dd className="mt-1 font-medium text-slate-700">{language.name}</dd></div><div><dt className="text-slate-400">Genre</dt><dd className="mt-1 font-medium text-slate-700">{selectedGenre || 'Not chosen'}</dd></div></dl></section>
             <section className="ui-card"><h2>Up next</h2><p className="ui-help">Choose your print format, write your manuscript and add cover artwork in the book studio.</p><div className="mt-4 border-t border-slate-100 pt-4 text-xs leading-6 text-slate-500">Submit your complete book and pay the one-time ₹199 review fee. Once approved, choose your selling price and publish.</div></section>
           </aside>
         </div>

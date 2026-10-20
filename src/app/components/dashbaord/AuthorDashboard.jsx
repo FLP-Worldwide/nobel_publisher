@@ -22,7 +22,7 @@ export default function AuthorDashboard({ apiBase = DEFAULT_API }) {
   const [notice, setNotice] = useState("");
   const [filter, setFilter] = useState("ALL");
   const [search, setSearch] = useState("");
-  const visibleBooks = books.filter(book => (filter === "ALL" || book.status === filter) && `${book.title || ""} ${book.authorName || ""}`.toLowerCase().includes(search.toLowerCase()));
+  const visibleBooks = books.filter(book => (filter === "ALL" || book.status === filter) && `${book.title || ""} ${book.titleRoman || ""} ${book.authorName || ""} ${book.authorNameRoman || ""}`.toLowerCase().includes(search.toLowerCase()));
 
   const authHeaders = useMemo(
     () => ({
@@ -69,7 +69,7 @@ export default function AuthorDashboard({ apiBase = DEFAULT_API }) {
 
   async function handleDelete(id) {
     if (!API_BASE || !id) return;
-    const book = books.find((item) => (item.id ?? item._id) === id);
+    const book = books.find((item) => (item.publicId ?? item.id ?? item._id) === id);
     const confirmed = window.confirm(
       `Move “${book?.title || "this book"}” to trash? It will no longer appear on your dashboard.`
     );
@@ -84,7 +84,7 @@ export default function AuthorDashboard({ apiBase = DEFAULT_API }) {
       });
       const result = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(result?.message || `Could not move book to trash (${response.status})`);
-      setBooks((current) => current.filter((item) => (item.id ?? item._id) !== id));
+      setBooks((current) => current.filter((item) => (item.publicId ?? item.id ?? item._id) !== id));
       setNotice("Book moved to trash.");
     } catch (deleteError) {
       setError(deleteError?.message || "Could not move the book to trash.");
