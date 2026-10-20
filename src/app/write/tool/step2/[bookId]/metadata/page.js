@@ -15,7 +15,9 @@ import {
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
+import { readPublicationResponse as readJson, submitReview, publicationErrorNotice } from "@/utils/reviewSubmission.mjs";
 
 const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
 const DESCRIPTION_LIMIT = 1500;
@@ -55,15 +57,6 @@ function splitKeywords(value) {
     .filter((keyword, index, keywords) => keywords.indexOf(keyword) === index);
 }
 
-async function readJson(response) {
-  const body = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    const issues = Array.isArray(body?.issues) ? body.issues.join(" ") : "";
-    throw new Error(issues || body?.message || `Request failed (${response.status})`);
-  }
-  return body;
-}
-
 function Metadata() {
   const router = useRouter();
   const params = useParams();
@@ -82,6 +75,8 @@ function Metadata() {
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [notice, setNotice] = useState(null);
+  const submittingRef = useRef(false);
+  const recoveryRef = useRef(false);
 
   const authHeaders = useMemo(
     () => ({
@@ -120,7 +115,7 @@ function Metadata() {
       );
       setTermsAccepted(Boolean(data?.termsAccepted ?? data?.termsAcceptedAt));
     } catch (error) {
-      setNotice({ type: "error", text: error.message || "Could not load this book." });
+      setNotice({ type: "error", title: "Publication details couldn’t be opened", text: "Check your connection and reopen this book from your dashboard." });
     } finally {
       setLoading(false);
     }
@@ -191,40 +186,49 @@ function Metadata() {
   }
 
   async function handleSave() {
+    if (submittingRef.current || saving) return;
+    const validationError = validateForSave();
+    if (validationError) {
+      setNotice({ type: "error", title: "Check your book details", text: validationError });
+      return;
+    }
     setNotice(null);
     setSaving(true);
     try {
       await saveMetadata();
     } catch (error) {
-      setNotice({ type: "error", text: error.message || "Could not save your draft." });
+      setNotice({ ...publicationErrorNotice(error), action: "save" });
     } finally {
       setSaving(false);
     }
   }
 
   async function handleSubmit(event) {
-    event.preventDefault();
+    event?.preventDefault();
+    if (submittingRef.current || saving) return;
     setNotice(null);
 
     const validationError = validateForSubmission();
     if (validationError) {
-      setNotice({ type: "error", text: validationError });
+      setNotice({ type: "error", title: "One more detail before you submit", text: validationError });
       return;
     }
 
+    submittingRef.current = true;
     setSubmitting(true);
     try {
-      await saveMetadata({ showSuccess: false });
-      const response = await fetch(`${API_BASE}/books/${bookId}/submit-review`, {
-        method: "POST",
-        headers: authHeaders,
-        body: JSON.stringify({ message: authorMessage.trim() || undefined }),
+      await submitReview({
+        apiBase: API_BASE, bookId, headers: authHeaders, message: authorMessage,
+        recoverFirst: recoveryRef.current,
+        saveDraft: () => saveMetadata({ showSuccess: false }),
       });
-      await readJson(response);
+      recoveryRef.current = false;
       router.push(`/write/tool/step2/${bookId}/pricing_info`);
     } catch (error) {
-      setNotice({ type: "error", text: error.message || "Could not submit this book." });
+      recoveryRef.current = error.phase !== "save";
+      setNotice(publicationErrorNotice(error));
     } finally {
+      submittingRef.current = false;
       setSubmitting(false);
     }
   }
@@ -240,7 +244,14 @@ function Metadata() {
     <AuthorSidebar currentStep="metadata" />
     <main className="ui-shell">
       <header className="ui-heading"><div><p className="ui-eyebrow">03 / Prepare for readers</p><h1>Publication details</h1><p>A clear description, a little about you, and the details that help readers find your book.</p></div><Link href={`/write/tool/step2/${bookId}/canva/preview`} className="ui-button ui-button-secondary"><Eye size={15}/>Preview book</Link></header>
-      {notice && <div role={notice.type === 'error' ? 'alert' : 'status'} className={`mb-4 rounded-lg border p-3 text-sm ${notice.type==='error'?'border-red-200 bg-red-50 text-red-800':'border-green-200 bg-green-50 text-green-800'}`}>{notice.text}</div>}
+      {notice && <div role={notice.type === 'error' ? 'alert' : 'status'} className={`mb-4 rounded-xl border p-4 text-sm ${notice.type==='error'?'border-amber-200 bg-amber-50 text-amber-950':'border-green-200 bg-green-50 text-green-800'}`}>
+        {notice.title && <p className="font-semibold">{notice.title}</p>}
+        <p className={notice.title ? "mt-1 leading-6" : ""}>{notice.text}</p>
+        {notice.issues?.length > 0 && <ul className="mt-2 list-disc space-y-1 pl-5">{notice.issues.map(issue => <li key={issue}>{issue}</li>)}</ul>}
+        {notice.retry && <button type="button" disabled={saving || submitting} onClick={() => notice.action === "save" ? handleSave() : handleSubmit()} className="ui-button mt-3">{submitting ? 'Checking submission…' : 'Try again'}</button>}
+        {notice.statusLink && <Link href={`/write/tool/step2/${bookId}/pricing_info`} className="ui-button ui-button-secondary mt-3">Check review status</Link>}
+      </div>}
+
       {loading ? <div className="ui-card flex items-center gap-3 text-slate-500"><Loader2 size={16} className="animate-spin"/>Loading publication details…</div> : <form onSubmit={handleSubmit}>
         <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_260px]">
           <fieldset disabled={isLocked || saving || submitting} className="min-w-0 space-y-4 disabled:opacity-70">

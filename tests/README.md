@@ -25,3 +25,9 @@ The 19 October local browser check used a disposable 90-paragraph Hindi chapter 
 Check with a book containing more than ten chapters. Adding after a selected chapter must preserve the chapter order and existing text. Repeated clicks while adding are disabled. Simulate a response lost after the server commits: Try again must send the same Idempotency-Key, show exactly one new chapter, and preserve the current editor on failure. A failed follow-up list request must not turn successful creation into a failure. If the author types while addition is pending, leave the current draft open and offer the new chapter in the list.
 
 The 19 October disposable local browser fixture exercised the real manuscript page with a simulated lost response, starting with ten chapters. The second POST reused the first key and returned the one created chapter. The fixture was removed before the production build. Server regressions run with npm run test:commerce in the API project.
+
+# Review submission recovery
+
+Run `node --test tests/review-submission.test.mjs`. The isolated workflow checks cover a response lost after commit, rollback followed by retry, failed status recovery, a failed draft save, missing details and expired sessions. No production accounts, payments or books are used. After an uncertain submission, status is checked before saving again so an already locked edition continues to its existing review/payment screen. Save-draft recovery must only save the draft; submission recovery may submit after checking status.
+
+The API's `npm run test:commerce` also covers a 40-chapter Hindi review snapshot, unchanged-snapshot guards, reuse of an existing submission, and full rollback on an injected transaction timeout.
