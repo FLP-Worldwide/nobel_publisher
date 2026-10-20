@@ -1,5 +1,6 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import { authorizeCredentials } from "@/utils/signIn.mjs";
 
 const handler = NextAuth({
   providers: [
@@ -10,39 +11,7 @@ const handler = NextAuth({
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
-        try {
-          const accountType = credentials?.accountType || "author";
-          if (!["admin", "author", "buyer"].includes(accountType)) return null;
-          const endpoint = accountType === "admin" ? "/auth/admin/login" : "/auth/login";
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              email: credentials?.email,
-              password: credentials?.password,
-              accountType,
-            })
-          });
-
-          const data = await res.json();
-
-          if (!res.ok || !data?.user) {
-            throw new Error(data?.message || "Invalid email or password");
-          }
-
-          if (data.user.role !== accountType) throw new Error("Use the sign in page for your account type.");
-          return {
-            id: data.user.id,
-            name: data.user.name,
-            email: data.user.email,
-            role: data.user.role,
-            token: data.token, // from Express backend
-            // refreshToken: data.refreshToken
-          };
-        } catch (err) {
-          console.error("Authorize error:", err);
-          throw new Error(err.message || "Unable to sign in");
-        }
+        return authorizeCredentials(credentials, { apiUrl: process.env.NEXT_PUBLIC_API_URL });
       }
     })
   ],

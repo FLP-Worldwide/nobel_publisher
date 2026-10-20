@@ -4,6 +4,7 @@ import React, { Suspense, useState } from "react";
 import { getSession, signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { loginDestination } from "@/utils/loginRedirect";
+import { signInMessage } from "@/utils/signIn.mjs";
 
 function LoginForm({ accountType = "author" }) {
   const searchParams = useSearchParams();
@@ -18,57 +19,60 @@ function LoginForm({ accountType = "author" }) {
     e.preventDefault();
     setError("");
     setLoading(true);
-  
-    const res = await signIn("credentials", {
-      email,
-      password,
-      accountType,
-      redirect: false,
-    });
-  
-    setLoading(false);
-  
-    if (res?.ok) {
-      let loggedInSession = null;
-      try {
-        // ✅ get accessToken after login
-        loggedInSession = await getSession();
-        const accessToken = loggedInSession?.user?.accessToken;
-  
-        // ✅ load guest cart
-        const guestCart = JSON.parse(localStorage.getItem("guest_cart") || "[]");
-  
-        if (accountType !== "admin" && guestCart.length > 0 && accessToken) {
-          for (const item of guestCart) {
-            const { bookId, qty } = item;
-  
-            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/cart/items`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${accessToken}`,
-              },
-              body: JSON.stringify({ bookId, qty }),
-            });
+    try {
+      const res = await signIn("credentials", {
+        email,
+        password,
+        accountType,
+        redirect: false,
+      });
+
+      if (res?.ok && !res.error) {
+        let loggedInSession = null;
+        try {
+          // ✅ get accessToken after login
+          loggedInSession = await getSession();
+          const accessToken = loggedInSession?.user?.accessToken;
+
+          // ✅ load guest cart
+          const guestCart = JSON.parse(localStorage.getItem("guest_cart") || "[]");
+
+          if (accountType !== "admin" && guestCart.length > 0 && accessToken) {
+            for (const item of guestCart) {
+              const { bookId, qty } = item;
+
+              await fetch(`${process.env.NEXT_PUBLIC_API_URL}/cart/items`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${accessToken}`,
+                },
+                body: JSON.stringify({ bookId, qty }),
+              });
+            }
+
+            // ✅ clear only after syncing
+            localStorage.removeItem("guest_cart");
           }
-  
-          // ✅ clear only after syncing
-          localStorage.removeItem("guest_cart");
+        } catch (err) {
+          console.error("Cart sync error:", err);
         }
-      } catch (err) {
-        console.error("Cart sync error:", err);
+
+        // remember me
+        if (remember) localStorage.setItem("rememberMe", "1");
+        else localStorage.removeItem("rememberMe");
+
+        const callbackUrl = searchParams.get("callbackUrl");
+        const destination = loginDestination(loggedInSession?.user?.role, callbackUrl);
+        // Refresh the document so a prefetched unauthenticated redirect is not reused.
+        window.location.assign(destination);
+      } else {
+        setError(signInMessage(res?.error));
       }
-  
-      // remember me
-      if (remember) localStorage.setItem("rememberMe", "1");
-      else localStorage.removeItem("rememberMe");
-  
-      const callbackUrl = searchParams.get("callbackUrl");
-      const destination = loginDestination(loggedInSession?.user?.role, callbackUrl);
-      // Refresh the document so a prefetched unauthenticated redirect is not reused.
-      window.location.assign(destination);
-    } else {
-      setError(res?.error || "Invalid email or password.");
+    } catch {
+      setError(signInMessage("SignInUnavailable"));
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -92,7 +96,7 @@ function LoginForm({ accountType = "author" }) {
           <h2 className="text-xl font-semibold text-blue-700 mb-6">{accountType === "admin" ? "Admin sign in" : accountType === "buyer" ? "Reader sign in" : "Author sign in"}</h2>
 
           {error && (
-            <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            <div role="alert" className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
               {error}
             </div>
           )}
