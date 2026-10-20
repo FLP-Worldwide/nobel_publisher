@@ -206,7 +206,8 @@ export default function ReviewBookPage() {
             placeholder="Be specific and actionable. Approval notes are optional; change requests require a reason."
             className="mt-2 w-full resize-y rounded-xl border border-slate-300 p-3 text-sm outline-none read-only:bg-slate-50 read-only:text-slate-600 focus:border-blue-700 focus:ring-2 focus:ring-blue-100"
           />
-          {error && <p role="alert" className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-800">{error}</p>}
+          {book?.reviewFeeWaivedAt && <p className="mb-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">Demo review: fee waived. No payment was collected.</p>}
+      {error && <p role="alert" className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-800">{error}</p>}
           {reviewIsOpen ? (
             <>
               <div className="mt-5 space-y-3">

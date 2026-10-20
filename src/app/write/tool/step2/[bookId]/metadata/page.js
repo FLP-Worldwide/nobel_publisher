@@ -1,5 +1,5 @@
 "use client";
-import BookPreview from "@/app/components/editor/BookPreview";
+import FinalBookPreviewDialog from "@/app/components/editor/FinalBookPreviewDialog";
 import { normalizeBook } from "@/utils/bookPreview";
 import BookEditGuard from "@/app/components/dashbaord/BookEditGuard";
 
@@ -67,6 +67,7 @@ function Metadata() {
   const accessToken = session?.user?.accessToken;
 
   const [book, setBook] = useState(null);
+  const [reviewFee, setReviewFee] = useState(null);
   const [description, setDescription] = useState("");
   const [authorBiography, setAuthorBiography] = useState("");
   const [categories, setCategories] = useState([]);
@@ -114,6 +115,7 @@ function Metadata() {
       });
       const data = await readJson(response);
       setBook(data);
+      setReviewFee(data.reviewFee || null);
       setDescription(data?.description || "");
       setCopyrightHolder(data?.copyrightHolder || [data?.authorName, data?.coAuthor].filter(Boolean).join(" & "));
       setCopyrightYear(String(data?.copyrightYear || new Date().getFullYear()));
@@ -223,7 +225,6 @@ function Metadata() {
     try {
       const savedBook = await saveMetadata({ showSuccess: false });
       setFinalProof(normalizeBook(savedBook, savedBook.design, session?.user?.name));
-      requestAnimationFrame(() => document.getElementById('final-book-preview')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
     } catch (error) { setNotice({ ...publicationErrorNotice(error), action: "save" }); }
     finally { setPreviewLoading(false); }
   }
@@ -296,14 +297,15 @@ function Metadata() {
               <details className="mt-4 border-t border-slate-100 pt-4"><summary className="cursor-pointer text-xs font-semibold text-slate-600">Add a note for the reviewer <span className="font-normal text-slate-400">· optional</span></summary><label htmlFor="author-message" className="sr-only">Note for the reviewer</label><textarea id="author-message" value={authorMessage} onChange={e=>setAuthorMessage(e.target.value)} rows={3} maxLength={1000} placeholder="Anything the reviewer should know about this edition?" className="ui-field mt-3"/></details>
             </section>
           </fieldset>
-          <aside className="space-y-4 lg:sticky lg:top-6"><section className="ui-card"><p className="ui-eyebrow">Submission checklist</p><h2 className="mt-3 break-words">{book?.title || 'Your book'}</h2><p className="ui-help">{readiness.filter(([,ready])=>ready).length} of {readiness.length} details complete</p><div className="mt-3 h-1 overflow-hidden rounded-full bg-slate-100"><div className="h-full bg-[#527e70] transition-all" style={{width:`${readiness.filter(([,ready])=>ready).length/readiness.length*100}%`}}/></div><ul className="ui-checklist">{readiness.map(([label,ready])=><li key={label}><CheckCircle2 className={ready?'opacity-100':'opacity-25'}/><span className={ready?'text-slate-700':'text-slate-400'}>{label}</span></li>)}</ul></section><section className="rounded-xl bg-[#19334c] p-5 text-white"><h2 className="text-sm font-semibold">Review first. Publish next.</h2><p className="mt-3 text-xs leading-6 text-slate-300">After submitting, pay the one-time ₹199 review fee to enter the review queue. If you have already paid for this book, revisions carry no extra review fee.</p></section></aside>
+          <aside className="space-y-4 lg:sticky lg:top-6"><section className="ui-card"><p className="ui-eyebrow">Submission checklist</p><h2 className="mt-3 break-words">{book?.title || 'Your book'}</h2><p className="ui-help">{readiness.filter(([,ready])=>ready).length} of {readiness.length} details complete</p><div className="mt-3 h-1 overflow-hidden rounded-full bg-slate-100"><div className="h-full bg-[#527e70] transition-all" style={{width:`${readiness.filter(([,ready])=>ready).length/readiness.length*100}%`}}/></div><ul className="ui-checklist">{readiness.map(([label,ready])=><li key={label}><CheckCircle2 className={ready?'opacity-100':'opacity-25'}/><span className={ready?'text-slate-700':'text-slate-400'}>{label}</span></li>)}</ul></section><section className="rounded-xl bg-[#19334c] p-5 text-white"><h2 className="text-sm font-semibold">Review first. Publish next.</h2><p className="mt-3 text-xs leading-6 text-slate-300">{reviewFee?.mode === "demo" || reviewFee?.waived ? "Demo mode: submit directly to editorial review. The review fee is waived and no payment is collected. Editorial approval is still required." : "After submitting, pay the one-time ₹199 review fee to enter the review queue. If you have already paid for this book, revisions carry no extra review fee."}</p></section></aside>
         </div>
         <section id="final-book-preview" className="ui-card mt-5 scroll-mt-8"><div className="flex flex-wrap items-start justify-between gap-4"><div><p className="ui-eyebrow">One final look</p><h2 className="mt-2">Your complete book, cover to cover</h2><p className="ui-help">Check the saved front cover, copyright page, contents, every chapter and back cover before you submit.</p></div><button type="button" disabled={saving||submitting||previewLoading} onClick={openFinalPreview} className="ui-button ui-button-secondary"><Eye size={15}/>{previewLoading?'Preparing preview…':finalProof?'Save and refresh preview':'Open final book preview'}</button></div>
-          {finalProof ? <><p className="ui-help mt-3">This shows the saved version. If you change the details above, save and refresh the preview to check them.</p><div className="mt-4 -mx-4 border-t border-slate-100 sm:-mx-5"><BookPreview book={finalProof} accessToken={accessToken}/></div></> : <p className="mt-4 rounded-lg bg-slate-50 p-4 text-xs leading-6 text-slate-500">Your details are saved when you open the preview. Opening it does not submit your book or start a payment.</p>}
+          <p className="mt-3 text-xs leading-6 text-slate-500">Your details are saved before the preview opens. Close it to return here and submit.</p>
         </section>
         <div className="ui-actions"><Link href={`/write/tool/step2/${bookId}`} className="inline-flex items-center gap-2 text-xs font-medium text-slate-500"><ArrowLeft size={14}/>Back to book studio</Link><div className="flex flex-wrap gap-2"><button type="button" onClick={handleSave} disabled={isLocked||saving||submitting||previewLoading} className="ui-button ui-button-secondary"><Save size={14}/>{saving?'Saving…':'Save draft'}</button><button type="submit" disabled={isLocked||saving||submitting||previewLoading} className="ui-button"><Send size={14}/>{submitting?'Submitting…':'Submit for review'}</button></div></div>
       </form>}
     </main>
+    <FinalBookPreviewDialog book={finalProof} accessToken={accessToken} onClose={() => setFinalProof(null)}/>
   </div>;
 }
 
